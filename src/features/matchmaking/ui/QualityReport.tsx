@@ -120,7 +120,7 @@ export default function QualityReport({
               <div>
                 <p className="label">Violations</p>
                 {violations.length === 0 ? (
-                  <p className="text-xs text-lob-muted">No rule violations.</p>
+                  <p className="caption">No rule violations.</p>
                 ) : (
                   <ul className="space-y-1">
                     {violations.map((violation, index) => (

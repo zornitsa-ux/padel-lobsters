@@ -111,14 +111,14 @@ export default function CompareView({
                   compact
                 />
               ) : (
-                <p className="text-xs text-lob-muted-light">Generate an alternative to compare.</p>
+                <p className="caption">Generate an alternative to compare.</p>
               )}
             </div>
           </div>
           {altRun && diffLines.length > 0 && (
             <div className="space-y-0.5">
               {diffLines.map((line) => (
-                <p key={line} className="text-xs text-lob-muted">
+                <p key={line} className="caption">
                   Alternative: {line}
                 </p>
               ))}
@@ -152,9 +152,7 @@ export default function CompareView({
             ) : altRun ? (
               <ScheduleRounds rounds={altRun.rounds} />
             ) : (
-              <p className="text-xs text-lob-muted-light">
-                Generate an alternative above to see its rounds here.
-              </p>
+              <p className="caption">Generate an alternative above to see its rounds here.</p>
             )}
           </div>
         </div>

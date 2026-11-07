@@ -111,7 +111,7 @@ export function OtpCodeStep({
         {busy ? 'Checking…' : submitLabel}
       </Button>
 
-      <p className="text-xs text-lob-muted text-center">Or tap the link in the email.</p>
+      <p className="caption text-center">Or tap the link in the email.</p>
 
       <div className="flex items-center justify-between text-xs">
         <TextButton onClick={handleResend} disabled={remaining > 0}>

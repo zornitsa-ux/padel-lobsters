@@ -103,7 +103,7 @@ export default function ScheduleGeneratorControls({
         </>
       )}
 
-      <p className="text-xs text-lob-muted">
+      <p className="caption">
         {registeredPlayers.length} players · {numCourts} court{numCourts > 1 ? 's' : ''}
       </p>
     </div>

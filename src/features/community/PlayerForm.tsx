@@ -77,10 +77,10 @@ export default function PlayerForm({
     >
       <form id="player-form" onSubmit={handleSubmit} className="space-y-4">
         {!editId && !isAdmin && (
-          <p className="text-xs text-lob-muted -mt-2">You'll sign in with a code we email you</p>
+          <p className="caption -mt-2">You'll sign in with a code we email you</p>
         )}
         {editId && !formReady && (
-          <p className="text-xs text-lob-muted -mt-2" role="status">
+          <p className="caption -mt-2" role="status">
             Loading this player&apos;s details…
           </p>
         )}
@@ -174,7 +174,7 @@ export default function PlayerForm({
               value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
             />
-            <p className="text-xs text-lob-muted-light mt-1">Visible for organizers only</p>
+            <p className="caption mt-1">Visible for organizers only</p>
           </div>
 
           <div>
@@ -186,7 +186,7 @@ export default function PlayerForm({
               value={form.phone}
               onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
             />
-            <p className="text-xs text-lob-muted-light mt-1">Visible for organizers only</p>
+            <p className="caption mt-1">Visible for organizers only</p>
           </div>
 
           <div>

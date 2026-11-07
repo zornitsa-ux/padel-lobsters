@@ -51,7 +51,7 @@ export function PlayerRow({
       {leading}
       <div className="flex-1 min-w-0">
         <p className={nameClassName ?? NAME_CLASS}>{name}</p>
-        {subtitle && <p className="text-xs text-lob-muted">{subtitle}</p>}
+        {subtitle && <p className="caption">{subtitle}</p>}
         {children}
       </div>
       {trailing}

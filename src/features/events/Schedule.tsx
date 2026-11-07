@@ -518,9 +518,7 @@ export default function Schedule({
                         ))}
 
                         {match.team1Level && (
-                          <p className="text-xs text-lob-muted-light mt-1">
-                            Avg {(match.team1Level / 2).toFixed(1)}
-                          </p>
+                          <p className="caption mt-1">Avg {(match.team1Level / 2).toFixed(1)}</p>
                         )}
                       </div>
 
@@ -563,9 +561,7 @@ export default function Schedule({
                         ))}
 
                         {match.team2Level && (
-                          <p className="text-xs text-lob-muted-light mt-1">
-                            Avg {(match.team2Level / 2).toFixed(1)}
-                          </p>
+                          <p className="caption mt-1">Avg {(match.team2Level / 2).toFixed(1)}</p>
                         )}
                       </div>
                     </div>

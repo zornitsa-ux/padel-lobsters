@@ -103,6 +103,7 @@ component doesn't fit, fix the component, not the call site.**
 | Loading                              | `Spinner` (`size="inline"` in a card) / `Skeleton`   | exists |
 | Identity label (Court 2, a size)     | `Tag` (a state is a `Badge`)                         | exists |
 | Eyebrow / overline                   | `.eyebrow` / `.eyebrow-accent`                       | exists |
+| Small secondary text (hint, meta)    | `.caption`                                           | exists |
 
 ### Buttons and chips (owner, 2026-10-25)
 
@@ -1820,3 +1821,34 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     caught by neither check. Test files stay in the colour check, as their
     fixtures pass classes into components.
   - P7 is done with this PR, and with it the design system plan's steps.
+
+- **2026-11-07.** `.caption` on `ui-caption-text` (owner, from the review
+  of #169). 176 lines spelled 12px secondary text by hand as `text-xs` with
+  `lob-muted` (112, about 3.7:1 on white) or `lob-muted-light` (64, about
+  2.3:1); neither passes WCAG AA for small text.
+  - Owner calls: one tone, `lob-slate` (about 7:1, as for `.eyebrow`), and
+    a CSS class in `index.css` beside `.eyebrow`, not a component, so it
+    works on `<p>`, `<span>`, `<td>` and in class constants.
+  - 156 lines in 81 files move onto it, the ui pieces among them
+    (`Section`'s description, `EmptyState`, `SettingRow`, `PlayerRow`,
+    `LinkCard`, `DialogShell`, `OptionRow`, `MenuItem`, `AvatarPicker`).
+    Layout and text utilities on them stay (margins, `italic`, `truncate`,
+    `text-center`). All sit on light surfaces.
+  - Left alone, as they are not captions: form and stat labels with a
+    weight (`font-medium` / `semibold` / `bold`), uppercase overlines
+    (`RatingReview`'s figure captions, the readiness panel, the Scores table
+    header), monospace seeds and step numbers, the Lobster Way chevron
+    icon, and the Settings version line at 60% opacity. Gallery entry.
+  - Inline `EmptyState`'s title moves from `lob-muted` to `lob-slate`, so its
+    caption isn't darker than the title; size sets the hierarchy.
+  - Review: `design:check` gains `check-muted-captions.mjs`, which fails on
+    `text-xs` with `lob-muted` / `lob-muted-light` outside
+    `src/components/ui` (weighted, uppercase and monospace text left out;
+    the Lobster Way chevron glyph allowed). `OptionRow`'s actions wrapper
+    keeps `lob-muted`: it holds controls, not text. `DESIGN_SYSTEM.md`'s
+    "Caption / meta" row points at `.caption`.
+  - Open for the owner: weighted 12px labels (`OptionRow`'s trailing
+    level, form labels in `NewPartnerForm`, `ScoreEntryForm`, `Shop`) are
+    still `lob-muted`, about 3.7:1. A caption inside a `lob-slate` line
+    (Payments' per-player split, Tip of the Day's sign-off, the Settings
+    footer) now differs from it by size only.

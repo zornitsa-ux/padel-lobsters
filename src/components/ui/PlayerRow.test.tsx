@@ -20,7 +20,7 @@ describe('PlayerRow', () => {
     const [nameEl, subtitleEl] = childrenOf(column)
     expect(propsOf(nameEl).className).toBe('font-semibold text-sm text-lob-dark truncate')
     expect(propsOf(nameEl).children).toBe('Ana Diaz')
-    expect(propsOf(subtitleEl).className).toBe('text-xs text-lob-muted')
+    expect(propsOf(subtitleEl).className).toBe('caption')
     expect(propsOf(subtitleEl).children).toBe('Level 3.5')
     expect(propsOf(column).className).toBe('flex-1 min-w-0')
   })

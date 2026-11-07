@@ -226,7 +226,7 @@ function TextButtonSection() {
         <TextButton to="/design" icon={<ArrowUpRight size={12} />}>
           Router link
         </TextButton>
-        <p className="text-xs text-lob-muted">
+        <p className="caption">
           Inline in a sentence:{' '}
           <TextButton size="inherit" href="mailto:hello@example.com">
             email link
@@ -374,6 +374,9 @@ function StatusSection() {
       <Row label="Eyebrow (.eyebrow / .eyebrow-accent): a small overline">
         <p className="eyebrow">Match metrics</p>
         <p className="eyebrow-accent">Lobster review</p>
+      </Row>
+      <Row label="Caption (.caption): 12px secondary text, lob-slate">
+        <p className="caption">Payment due by Friday · 3 spots left</p>
       </Row>
       <Row label="Badge icon (the badge sizes it)">
         <Badge tone="success" icon={<Check />} label="You're registered!" />
@@ -613,12 +616,12 @@ function OptionSection() {
           {SAMPLE_PLAYERS.slice(0, 2).map((p) => (
             <OptionTile key={p.id} selected={tile === p.id} onClick={() => setTile(p.id)}>
               <span className="font-semibold text-sm text-lob-dark">{p.name}</span>
-              <span className="text-xs text-lob-muted">R2: you &amp; {p.name.split(' ')[0]}</span>
+              <span className="caption">R2: you &amp; {p.name.split(' ')[0]}</span>
             </OptionTile>
           ))}
           <OptionTile disabled onClick={() => {}}>
             <span className="font-semibold text-sm text-lob-dark">You</span>
-            <span className="text-xs text-lob-muted">that&apos;s you</span>
+            <span className="caption">that&apos;s you</span>
           </OptionTile>
           <OptionTile muted>
             <span className="font-semibold text-sm text-lob-dark">Best smash</span>
@@ -1305,9 +1308,9 @@ function CollapsibleSectionDemo() {
         expanded={open}
         onToggle={() => setOpen((o) => !o)}
         header={<span className="text-sm font-semibold text-lob-slate">Best Lobster</span>}
-        summary={<p className="text-xs text-lob-muted">summary stays visible</p>}
+        summary={<p className="caption">summary stays visible</p>}
       >
-        <p className="text-xs text-lob-muted">Body shown while expanded.</p>
+        <p className="caption">Body shown while expanded.</p>
       </CollapsibleCard>
       <CollapsibleCard
         className="rounded-xl border border-lob-line bg-lob-well p-3 space-y-2"
@@ -1327,7 +1330,7 @@ function CollapsibleSectionDemo() {
           <span className="text-sm font-medium text-lob-slate truncate">leading + actions</span>
         }
       >
-        <p className="text-xs text-lob-muted">Reorder and delete sit outside the toggle.</p>
+        <p className="caption">Reorder and delete sit outside the toggle.</p>
       </CollapsibleCard>
     </GallerySection>
   )
@@ -1340,7 +1343,7 @@ function StatesSection() {
       <Disclosure expanded={open} onToggle={() => setOpen((o) => !o)}>
         Advanced
       </Disclosure>
-      {open && <p className="text-xs text-lob-muted">Extra detail shown by Disclosure.</p>}
+      {open && <p className="caption">Extra detail shown by Disclosure.</p>}
       <EmptyState
         icon={<Inbox />}
         title="Nothing here yet"

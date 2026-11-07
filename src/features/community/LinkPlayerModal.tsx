@@ -59,7 +59,7 @@ export default function LinkPlayerModal({
   return (
     <Modal open onClose={onClose} title="Link to existing player">
       <div className="space-y-3">
-        <p className="text-xs text-lob-muted -mt-2">
+        <p className="caption -mt-2">
           Who is <strong>{linkModal.name}</strong> in the system?
         </p>
 
@@ -109,7 +109,7 @@ export default function LinkPlayerModal({
           </div>
         )}
 
-        <p className="text-xs text-lob-muted-light text-center pt-1">
+        <p className="caption text-center pt-1">
           This will merge {linkModal.name}'s new contact info onto the existing profile.
         </p>
       </div>

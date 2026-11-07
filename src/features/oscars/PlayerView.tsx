@@ -69,7 +69,7 @@ export default function PlayerView({
           myVoteByCat={myVoteByCat}
           onSelect={onSelectCategory}
         />
-        <p className="text-center text-xs text-lob-muted-light">
+        <p className="text-center caption">
           <span className="font-semibold text-lob-slate">{Object.keys(myVoteByCat).length}</span> of{' '}
           {categories.length} voted
         </p>
@@ -91,7 +91,7 @@ export default function PlayerView({
           onSelect={null}
           showWaitingState
         />
-        <p className="text-center text-xs text-lob-muted-light flex items-center justify-center gap-1">
+        <p className="text-center caption flex items-center justify-center gap-1">
           <RotateCw size={11} className="animate-spin" /> waiting for the admin to share
         </p>
       </Shell>

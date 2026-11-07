@@ -312,7 +312,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
             <UserPlus size={18} className="text-lob-teal" />
             Join the Lobsters 🦞
           </h1>
-          <p className="text-xs text-lob-muted leading-snug">
+          <p className="caption leading-snug">
             We'll email you a 6-digit code to confirm your address. Fill in the full profile — it
             powers matchmaking, your Lobster Review, and the leaderboards.
           </p>
@@ -339,7 +339,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
               value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
             />
-            <p className="text-xs text-lob-muted-light mt-1">Visible for organizers only</p>
+            <p className="caption mt-1">Visible for organizers only</p>
           </div>
 
           <ProfileContactFields form={form} setForm={setForm} />

@@ -26,7 +26,7 @@ export function ChampionBanner({ champions, teamById, onTeamClick }: ChampionBan
           <TextButton size="lg" truncate onClick={() => onTeamClick(gold)}>
             {resolveTeamName(gold)}
           </TextButton>
-          {players && <p className="text-xs text-lob-muted truncate">{players}</p>}
+          {players && <p className="caption truncate">{players}</p>}
         </div>
       </div>
       {silver && (

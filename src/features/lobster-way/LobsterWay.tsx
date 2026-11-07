@@ -122,7 +122,7 @@ export default function LobsterWay() {
           </div>
         ))}
 
-        <p className="text-xs text-lob-muted-light text-center pt-2">
+        <p className="caption text-center pt-2">
           Question not here? Ask in the Padel Lobsters WhatsApp group.
         </p>
       </div>

@@ -108,7 +108,7 @@ function EmailChangeForm({ email }: { email: string }) {
               {emailBusy ? 'Sending…' : 'Send confirmation'}
             </Button>
           </ActionRow>
-          <p className="text-xs text-lob-muted">
+          <p className="caption">
             We'll email a confirmation link to the new address. The change only takes effect once
             you click it.
           </p>

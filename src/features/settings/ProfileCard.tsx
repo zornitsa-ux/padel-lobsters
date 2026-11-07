@@ -31,9 +31,7 @@ export default function ProfileCard({ player, isAdmin, onEdit }: ProfileCardProp
             <LevelBadge level={level} size="sm" />
             {isAdmin && <Badge tone="brand" icon={<Shield />} label="Admin" />}
           </div>
-          {player.tagline && (
-            <p className="text-xs text-lob-muted italic truncate">“{player.tagline}”</p>
-          )}
+          {player.tagline && <p className="caption italic truncate">“{player.tagline}”</p>}
         </div>
       </div>
       <ActionRow>

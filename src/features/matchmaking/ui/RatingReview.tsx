@@ -264,7 +264,7 @@ function QueueItem({
 
       <LevelLine before={before} cautious={cautiousLevel} full={fullLevel} direction={direction} />
 
-      <p className="text-xs text-lob-muted">
+      <p className="caption">
         Already {direction === 'down' ? 'lowered' : 'raised'} to{' '}
         <span className="font-mono tabular-nums">{formatLevel(cautiousLevel)}</span> (the most we
         change in one night). The last{' '}
@@ -315,7 +315,7 @@ function QueueItem({
             >
               <Plus />
             </IconButton>
-            <span className="text-xs text-lob-muted-light">
+            <span className="caption">
               between {formatLevel(loLevel)} and {formatLevel(hiLevel)}
             </span>
           </div>
@@ -329,7 +329,7 @@ function QueueItem({
           </Disclosure>
           {breakdownOpen && (
             <>
-              <p className="mt-1.5 text-xs text-lob-muted-light">
+              <p className="mt-1.5 caption">
                 Each match nudges the level by the amount on the right; they add up to the full
                 move.
               </p>

@@ -200,7 +200,7 @@ export default function ConfigPanel({
           value={config.preset}
           onChange={(preset) => onConfigChange({ preset })}
         />
-        <p className="mt-2 text-xs text-lob-muted">{presetIntent}</p>
+        <p className="mt-2 caption">{presetIntent}</p>
       </div>
 
       <Disclosure expanded={advancedOpen} onToggle={() => setAdvancedOpen((open) => !open)}>
@@ -217,7 +217,7 @@ export default function ConfigPanel({
               <div key={key}>
                 <div className="flex items-center justify-between">
                   <label className="label mb-0">{label}</label>
-                  <span className="flex items-center gap-1 text-xs text-lob-muted">
+                  <span className="flex items-center gap-1 caption">
                     {toDisplay(value)}
                     {overridden && (
                       <>
@@ -249,8 +249,8 @@ export default function ConfigPanel({
                   }
                   className="w-full accent-lob-teal"
                 />
-                <p className="text-xs text-lob-muted">{describe(value)}</p>
-                <p className="text-xs text-lob-muted-light">{effect}</p>
+                <p className="caption">{describe(value)}</p>
+                <p className="caption">{effect}</p>
               </div>
             )
           })}
@@ -259,7 +259,7 @@ export default function ConfigPanel({
             <div className="flex items-center justify-between">
               <label className="label mb-0">Lefty rule</label>
               {config.leftyRule !== undefined && (
-                <span className="flex items-center gap-1 text-xs text-lob-muted">
+                <span className="flex items-center gap-1 caption">
                   <span
                     className="text-lob-teal font-medium"
                     title="Overridden from preset default"
@@ -286,11 +286,11 @@ export default function ConfigPanel({
 
           {priorities.length > 0 && (
             <div className="pt-1">
-              <p className="text-xs text-lob-muted">
+              <p className="caption">
                 No schedule can be perfect at everything. When the matcher has to choose, this is
                 what it hangs on to longest — the ones at the bottom slip first:
               </p>
-              <ol className="mt-1 space-y-0.5 text-xs text-lob-muted list-decimal pl-4">
+              <ol className="mt-1 space-y-0.5 caption list-decimal pl-4">
                 {priorities.map(({ key }) => (
                   <li key={key}>{DIMENSION_LABELS[key]}</li>
                 ))}

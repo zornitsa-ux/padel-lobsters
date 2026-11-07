@@ -223,7 +223,7 @@ function ProfileFormFields({
             onChange={(e) => setProfileForm((f) => ({ ...f, tagline: e.target.value }))}
           />
         </div>
-        <p className="text-xs text-lob-muted-light mt-1">
+        <p className="caption mt-1">
           Appears on your player card. {80 - profileForm.tagline.length} chars left.
         </p>
       </div>
@@ -255,7 +255,7 @@ function ProfileFormFields({
           value={profileForm.phone}
           onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))}
         />
-        <p className="text-xs text-lob-muted-light mt-1">
+        <p className="caption mt-1">
           Start with + and the country code, e.g. +31 for the Netherlands.
         </p>
       </div>
@@ -270,7 +270,7 @@ function ProfileFormFields({
         />
       </div>
 
-      <p className="text-xs text-lob-muted">
+      <p className="caption">
         Your email is your sign-in: change it under Sign-in &amp; security on the Account page.
       </p>
     </div>

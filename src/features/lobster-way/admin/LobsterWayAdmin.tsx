@@ -86,7 +86,7 @@ export default function LobsterWayAdmin() {
       />
 
       <div className="px-4 pt-4 pb-8 space-y-3">
-        <p className="text-xs text-lob-muted">
+        <p className="caption">
           Changes save to the live FAQ page once you tap Save — nothing updates for players until
           then.
         </p>

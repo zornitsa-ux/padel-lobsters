@@ -80,7 +80,7 @@ function TeamLine({
       <span className="font-mono tabular-nums text-xs text-lob-muted pt-0.5">{seed}</span>
       <span className="min-w-0">
         {label}
-        {note && <span className="text-xs text-lob-muted"> · {note}</span>}
+        {note && <span className="caption"> · {note}</span>}
       </span>
     </p>
   )

@@ -165,7 +165,7 @@ function PlayerPicker({
           </MenuList>
         )}
       </div>
-      {displayValue && <p className="text-xs text-lob-muted">{displayValue}</p>}
+      {displayValue && <p className="caption">{displayValue}</p>}
       <FormError id={errorId} message={error} />
     </div>
   )
@@ -355,7 +355,7 @@ export function TeamForm({
           value={spiritAnimal}
           onChange={(e) => setSpiritAnimal(e.target.value)}
         />
-        <p className="text-xs text-lob-muted mt-1">Emoji or animal name</p>
+        <p className="caption mt-1">Emoji or animal name</p>
       </div>
       <div>
         <label className="label">Experience Level</label>
@@ -374,7 +374,7 @@ export function TeamForm({
           value={preferredTimes}
           onChange={(e) => setPreferredTimes(e.target.value)}
         />
-        <p className="text-xs text-lob-muted mt-1">Visible to other teams for scheduling</p>
+        <p className="caption mt-1">Visible to other teams for scheduling</p>
       </div>
       {groupsFormed && (
         <div>

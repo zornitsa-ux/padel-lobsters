@@ -84,7 +84,7 @@ export function MenuItem({
           <span className="break-words">{children}</span>
           {current && <span className="text-2xs font-semibold flex-shrink-0">· current</span>}
         </span>
-        {hint && <span className="block text-xs font-normal text-lob-muted">{hint}</span>}
+        {hint && <span className="block caption font-normal">{hint}</span>}
       </span>
     </ItemButton>
   )

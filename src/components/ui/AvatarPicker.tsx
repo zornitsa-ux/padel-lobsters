@@ -36,7 +36,7 @@ export function AvatarPicker({ preview, onChange }: AvatarPickerProps) {
           <Camera />
         </IconButton>
       </div>
-      <p className="text-xs text-lob-muted-light">Tap camera icon to {action} photo</p>
+      <p className="caption">Tap camera icon to {action} photo</p>
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onChange} />
     </div>
   )

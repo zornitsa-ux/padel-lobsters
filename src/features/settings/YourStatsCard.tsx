@@ -46,7 +46,7 @@ export default function YourStatsCard({ claimedId, myStats }: YourStatsCardProps
         </StatGrid>
 
         {myStats.played === 0 ? (
-          <div className="mt-3 pt-3 border-t border-lob-line text-xs text-lob-muted text-center">
+          <div className="mt-3 pt-3 border-t border-lob-line caption text-center">
             No matches logged yet. Your stats fill in once a tournament result is recorded.
           </div>
         ) : (
@@ -75,7 +75,7 @@ export default function YourStatsCard({ claimedId, myStats }: YourStatsCardProps
               </div>
             )}
 
-            <div className="mt-2 pt-2 border-t border-lob-line flex items-center justify-between text-xs text-lob-muted">
+            <div className="mt-2 pt-2 border-t border-lob-line flex items-center justify-between caption">
               <span>{myStats.pts} total points</span>
               <span>
                 Game diff: {myStats.pointsFor - myStats.pointsAgainst > 0 ? '+' : ''}

@@ -178,14 +178,14 @@ export default function TransferSpotModal({
       }
     >
       <div className="space-y-4">
-        <p className="text-xs text-lob-muted-light -mt-2">
+        <p className="caption -mt-2">
           {transferImmediately
             ? 'Pick who takes over. This moves the spot immediately — no acceptance needed.'
             : `Pick who takes over. They'll be asked to accept — ${isOnBehalf ? `${(fromPlayer?.name || 'their').split(/\s+/)[0]}'s spot` : 'your spot'} stays held until they do.`}
         </p>
 
         {isOnBehalf && (
-          <label className="flex items-center gap-2 text-xs text-lob-muted-light">
+          <label className="flex items-center gap-2 caption">
             <input
               type="checkbox"
               checked={transferImmediately}

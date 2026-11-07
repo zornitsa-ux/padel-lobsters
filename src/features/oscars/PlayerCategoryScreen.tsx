@@ -70,7 +70,7 @@ export default function PlayerCategoryScreen({
           <div className="text-center py-10 text-lob-muted">
             <p className="text-4xl mb-2">🤷</p>
             <p className="text-sm font-semibold text-lob-slate">No registered players</p>
-            <p className="text-xs text-lob-muted mt-1">
+            <p className="caption mt-1">
               This tournament doesn&apos;t have any registered players yet, so there&apos;s no one
               to vote for.
             </p>
@@ -137,7 +137,7 @@ export default function PlayerCategoryScreen({
             })}
           </div>
         )}
-        <p className="text-center text-xs text-lob-muted-light pt-3">
+        <p className="text-center caption pt-3">
           Tap a player to vote. You can change your mind until the admin ends the games.
         </p>
       </div>

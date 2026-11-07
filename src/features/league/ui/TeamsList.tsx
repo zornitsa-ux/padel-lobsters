@@ -18,9 +18,7 @@ export function TeamsList({ teams, myTeamId, onTeamClick }: TeamsListProps) {
           highlighted={team.id === myTeamId}
           title={resolveTeamShortName(team)}
           subtitle={resolveTeamPlayers(team)}
-          trailing={
-            <span className="text-xs text-lob-muted capitalize">{team.experience_level}</span>
-          }
+          trailing={<span className="caption capitalize">{team.experience_level}</span>}
         />
       ))}
     </ListCard>

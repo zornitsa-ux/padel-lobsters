@@ -170,7 +170,7 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
               title="Lobster Oscars"
               icon={<Trophy />}
               action={
-                <span className="text-xs text-lob-muted-light">
+                <span className="caption">
                   {plural({ count: cats.length, one: 'category', many: 'categories' })}
                   {totalVoters > 0 && ` · ${plural({ count: totalVoters, one: 'voter' })}`}
                 </span>

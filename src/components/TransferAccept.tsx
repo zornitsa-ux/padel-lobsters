@@ -220,7 +220,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
 
         <div>
           <h2 className="font-bold text-lg">{tournament?.name || 'Event'}</h2>
-          <p className="text-xs text-lob-muted mt-0.5">
+          <p className="caption mt-0.5">
             {tournament?.date
               ? new Date(tournament.date).toLocaleDateString('en-GB', {
                   weekday: 'long',
@@ -237,17 +237,17 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
           <Avatar player={{ name: fromPlayer?.name || '?' }} size="lg" />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm">{dn(fromPlayer)}</p>
-            <p className="text-xs text-lob-muted">From</p>
+            <p className="caption">From</p>
           </div>
           <ArrowRightLeft size={16} className="text-lob-muted-light/60" />
           <div className="flex-1 min-w-0 text-right">
             <p className="font-semibold text-sm">{dn(toPlayer)}</p>
-            <p className="text-xs text-lob-muted">To you</p>
+            <p className="caption">To you</p>
           </div>
           <Avatar player={{ name: toPlayer?.name || '?' }} size="lg" />
         </div>
 
-        <p className="text-xs text-lob-muted leading-relaxed">
+        <p className="caption leading-relaxed">
           If you accept, the spot moves to you and {dn(fromPlayer)}'s registration is cancelled.
           They'll share the payment link with you separately on WhatsApp.
         </p>

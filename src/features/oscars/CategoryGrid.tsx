@@ -44,7 +44,7 @@ export default function CategoryGrid({
                     )}
                   </span>
                 ) : (
-                  <span className="block text-xs text-lob-muted-light mt-1">
+                  <span className="block caption mt-1">
                     {showWaitingState ? "You didn't vote" : 'Tap to vote'}
                   </span>
                 )}

@@ -18,7 +18,7 @@ export function SettingRow({ label, value, action, children }: SettingRowProps) 
       <div className="flex items-center gap-3">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-lob-dark">{label}</p>
-          {value && <div className="text-xs text-lob-muted mt-0.5">{value}</div>}
+          {value && <div className="caption mt-0.5">{value}</div>}
         </div>
         {action && <div className="flex-shrink-0">{action}</div>}
       </div>

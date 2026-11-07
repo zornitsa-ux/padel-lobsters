@@ -63,7 +63,7 @@ export function OptionRow({
             )}
             <span className="flex-1 min-w-0">
               <span className="block text-sm font-semibold text-lob-dark break-words">{title}</span>
-              {subtitle && <span className="block text-xs text-lob-muted">{subtitle}</span>}
+              {subtitle && <span className="block caption">{subtitle}</span>}
             </span>
             {trailing && (
               <span className="flex items-center flex-shrink-0 text-xs font-semibold text-lob-muted">

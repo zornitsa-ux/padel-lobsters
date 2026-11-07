@@ -109,14 +109,14 @@ export default function RegistrationPaymentSheetModal({
             >
               {declaring ? 'Saving…' : copy.declareLabel}
             </Button>
-            <p className="text-xs text-lob-muted-light text-center -mt-2">{copy.declareNote}</p>
+            <p className="caption text-center -mt-2">{copy.declareNote}</p>
           </>
         )}
 
         {!forPlayerName && (
           <>
             <AddToCalendarButton tournament={tournament} />
-            <p className="text-xs text-lob-muted-light text-center -mt-2">
+            <p className="caption text-center -mt-2">
               We&apos;ll nudge you 24h and 2h before. No notifications from us — it runs from your
               own calendar.
             </p>

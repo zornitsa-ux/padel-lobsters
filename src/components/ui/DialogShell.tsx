@@ -86,9 +86,7 @@ function DialogHeader({
         <div>
           <Dialog.Title className="font-semibold text-lob-dark text-base">{title}</Dialog.Title>
           {description && (
-            <Dialog.Description className="text-xs text-lob-muted mt-0.5">
-              {description}
-            </Dialog.Description>
+            <Dialog.Description className="caption mt-0.5">{description}</Dialog.Description>
           )}
         </div>
         {onClose && (

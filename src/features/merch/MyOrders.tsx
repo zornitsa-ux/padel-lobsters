@@ -52,7 +52,7 @@ function OrderRow({ order: o, item }: { order: MerchInterest; item: MerchItem | 
             <div className="flex items-center gap-2 flex-wrap mt-0.5">
               {o.size && <Tag label={o.size} />}
               {o.customName && <Tag label={`Name: ${o.customName}`} />}
-              <span className="text-xs text-lob-muted-light">{formatOrderTime(o.created_at)}</span>
+              <span className="caption">{formatOrderTime(o.created_at)}</span>
             </div>
           </div>
         </div>

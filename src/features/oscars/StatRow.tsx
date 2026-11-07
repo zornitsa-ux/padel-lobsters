@@ -40,7 +40,7 @@ export default function StatRow({ stat, expanded, voters, onToggle }: StatRowPro
         <div>
           <p className="eyebrow text-lob-success mb-1">✓ Voted ({voted.length})</p>
           <div className="space-y-0.5">
-            {voted.length === 0 && <p className="text-xs text-lob-muted-light italic">none yet</p>}
+            {voted.length === 0 && <p className="caption italic">none yet</p>}
             {voted.map((v) => (
               <p key={v.player_id} className="text-xs text-lob-slate truncate">
                 {v.player_name}
@@ -51,11 +51,9 @@ export default function StatRow({ stat, expanded, voters, onToggle }: StatRowPro
         <div>
           <p className="eyebrow mb-1">○ Not yet ({notVoted.length})</p>
           <div className="space-y-0.5">
-            {notVoted.length === 0 && (
-              <p className="text-xs text-lob-muted-light italic">all voted!</p>
-            )}
+            {notVoted.length === 0 && <p className="caption italic">all voted!</p>}
             {notVoted.map((v) => (
-              <p key={v.player_id} className="text-xs text-lob-muted truncate">
+              <p key={v.player_id} className="caption truncate">
                 {v.player_name}
               </p>
             ))}

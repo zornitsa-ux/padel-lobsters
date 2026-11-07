@@ -467,7 +467,7 @@ export default function Registration({
           <EventAdminMenu isAdmin={isAdmin} onEdit={openEdit} />
         </div>
         <div className="flex items-center justify-between gap-2 flex-wrap pt-2 border-t border-lob-line">
-          <p className="text-xs text-lob-muted-light">
+          <p className="caption">
             Format:{' '}
             <span className="font-medium text-lob-slate">{formatLabel(tournament.format)}</span>
           </p>

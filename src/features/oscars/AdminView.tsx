@@ -132,7 +132,7 @@ export default function AdminView({
           >
             {busy ? 'Starting…' : 'Start Lobster Games'}
           </Button>
-          <p className="text-xs text-lob-muted-light text-center -mt-1">
+          <p className="caption text-center -mt-1">
             Once started, categories can&apos;t be edited. You can end voting at any time.
           </p>
         </div>

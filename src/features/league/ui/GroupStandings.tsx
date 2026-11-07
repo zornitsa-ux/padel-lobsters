@@ -48,7 +48,7 @@ export function GroupStandings({
             />
           </div>
         ))}
-        <p className="text-xs text-lob-muted-light">{TIEBREAK_NOTE}</p>
+        <p className="caption">{TIEBREAK_NOTE}</p>
       </div>
     </Section>
   )

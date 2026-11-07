@@ -112,7 +112,7 @@ function SeedsSection({
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-lob-dark truncate">{labelOf(teamId)}</p>
                       {strength && (
-                        <p className="flex items-center gap-1 text-xs text-lob-muted">
+                        <p className="flex items-center gap-1 caption">
                           Avg level {strength.strength.toFixed(2)}
                           {strength.unrated && <Badge tone="warning" label="unrated" />}
                         </p>
@@ -214,7 +214,7 @@ function FinalStandingsSection({ seeding, actions }: { seeding: Seeding; actions
           <ListRow key={court.courtIndex}>
             <p className="text-xs font-bold text-lob-teal">{courtLabel({ court })}</p>
             {(['first', 'second'] as const).map((slot) => (
-              <label key={slot} className="flex items-center gap-2 text-xs text-lob-muted">
+              <label key={slot} className="flex items-center gap-2 caption">
                 <span className="w-8">{slot === 'first' ? '1st' : '2nd'}</span>
                 <select
                   className="input flex-1 min-w-0 py-1.5 text-sm"

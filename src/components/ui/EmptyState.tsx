@@ -19,13 +19,13 @@ const styles: Record<
     root: 'card flex flex-col items-center py-10 text-center gap-2',
     icon: 'text-lob-muted opacity-40 [&>svg]:size-9',
     title: 'text-sm font-semibold text-lob-dark',
-    description: 'text-xs text-lob-muted',
+    description: 'caption',
   },
   inline: {
     root: 'flex flex-col items-center py-4 text-center gap-1',
     icon: 'text-lob-muted opacity-40 [&>svg]:size-5',
-    title: 'text-sm text-lob-muted',
-    description: 'text-xs text-lob-muted-light',
+    title: 'text-sm text-lob-slate',
+    description: 'caption',
   },
 }
 

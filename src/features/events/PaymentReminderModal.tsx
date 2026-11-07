@@ -62,7 +62,7 @@ export default function PaymentReminderModal({
 
         {state.status === 'ready' && (
           <>
-            <p className="text-xs text-lob-muted leading-relaxed">
+            <p className="caption leading-relaxed">
               Opens WhatsApp with a pre-filled Tikkie payment nudge to {firstName}
               {isTeam ? ', the team captain, who pays for both players' : ''}.
             </p>

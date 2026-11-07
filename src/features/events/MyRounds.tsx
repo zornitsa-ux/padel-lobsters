@@ -92,7 +92,7 @@ function NextRoundCard({ view, getPlayer }: { view: MyMatchView; getPlayer: GetP
       <div className="flex items-center justify-center gap-2">
         <Avatar player={partner ?? { name: '?' }} size="lg" />
         <div className="text-left">
-          <p className="text-xs text-lob-muted-light">with</p>
+          <p className="caption">with</p>
           <p className="font-bold text-lob-dark">{firstName(partner, 'Partner TBD')}</p>
         </div>
       </div>
@@ -156,7 +156,7 @@ function PlayedRound({ round, getPlayer }: { round: MyRoundView; getPlayer: GetP
             <OutcomeBadge view={view} />
           </>
         ) : (
-          <span className="text-xs text-lob-muted-light">Later</span>
+          <span className="caption">Later</span>
         )}
       </div>
     </div>

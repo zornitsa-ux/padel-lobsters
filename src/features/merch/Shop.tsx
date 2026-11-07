@@ -51,7 +51,7 @@ export default function Shop({
   const sizeErrorPrefix = useId()
   return (
     <div className="space-y-3">
-      <p className="text-xs text-lob-muted">
+      <p className="caption">
         Place an order — the organizers will see what you need and get in touch. Prices include
         shipping.
       </p>
@@ -94,9 +94,7 @@ export default function Shop({
             <div className="flex items-start justify-between">
               <div>
                 <p className="font-bold text-lob-dark">{item.name}</p>
-                {item.description && (
-                  <p className="text-xs text-lob-muted mt-0.5">{item.description}</p>
-                )}
+                {item.description && <p className="caption mt-0.5">{item.description}</p>}
                 {/* FOMO counter — combines website orders + offline sales.
                   Singular copy below 1, so "1 lobster has this" sounds
                   right when only one person has ordered so far. */}
@@ -185,10 +183,7 @@ export default function Shop({
                   const web = websiteOrderCount(item.id)
                   const ext = item.externalOrders
                   return (
-                    <span
-                      className="text-xs text-lob-muted-light flex-shrink-0"
-                      title="Website orders + offline orders"
-                    >
+                    <span className="caption flex-shrink-0" title="Website orders + offline orders">
                       {web}
                       {ext > 0 ? ` + ${ext}` : ''} total
                     </span>

@@ -112,7 +112,7 @@ export function LeagueMatchRow({
           ))}
         </div>
         {result && <p className="sr-only">{result}</p>}
-        {details && <p className="text-xs text-lob-muted truncate">{details}</p>}
+        {details && <p className="caption truncate">{details}</p>}
       </div>
       {isBye ? (
         <Badge tone="neutral" label="Bye" />

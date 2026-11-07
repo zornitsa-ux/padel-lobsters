@@ -91,7 +91,7 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
       {activeOrders.length > 0 ? (
         <div className="space-y-2">
           {/* Summary stats */}
-          <div className="flex gap-2 text-xs text-lob-muted px-1">
+          <div className="flex gap-2 caption px-1">
             <span>{activeOrders.length} orders</span>
             <span>·</span>
             <span className="text-lob-warning">
@@ -156,13 +156,13 @@ function OrderRow({
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-lob-dark">
             {playerName?.split(' ')[0] || `Player #${o.player_id}`}
-            <span className="font-normal text-lob-muted ml-1.5 text-xs">{item?.name || '—'}</span>
+            <span className="font-normal ml-1.5 caption">{item?.name || '—'}</span>
           </p>
           <div className="flex flex-wrap items-center gap-2 mt-0.5">
             {o.size && <Tag label={o.size} />}
             {hasCustomName && <Badge tone="warning" label={`"${o.customName}"`} />}
             <span className="text-xs font-bold text-lob-teal">€{orderPrice}</span>
-            <span className="text-xs text-lob-muted-light">{formatOrderTime(o.created_at)}</span>
+            <span className="caption">{formatOrderTime(o.created_at)}</span>
           </div>
         </div>
         <Badge tone={cfg.tone} label={cfg.label} icon={<StatusIcon />} />

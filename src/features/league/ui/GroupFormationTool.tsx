@@ -53,7 +53,7 @@ function RecommendationPanel({ teams, groupA, groupB }: RecommendationPanelProps
           groups
         </span>
         {!matchesRec && currentA + currentB > 0 && (
-          <span className="text-xs text-lob-muted">
+          <span className="caption">
             (current {currentA}+{currentB})
           </span>
         )}

@@ -168,7 +168,7 @@ export default function UpcomingEventCard({
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <Badge tone="brand" icon={<ShieldCheck />} label="Admin books all courts" />
           {t.totalPrice > 0 && (
-            <span className="text-xs text-lob-muted">
+            <span className="caption">
               Total {fmtEur(t.totalPrice)} incl. courts + food + prizes
             </span>
           )}
@@ -209,7 +209,7 @@ export default function UpcomingEventCard({
       )}
 
       {/* Format chip */}
-      <p className="text-xs text-lob-muted-light mb-3">
+      <p className="caption mb-3">
         Format: <span className="font-medium text-lob-slate">{formatLabel(t.format)}</span>
       </p>
 
