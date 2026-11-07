@@ -1,26 +1,20 @@
-import { useEffect, useRef } from 'react'
-import { Analytics } from '@vercel/analytics/react'
+import { useCallback, useRef } from 'react'
+import { Analytics, type BeforeSendEvent } from '@vercel/analytics/react'
 import { useApp } from '../../context/useApp'
 import { funnelPageView } from './funnelPageView'
 
 /**
- * Vercel Web Analytics for the signed-out funnel only (G5b). Mounted once auth has settled, so the
- * first page view already knows whether someone is signed in. The script reads `beforeSend` once,
- * so it checks the session through a ref.
+ * Vercel Web Analytics for the signed-out funnel only (G5b). The auth state is read through a
+ * ref set during render, so a page view right after signing in is already filtered, and the
+ * callback stays stable.
  */
 export default function GuestAnalytics() {
   const { session } = useApp()
   const signedIn = useRef(Boolean(session))
-  useEffect(() => {
-    signedIn.current = Boolean(session)
-  }, [session])
-  return (
-    <Analytics
-      mode="production"
-      beforeSend={(event) => {
-        const url = funnelPageView({ url: event.url, signedIn: signedIn.current })
-        return url ? { ...event, url } : null
-      }}
-    />
-  )
+  signedIn.current = Boolean(session)
+  const beforeSend = useCallback((event: BeforeSendEvent) => {
+    const url = funnelPageView({ url: event.url, signedIn: signedIn.current })
+    return url ? { ...event, url } : null
+  }, [])
+  return <Analytics beforeSend={beforeSend} />
 }

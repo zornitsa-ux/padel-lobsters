@@ -35,6 +35,9 @@ shipped and the funnel has been measured.
   signed-out funnel pages only. See G5b. After merge, the owner enables Web
   Analytics on the Vercel project. Speed Insights later, with the perf work.
 - **G4 leftovers** (admin announcement text, "Download image") are still open.
+- **To do: a privacy page.** The app has none. Research what it must say
+  (GDPR; the app holds player profiles and contact details, and G5b adds
+  cookieless analytics), then write it and link it from the app. See G5b.
 
 ---
 
@@ -258,28 +261,36 @@ Checked 7 Nov against Vercel's docs:
 
 **The funnel is page views, because each step has a URL:**
 
-| Step                               | Counted by                        |
-| ---------------------------------- | --------------------------------- |
-| Landing / events list              | page view `/`, `/home`, `/events` |
-| Opened a shared event              | page view `/events/:id(/info)`    |
-| Tapped "Join to play" or "Sign in" | page view `/events/:id/join`      |
-| Signed up, registered              | Supabase                          |
+| Step                               | Counted by                                        |
+| ---------------------------------- | ------------------------------------------------- |
+| Landing / events list              | page view `/home`, `/events`                      |
+| Opened a shared event              | page view `/events/:id/info` (the link redirects) |
+| Tapped "Join to play" or "Sign in" | page view `/events/:id/join`                      |
+| Signed up, registered              | Supabase                                          |
 
 **How it's built**
 
 - `GuestAnalytics` (`src/features/growth/`) renders Vercel's `<Analytics>`
-  in production builds only, lazy-loaded (≈1.5 KB gzip, its own chunk, not
-  in the entry bundle) and mounted once auth has settled.
+  in production builds only. It's a lazy chunk (≈1.5 KB gzip, not in the
+  entry bundle), mounted only once a signed-out visitor is seen, so members
+  never fetch it.
 - `beforeSend` → `funnelPageView`: sends a page view only when signed out and
-  on a funnel path, as origin + path. The query string and hash are dropped
-  (they can carry `?email=` or tokens), `/auth/*` and every member page send
-  nothing. Unit tests; checked in a production build (the script loads, a
-  `?email=` join view goes out bare, member and auth pages are dropped).
+  on a funnel path (the public pages from `authPaths.ts`, plus `/join`), as
+  origin + path. The query string and hash are dropped (they can carry
+  `?email=` or tokens); `/auth/*` and every member page send nothing. The
+  signed-in check is read during render, so a view right after signing in is
+  already dropped. Unit tests; checked in a production build.
 - No database writes, no player IDs, names or emails, no consent banner
   needed.
 
 **After merge (owner):** Vercel project → Analytics → Enable Web Analytics.
 Until then the script 404s harmlessly.
+
+**Still to do: a privacy page** (owner, 7 Nov). The app has no privacy
+page. First research what it needs to cover: the player data the app keeps
+(profiles, contact details, registrations, payments), email sign-in, and
+Vercel Web Analytics, under GDPR. Then create the page and link it from the
+app (e.g. the footer and the signup form).
 
 **Reviewing:** monthly, before the 1-month window rolls over. Copy the counts
 into the owner's private baseline; keep numbers out of the repo. Compare
@@ -368,3 +379,4 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
 - 7 Nov 2026: G5b: Vercel Web Analytics on Hobby, signed-out funnel pages
   only (owner). Custom events and UTM are paid, so the funnel is page views
   plus Supabase counts. Speed Insights later.
+- 7 Nov 2026: owner: research and create a privacy page (none exists yet).

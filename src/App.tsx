@@ -1,4 +1,4 @@
-import React, { useEffect, lazy, Suspense } from 'react'
+import React, { useEffect, useState, lazy, Suspense } from 'react'
 import {
   BrowserRouter,
   Routes,
@@ -361,11 +361,13 @@ function DeepLinkMigrator() {
   return null
 }
 
-// G5b: Vercel Web Analytics, production builds only, loaded after first paint and once auth has
-// settled (see GuestAnalytics).
+// G5b: Vercel Web Analytics, production builds only. Loaded once someone is seen signed out,
+// so members never fetch it; it stays mounted after that, and GuestAnalytics drops their views.
 function FunnelAnalytics() {
-  const { sessionSettled } = useApp()
-  if (!import.meta.env.PROD || !sessionSettled) return null
+  const { session, sessionSettled } = useApp()
+  const [guestSeen, setGuestSeen] = useState(false)
+  if (!guestSeen && sessionSettled && !session) setGuestSeen(true)
+  if (!import.meta.env.PROD || !guestSeen) return null
   return (
     <Suspense fallback={null}>
       <GuestAnalytics />
