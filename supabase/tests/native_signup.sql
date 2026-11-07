@@ -202,6 +202,40 @@ begin
     raise exception 'CHECK 12 FAILED: collision not skipped';
   end if;
   raise notice 'CHECK 12 ok: email collision skipped';
+
+  -- CHECK 13 (G5): a valid share placement is stored; a malformed or missing
+  -- one is stored as null and still creates the player; the hook ignores it
+  v_id := gen_random_uuid();
+  perform pg_temp.insert_auth_user(v_id, 'placed@test.invalid',
+    '{"name":"Placed Signup","share_placement":"you-tab"}', true);
+  select signup_placement into v_player.signup_placement from public.players where id = v_id;
+  if v_player.signup_placement is distinct from 'you-tab' then
+    raise exception 'CHECK 13 FAILED: placement not stored (%)', v_player.signup_placement;
+  end if;
+  v_id := gen_random_uuid();
+  perform pg_temp.insert_auth_user(v_id, 'badplace@test.invalid',
+    '{"name":"Bad Placement","share_placement":"x''); drop table players;--"}', true);
+  if (select signup_placement from public.players where id = v_id) is not null
+     or not exists (select 1 from public.players where id = v_id) then
+    raise exception 'CHECK 13 FAILED: malformed placement kept or player missing';
+  end if;
+  v_id := gen_random_uuid();
+  perform pg_temp.insert_auth_user(v_id, 'noplace@test.invalid', '{"name":"No Placement"}', true);
+  if (select signup_placement from public.players where id = v_id) is not null then
+    raise exception 'CHECK 13 FAILED: missing placement not null';
+  end if;
+  if pg_temp.hook_message('{"name":"A","share_placement":"NOT VALID!"}') is not null then
+    raise exception 'CHECK 13 FAILED: hook rejected a bad placement';
+  end if;
+  raise notice 'CHECK 13 ok: share placement';
+
+  -- CHECK 14 (G5): clients can't read or write the column
+  if has_column_privilege('authenticated', 'public.players', 'signup_placement', 'SELECT')
+     or has_column_privilege('anon', 'public.players', 'signup_placement', 'SELECT')
+     or has_column_privilege('authenticated', 'public.players', 'signup_placement', 'UPDATE') then
+    raise exception 'CHECK 14 FAILED: signup_placement is client-accessible';
+  end if;
+  raise notice 'CHECK 14 ok: signup_placement is admin-only';
 end;
 $$;
 

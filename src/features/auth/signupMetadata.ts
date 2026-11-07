@@ -1,4 +1,5 @@
 import { parseLevel } from '../../lib/parseLevel'
+import type { SharePlacement } from '../events/shareTags'
 
 export interface SignupProfile {
   name: string
@@ -13,8 +14,15 @@ export interface SignupProfile {
   notes: string
 }
 
-// C-2: exactly these keys, all strings. No email and no avatar_url.
-export function buildSignupMetadata({ profile }: { profile: SignupProfile }) {
+// C-2: exactly these keys, all strings. No email and no avatar_url. share_placement (G5) is
+// where in the app the link that brought them was shared from, or ''.
+export function buildSignupMetadata({
+  profile,
+  sharePlacement,
+}: {
+  profile: SignupProfile
+  sharePlacement?: SharePlacement | null
+}) {
   return {
     name: profile.name.trim(),
     phone: profile.phone.trim(),
@@ -27,5 +35,6 @@ export function buildSignupMetadata({ profile }: { profile: SignupProfile }) {
     preferred_position: profile.preferredPosition,
     tagline_label: profile.taglineLabel,
     notes: profile.notes,
+    share_placement: sharePlacement ?? '',
   }
 }

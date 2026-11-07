@@ -1,4 +1,4 @@
-import { Navigate, Outlet, useParams } from 'react-router-dom'
+import { Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
 import { CalendarCheck, LogIn, UserPlus } from 'lucide-react'
 import { PageHeader } from '../../../components/ui/PageHeader'
 import { RouteFallback } from '../../../components/ui/RouteFallback'
@@ -13,6 +13,7 @@ import { isFull, isOpenToJoin, joinPath } from './publicEventHelpers'
 import { GuestEventSummary } from './GuestEventSummary'
 import type { PublicEvent } from './publicEventQueries'
 import { loadFailed } from '../../../lib/queryState'
+import { withShareTags } from '../shareTags'
 
 function usePublicEventFromUrl() {
   const { id } = useParams()
@@ -37,7 +38,13 @@ export function GuestEventShell() {
       <PageHeader
         title={event.name}
         backLink={{ to: '/events', label: 'Events' }}
-        rightAction={<ShareEventButton event={event} registeredCount={event.registeredCount} />}
+        rightAction={
+          <ShareEventButton
+            event={event}
+            registeredCount={event.registeredCount}
+            placement="guest-header"
+          />
+        }
       />
       <div className="px-4 pt-4">
         <Outlet />
@@ -47,6 +54,7 @@ export function GuestEventShell() {
 }
 
 function JoinActions({ event }: { event: PublicEvent }) {
+  const { search } = useLocation()
   const full = isFull({ event })
   return (
     <div className="space-y-3">
@@ -56,10 +64,14 @@ function JoinActions({ event }: { event: PublicEvent }) {
         </AlertBox>
       )}
       <ActionRow>
-        <Button to={joinPath({ event })} icon={<UserPlus />} grow>
+        <Button to={withShareTags({ path: joinPath({ event }), search })} icon={<UserPlus />} grow>
           {full ? 'Join to get on the waitlist' : 'Join to play'}
         </Button>
-        <Button to={`/events/${event.id}/join`} variant="secondary" icon={<LogIn />}>
+        <Button
+          to={withShareTags({ path: `/events/${event.id}/join`, search })}
+          variant="secondary"
+          icon={<LogIn />}
+        >
           Sign in
         </Button>
       </ActionRow>

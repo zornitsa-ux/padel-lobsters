@@ -31,13 +31,16 @@ async function joinAsNewPlayer({
   eventId,
   email,
   cta,
+  search = '',
 }: {
   page: Page
   eventId: string
   email: string
   cta: RegExp
+  /** The shared link's query, e.g. its share tags. */
+  search?: string
 }): Promise<number> {
-  await page.goto(`/events/${eventId}`)
+  await page.goto(`/events/${eventId}${search}`)
   await page.getByRole('link', { name: cta }).click()
   await fillSignupForm({ page, email })
   await clearInbox({ to: email })
@@ -56,12 +59,15 @@ async function expectOnEventWithAction({
   page,
   eventId,
   action,
+  search = '',
 }: {
   page: Page
   eventId: string
   action: RegExp
+  search?: string
 }) {
-  await expect(page).toHaveURL(new RegExp(`/events/${eventId}/info$`))
+  const escaped = search.replace(/[?]/g, '\\?')
+  await expect(page).toHaveURL(new RegExp(`/events/${eventId}/info${escaped}$`))
   await expect(page.getByRole('button', { name: action })).toBeInViewport()
 }
 
@@ -179,6 +185,86 @@ test('team event: lands with "Sign up as a team" on screen', async ({ page }) =>
 
     await expectOnEventWithAction({ page, eventId: event.id, action: /sign up as a team/i })
   } finally {
+    await cleanUp(
+      () => deleteEvent({ id: event.id }),
+      () => deletePlayerByEmail({ email }),
+    )
+  }
+})
+
+/* G5: a link shared from the app keeps its share tags (and nothing else) through join, signup and
+   the email link, and the signup records where it was shared from. */
+
+const SHARE_TAGS = '?utm_source=share&utm_content=you-tab'
+
+async function signupPlacementOf({ email }: { email: string }): Promise<string | null> {
+  const { data, error } = await admin
+    .from('players')
+    .select('signup_placement')
+    .eq('email', email)
+    .single()
+  if (error || !data) throw new Error(`No player for ${email}`)
+  return data.signup_placement
+}
+
+test('shared link: the code signup keeps the share tags and records the placement', async ({
+  page,
+}) => {
+  const event = await createEvent()
+  const email = newEmail('g5-code')
+  try {
+    const since = await joinAsNewPlayer({
+      page,
+      eventId: event.id,
+      email,
+      cta: /join to play/i,
+      search: SHARE_TAGS,
+    })
+    await expect(page).toHaveURL(new RegExp(`/join\\?signup=1&${SHARE_TAGS.slice(1)}$`))
+    await enterCode({ page, email, since })
+
+    await expectOnEventWithAction({
+      page,
+      eventId: event.id,
+      action: /register for this event/i,
+      search: SHARE_TAGS,
+    })
+    expect(await signupPlacementOf({ email })).toBe('you-tab')
+  } finally {
+    await cleanUp(
+      () => deleteEvent({ id: event.id }),
+      () => deletePlayerByEmail({ email }),
+    )
+  }
+})
+
+test('shared link: the email link in another browser lands with the share tags', async ({
+  page,
+  browser,
+}) => {
+  const event = await createEvent()
+  const email = newEmail('g5-link')
+  const other = await browser.newPage({ viewport: { width: 375, height: 667 } })
+  try {
+    const since = await joinAsNewPlayer({
+      page,
+      eventId: event.id,
+      email,
+      cta: /join to play/i,
+      search: SHARE_TAGS,
+    })
+    await other.goto(await waitForConfirmPath({ to: email, since }))
+    await other.getByRole('button', { name: /tap to finish signing in/i }).click()
+
+    await expectOnEventWithAction({
+      page: other,
+      eventId: event.id,
+      action: /register for this event/i,
+      search: SHARE_TAGS,
+    })
+    expect(await signupPlacementOf({ email })).toBe('you-tab')
+  } finally {
+    await other.close()
     await cleanUp(
       () => deleteEvent({ id: event.id }),
       () => deletePlayerByEmail({ email }),

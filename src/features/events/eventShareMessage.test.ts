@@ -73,7 +73,9 @@ describe('buildEventShareMessage', () => {
 })
 
 describe('eventShareUrl', () => {
-  it('links to the bare event page', () => {
-    expect(eventShareUrl({ event, origin: 'https://padelobsters.nl' })).toBe(url)
+  it('links to the event page, tagged with where it was shared from', () => {
+    expect(eventShareUrl({ event, origin: 'https://padelobsters.nl', placement: 'you-tab' })).toBe(
+      'https://padelobsters.nl/events/t1?utm_source=share&utm_content=you-tab',
+    )
   })
 })

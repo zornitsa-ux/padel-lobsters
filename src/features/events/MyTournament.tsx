@@ -225,6 +225,7 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
       event={tournament}
       registeredCount={registered.length}
       variant="full"
+      placement="you-tab"
     />
   ) : null
 

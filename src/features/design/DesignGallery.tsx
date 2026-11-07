@@ -191,8 +191,18 @@ function ButtonSection() {
       </Row>
       <Row label='share: ShareEventButton variant="icon" · variant="full"' block>
         <div className="space-y-2">
-          <ShareEventButton event={SAMPLE_EVENT} registeredCount={12} variant="icon" />
-          <ShareEventButton event={SAMPLE_EVENT} registeredCount={12} variant="full" />
+          <ShareEventButton
+            event={SAMPLE_EVENT}
+            registeredCount={12}
+            variant="icon"
+            placement="home"
+          />
+          <ShareEventButton
+            event={SAMPLE_EVENT}
+            registeredCount={12}
+            variant="full"
+            placement="you-tab"
+          />
         </div>
       </Row>
       <Row label="fullWidth · ActionRow (alternative first, confirm last)">

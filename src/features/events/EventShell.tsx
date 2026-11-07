@@ -55,7 +55,13 @@ export default function EventShell({ tournament }: Props) {
         title={tournament.name}
         backLink={{ to: '/events', label: 'Events' }}
         tabs={tabs}
-        rightAction={<ShareEventButton event={tournament} registeredCount={registeredCount} />}
+        rightAction={
+          <ShareEventButton
+            event={tournament}
+            registeredCount={registeredCount}
+            placement="event-header"
+          />
+        }
       />
       <div className="px-4 pt-4">
         <Outlet />

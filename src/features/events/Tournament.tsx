@@ -181,6 +181,7 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
           <EventShareSheet
             event={eventForm.created}
             registeredCount={0}
+            placement="event-created"
             open
             onClose={eventForm.dismissCreated}
             lead="Your event is live. Share it now so people can sign up."

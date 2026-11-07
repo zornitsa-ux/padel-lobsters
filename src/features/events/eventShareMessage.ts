@@ -2,6 +2,7 @@ import { fmtEur } from '../../lib/format'
 import { formatLabel, parseLocalDate, pricePerPlayer } from './eventHelpers'
 import { spotsLabel } from './public/publicEventHelpers'
 import type { EntryMode } from '../../lib/normalise'
+import { shareTagParams, type SharePlacement } from './shareTags'
 
 // Structural subset of a tournament the share message reads. NormalisedTournament satisfies it.
 export interface ShareableEvent {
@@ -17,8 +18,15 @@ export interface ShareableEvent {
   entryMode?: EntryMode | null
 }
 
-export const eventShareUrl = ({ event, origin }: { event: ShareableEvent; origin: string }) =>
-  `${origin}/events/${event.id}`
+export const eventShareUrl = ({
+  event,
+  origin,
+  placement,
+}: {
+  event: ShareableEvent
+  origin: string
+  placement: SharePlacement
+}) => `${origin}/events/${event.id}?${shareTagParams({ placement })}`
 
 const whenLine = ({ date, time, duration }: ShareableEvent): string => {
   const day = parseLocalDate(date)

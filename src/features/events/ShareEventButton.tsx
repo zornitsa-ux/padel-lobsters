@@ -6,6 +6,7 @@ import { ShareSheet } from '../../components/ui/ShareSheet'
 import { isOpenToJoin } from './public/publicEventHelpers'
 import type { OverTournament } from './eventPhase'
 import { buildEventShareMessage, eventShareUrl, type ShareableEvent } from './eventShareMessage'
+import type { SharePlacement } from './shareTags'
 
 export type ShareEvent = ShareableEvent & OverTournament
 
@@ -18,11 +19,14 @@ interface ShareEventButtonProps {
    * the moments worth asking: just registered, the You tab).
    */
   variant?: 'icon' | 'full'
+  /** Where in the app this button is, tagged on the shared link. */
+  placement: SharePlacement
 }
 
 interface EventShareSheetProps {
   event: ShareEvent
   registeredCount?: number
+  placement: SharePlacement
   open: boolean
   onClose: () => void
   title?: string
@@ -33,12 +37,13 @@ interface EventShareSheetProps {
 export function EventShareSheet({
   event,
   registeredCount,
+  placement,
   open,
   onClose,
   title = 'Share event',
   lead,
 }: EventShareSheetProps) {
-  const url = eventShareUrl({ event, origin: window.location.origin })
+  const url = eventShareUrl({ event, origin: window.location.origin, placement })
   return (
     <ShareSheet
       open={open}
@@ -80,6 +85,7 @@ export default function ShareEventButton({
   event,
   registeredCount,
   variant = 'icon',
+  placement,
 }: ShareEventButtonProps) {
   const [open, setOpen] = useState(false)
   if (!event?.id || !isOpenToJoin({ event })) return null
@@ -90,6 +96,7 @@ export default function ShareEventButton({
       <EventShareSheet
         event={event}
         registeredCount={registeredCount}
+        placement={placement}
         open={open}
         onClose={() => setOpen(false)}
       />

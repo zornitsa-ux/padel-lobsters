@@ -16,6 +16,8 @@ import Layout from './components/Layout'
 import { RouteFallback } from './components/ui/RouteFallback'
 import Dashboard from './features/home/Dashboard'
 import VerificationGate from './components/VerificationGate'
+import { NavigateWithShareTags } from './features/events/NavigateWithShareTags'
+import { rememberSharePlacement } from './features/events/shareTags'
 import { mark } from './lib/perfMarks'
 import EventShell from './features/events/EventShell'
 import { AdminLeagueRouteGuard } from './features/league/manage/AdminLeagueRouteGuard'
@@ -82,6 +84,7 @@ export default function App() {
     <AppProvider>
       <BrowserRouter>
         <DeepLinkMigrator />
+        <SharePlacementRecorder />
         <PartnerOnboardingRedirect />
         <Layout>
           <VerificationGate>
@@ -101,7 +104,7 @@ export default function App() {
                   <Route path="scores" element={<Navigate to="../results" replace />} />
                   <Route path="oscars" element={<EventOscarsRoute />} />
                   <Route path="manage" element={<EventManageRoute />} />
-                  <Route path="join" element={<Navigate to="../info" replace />} />
+                  <Route path="join" element={<NavigateWithShareTags to="../info" />} />
                 </Route>
 
                 <Route path="/community" element={<CommunityShell />}>
@@ -240,7 +243,7 @@ function EventShellRoute() {
 
 function EventIndexRoute() {
   const isGuest = useIsGuest()
-  if (isGuest) return <Navigate to="info" replace />
+  if (isGuest) return <NavigateWithShareTags to="info" />
   return (
     <EventRouteGuard>
       {(tournament) => <EventDefaultTabRedirect tournament={tournament} />}
@@ -356,5 +359,13 @@ function DeepLinkMigrator() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  return null
+}
+
+// Keeps the first share tag this tab arrived with, for a signup later in the visit. Device only:
+// nothing is written to the server here (no route may write on load, see growth PLAN G3).
+function SharePlacementRecorder() {
+  const { search } = useLocation()
+  useEffect(() => rememberSharePlacement({ search }), [search])
   return null
 }

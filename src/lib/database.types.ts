@@ -880,6 +880,7 @@ export type Database = {
           playtomic_username: string | null
           preferred_position: string | null
           role: Database['public']['Enums']['player_role']
+          signup_placement: string | null
           status: string | null
           tagline: string | null
           tagline_label: string | null
@@ -914,6 +915,7 @@ export type Database = {
           playtomic_username?: string | null
           preferred_position?: string | null
           role?: Database['public']['Enums']['player_role']
+          signup_placement?: string | null
           status?: string | null
           tagline?: string | null
           tagline_label?: string | null
@@ -948,6 +950,7 @@ export type Database = {
           playtomic_username?: string | null
           preferred_position?: string | null
           role?: Database['public']['Enums']['player_role']
+          signup_placement?: string | null
           status?: string | null
           tagline?: string | null
           tagline_label?: string | null
@@ -1625,6 +1628,7 @@ export type Database = {
           playtomic_username: string | null
           preferred_position: string | null
           role: Database['public']['Enums']['player_role']
+          signup_placement: string | null
           status: string | null
           tagline: string | null
           tagline_label: string | null
@@ -2126,6 +2130,7 @@ export type Database = {
           playtomic_username: string | null
           preferred_position: string | null
           role: Database['public']['Enums']['player_role']
+          signup_placement: string | null
           status: string | null
           tagline: string | null
           tagline_label: string | null
@@ -2177,6 +2182,7 @@ export type Database = {
           playtomic_username: string | null
           preferred_position: string | null
           role: Database['public']['Enums']['player_role']
+          signup_placement: string | null
           status: string | null
           tagline: string | null
           tagline_label: string | null

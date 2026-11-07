@@ -105,6 +105,7 @@ describe('SignupRequest — public signup', () => {
         'playtomic_level',
         'playtomic_username',
         'preferred_position',
+        'share_placement',
         'tagline_label',
       ].sort(),
     )

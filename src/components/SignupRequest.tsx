@@ -19,6 +19,7 @@ import { OtpCodeStep } from '../features/auth/OtpCodeStep'
 import { confirmedJustNow } from '../features/auth/newAccount'
 import { takeReturnPath } from '../features/auth/returnPath'
 import { buildSignupMetadata } from '../features/auth/signupMetadata'
+import { forgetSharePlacement, readStoredSharePlacement } from '../features/events/shareTags'
 import {
   describeSignupError,
   SIGNUP_HOOK_MESSAGES,
@@ -247,6 +248,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
         taglineLabel: lobbyPrompt.label,
         notes: form.notes,
       },
+      sharePlacement: readStoredSharePlacement(),
     })
 
   const requestSignupCode = () =>
@@ -259,6 +261,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
   const handleVerified = (session: Session) => {
     void queryClient.invalidateQueries({ queryKey: playerKeys.all() })
     takeReturnPath()
+    forgetSharePlacement()
     // GoTrue signs an existing account in on this path: never overwrite its photo.
     if (avatarFile && confirmedJustNow({ emailConfirmedAt: session.user.email_confirmed_at })) {
       void uploadSignupAvatar({ playerId: session.user.id, file: avatarFile }).then((ok) => {

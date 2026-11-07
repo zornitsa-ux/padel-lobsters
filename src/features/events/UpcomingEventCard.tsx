@@ -88,7 +88,12 @@ export default function UpcomingEventCard({
           />
           {!over && (
             <div className="flex gap-1">
-              <ShareEventButton event={t} registeredCount={regCount} variant="icon" />
+              <ShareEventButton
+                event={t}
+                registeredCount={regCount}
+                variant="icon"
+                placement="events-list"
+              />
               <AddToCalendarButton tournament={t} variant="icon" />
             </div>
           )}

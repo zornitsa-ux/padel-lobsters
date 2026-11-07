@@ -29,6 +29,7 @@ describe('buildSignupMetadata', () => {
       'playtomic_level',
       'playtomic_username',
       'preferred_position',
+      'share_placement',
       'tagline_label',
     ])
     expect(Object.values(data).every((value) => typeof value === 'string')).toBe(true)
@@ -42,5 +43,12 @@ describe('buildSignupMetadata', () => {
       is_left_handed: 'true',
       birthday: '',
     })
+  })
+
+  it('carries the share placement, or an empty string', () => {
+    expect(buildSignupMetadata({ profile, sharePlacement: 'you-tab' }).share_placement).toBe(
+      'you-tab',
+    )
+    expect(buildSignupMetadata({ profile }).share_placement).toBe('')
   })
 })

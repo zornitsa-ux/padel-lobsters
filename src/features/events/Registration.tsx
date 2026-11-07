@@ -492,7 +492,12 @@ export default function Registration({
         />
       )}
       {isTeamEvent && !isAdmin && !isCompleted && myTeamEntry?.status === 'registered' && (
-        <ShareEventButton event={tournament} registeredCount={registered.length} variant="full" />
+        <ShareEventButton
+          event={tournament}
+          registeredCount={registered.length}
+          variant="full"
+          placement="info-registered"
+        />
       )}
 
       {!isTeamEvent && !isAdmin && claimedId && !isCompleted && (
@@ -509,6 +514,7 @@ export default function Registration({
               event={tournament}
               registeredCount={registered.length}
               variant="full"
+              placement="info-registered"
             />
           }
         />

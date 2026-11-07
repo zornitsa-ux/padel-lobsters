@@ -107,7 +107,12 @@ export default function NextEventCard({
           )}
         </div>
         <div className="flex gap-1 flex-shrink-0">
-          <ShareEventButton event={upcoming} registeredCount={registeredCount} variant="icon" />
+          <ShareEventButton
+            event={upcoming}
+            registeredCount={registeredCount}
+            variant="icon"
+            placement="home"
+          />
           <AddToCalendarButton tournament={upcoming} variant="icon" />
         </div>
       </div>
