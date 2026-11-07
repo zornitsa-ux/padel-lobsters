@@ -1,7 +1,7 @@
 import { supabase } from '../../../supabase'
 import type { League, LeagueTeam, LeagueMatch } from '../domain/types'
 import { parseLeagueMatches, parseLeagueTeams } from './leagueSchemas'
-import { pickCurrentLeague } from '../domain/lifecycle'
+import { pickCurrentLeague, type LeagueVisibility } from '../domain/lifecycle'
 
 export interface PlayerOption {
   id: string
@@ -20,13 +20,32 @@ const UNFINISHED = ['draft', 'group_stage', 'knockout']
 // Published, unfinished seasons — normally one, two while next season's draft
 // is published ahead of time. pickCurrentLeague chooses between them.
 export async function fetchCurrentLeague(): Promise<League | null> {
+  return pickCurrentLeague({ leagues: await fetchUnfinishedLeagues<League>({ columns: '*' }) })
+}
+
+async function fetchUnfinishedLeagues<T extends LeagueVisibility>({
+  columns,
+}: {
+  columns: string
+}): Promise<T[]> {
   const { data, error } = await supabase
     .from('leagues')
-    .select('*')
+    .select(columns)
     .in('status', UNFINISHED)
     .not('published_at', 'is', null)
   if (error) throw error
-  return pickCurrentLeague({ leagues: data ?? [] })
+  return (data ?? []) as unknown as T[]
+}
+
+/** What a signed-out visitor may read about a league (anon column grant). */
+export type PublicLeague = Pick<League, 'id' | 'name' | 'status' | 'published_at' | 'created_at'>
+
+export async function fetchPublicCurrentLeague(): Promise<PublicLeague | null> {
+  return pickCurrentLeague({
+    leagues: await fetchUnfinishedLeagues<PublicLeague>({
+      columns: 'id,name,status,published_at,created_at',
+    }),
+  })
 }
 
 // The current league plus its teams and matches in one round trip.

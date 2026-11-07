@@ -1,6 +1,7 @@
 export const leagueKeys = {
   all: () => ['league'] as const,
   active: () => ['league', 'active'] as const,
+  publicCurrent: () => ['league', 'public-current'] as const,
   champions: () => ['league', 'champions'] as const,
   activeBundle: () => ['league', 'active', 'bundle'] as const,
   byId: (id: string) => ['league', id] as const,

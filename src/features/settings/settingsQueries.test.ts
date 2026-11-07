@@ -43,7 +43,7 @@ describe('fetchSettings', () => {
       error: null,
     })
 
-    const result = await fetchSettings()
+    const result = await fetchSettings({ signedIn: true })
 
     expect(result).toMatchObject({
       whatsappLink: 'https://wa.me/test',
@@ -63,7 +63,7 @@ describe('fetchSettings', () => {
       error: null,
     })
 
-    const result = await fetchSettings()
+    const result = await fetchSettings({ signedIn: true })
 
     expect(result).toMatchObject({
       whatsappLink: '',
@@ -74,13 +74,13 @@ describe('fetchSettings', () => {
 
   it('returns null when the row is absent', async () => {
     mockSingle.mockResolvedValue({ data: null, error: null })
-    expect(await fetchSettings()).toBeNull()
+    expect(await fetchSettings({ signedIn: true })).toBeNull()
   })
 
   it('throws when supabase returns an error', async () => {
     const err = { message: 'permission denied', code: '42501' }
     mockSingle.mockResolvedValue({ data: null, error: err })
-    await expect(fetchSettings()).rejects.toBe(err)
+    await expect(fetchSettings({ signedIn: true })).rejects.toBe(err)
   })
 })
 
@@ -121,9 +121,24 @@ describe('saveSettings', () => {
 
 // ── Matchmaking V2 rollout flag removed (D-028) ──────────────────────────
 
+describe('fetchSettings columns', () => {
+  it('leaves the WhatsApp link and Lobster way content out for guests', async () => {
+    await fetchSettings({ signedIn: false })
+    const columns = mockSelect.mock.calls[0][0] as string
+    expect(columns).toContain('padel_tips')
+    expect(columns).not.toContain('whatsapp_link')
+    expect(columns).not.toContain('lobster_way_content')
+  })
+
+  it('asks members for the WhatsApp link', async () => {
+    await fetchSettings({ signedIn: true })
+    expect(mockSelect.mock.calls[0][0]).toContain('whatsapp_link')
+  })
+})
+
 describe('the matchmaking rollout flag is gone from the settings slice', () => {
   it('does not request matchmaking_v2_enabled', async () => {
-    await fetchSettings()
+    await fetchSettings({ signedIn: true })
 
     const columns = mockSelect.mock.calls[0][0] as string
     expect(columns).toContain('group_name')
@@ -138,7 +153,7 @@ describe('the matchmaking rollout flag is gone from the settings slice', () => {
 
     // .passthrough() keeps the raw column, but no camelCase flag is derived —
     // nothing in the app reads one any more.
-    expect(await fetchSettings()).not.toHaveProperty('matchmakingV2Enabled')
+    expect(await fetchSettings({ signedIn: true })).not.toHaveProperty('matchmakingV2Enabled')
   })
 
   it('never writes the flag, even if a stale caller passes it', async () => {

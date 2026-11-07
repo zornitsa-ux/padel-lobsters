@@ -34,7 +34,14 @@ shipped and the funnel has been measured.
 - **G5b is live** (#159). The owner enabled Web Analytics on the Vercel
   project on 7 Nov. Review monthly (see G5b). Speed Insights later, with the
   perf work.
-- **G4 leftovers** (admin announcement text, "Download image") are still open.
+- **G4 leftovers deferred** (owner, 7 Nov): the admin announcement text and
+  "Download image" are not being pursued for now.
+- **Anon lockdown (#150) in review.** Signed-out visitors read only what the
+  guest pages show. See "Anon lockdown (#150)". After merge: Vercel deploys
+  first, then `npx supabase db push` from `main` (the app must stop asking
+  for data before the database stops giving it). Must land by Wed 11 Nov
+  (release freeze), or wait until after 15 Nov. #102 (grant drift check)
+  follows in its own PR.
 - **Privacy page: researched, parked as an open planning item** (owner, 7 Nov).
   See "Privacy page (open)". It needs a controller and contact before it can
   be built.
@@ -70,7 +77,7 @@ source.
   existing `public_tournament_registration_counts`. They never read
   registrations or player data, so they keep working when anon database
   access is tightened. That tightening is a separate project (owner decision,
-  4 Nov), not part of G1. See #150.
+  4 Nov), not part of G1. See #150 and "Anon lockdown (#150)".
 - **Join.** "Join to play" goes to `/events/:id/join?signup=1`, a protected
   route. The gate opens in signup mode, and once signed in the route forwards
   to the event's info page. "Sign in" uses the same route without `signup`.
@@ -217,7 +224,8 @@ source.
 - **Not shared:** past events, partner invites (a private invite), the
   signed-out events list (its cards are already links), and the waitlist
   notice (sharing a full event only grows the waitlist).
-- **Still to do:** the admin announcement text and "Download image".
+- **Deferred** (owner, 7 Nov): the admin announcement text and "Download
+  image".
 
 ### G5 notes: paused
 
@@ -295,6 +303,41 @@ Done 7 Nov.
 into the owner's private baseline; keep numbers out of the repo. Compare
 event-page views → join views → signups (Supabase) for the month.
 
+### Anon lockdown (#150)
+
+**What it fixes.** The public API key ships in every page. With it, anyone
+could read registrations and payment status, matches, Oscars votes, merch
+orders, old names, raffle winners, transfers, league teams, the player roster
+and every event column (including the Tikkie link), because those tables'
+read policies are `using (true)` and anon held SELECT.
+
+**What signed-out visitors read now** (migration
+`20261107120000_anon_read_lockdown.sql`; `supabase/tests/anon_read_lockdown.sql`
+fails on anything outside this list):
+
+- `tournaments`: the event-card columns (`PUBLIC_EVENT_COLUMNS`, link
+  previews).
+- `public_tournament_registration_counts`: spots taken.
+- `settings`: group name and tips.
+- `leagues`: name, status, `published_at`, `created_at` (Home's league card,
+  name only, owner).
+- `get_group_link()`: the WhatsApp link, fetched when the button is tapped.
+  Owner: outsiders may join, but crawlers shouldn't find it. The hard-coded
+  copy in `src/lib/whatsapp.ts` is gone; members still read it from settings.
+- `signup_name_match(name)`: signup's "this name already has a profile"
+  check, answering `placeholder`, `member` or `none` instead of loading the
+  roster.
+
+Members keep the access they had. Anon has no write privileges.
+
+**App side.** Signed-out Home is `GuestHome` (public events, tips, the
+league name). The roster and events prefetch in `main.tsx` runs only when a
+saved session exists. Settings asks guests for their columns only.
+
+**After merge (owner, optional):** reset the WhatsApp invite link in the group
+and paste the new one in Group settings. The old link stays in public git
+history.
+
 ### Privacy page (open)
 
 Researched 7 Nov from the code, the schema and Dutch GDPR guidance. Parked as
@@ -308,7 +351,7 @@ review.
 - **Profile** (`players`): name, phone, gender, country, birthday,
   handedness, position, tagline, Playtomic level and username, free-text
   notes, and an avatar in the public `avatars` bucket.
-- **Shown to others** (`players_public`, readable by anyone today, #150):
+- **Shown to others** (`players_public`; members only once #150 is live):
   name, avatar, gender, country, handedness, position, tagline, levels and
   learned rating, role, and birthday day and month. Admins also see email and
   phone.
@@ -362,9 +405,9 @@ within 3 days of a tournament (see Constraints).
 1. Controller name and contact address (public in the repo).
 2. Retention: past results after an account is deleted (keep anonymised or
    delete); how long the security log and the old-email history are kept.
-3. The page can't say "only members see your profile" until anon reads of
-   `players_public` are closed (#150), or "delete your account yourself":
-   there is no self-service deletion, so requests go to the admins.
+3. The page can't say "only members see your profile" until #150 is live,
+   or "delete your account yourself": there is no self-service deletion, so
+   requests go to the admins.
 
 ## Phase 2: activation and referral (later)
 
@@ -459,3 +502,8 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   (owner). Set in `vercel.json`.
 - 7 Nov 2026: country flags self-hosted in `public/flags/` (64 SVGs from
   `country-flag-icons`, MIT), replacing flagcdn.com (#160, owner).
+- 7 Nov 2026: owner deferred the G4 leftovers (announcement text, "Download
+  image").
+- 7 Nov 2026: anon lockdown (#150) built: guests read only the guest-page
+  columns; signed-out Home, signup's name check and the WhatsApp link moved
+  off member tables. #102 next.

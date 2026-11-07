@@ -15,6 +15,7 @@ import EventDefaultTabRedirect from './features/events/EventDefaultTabRedirect'
 import Layout from './components/Layout'
 import { RouteFallback } from './components/ui/RouteFallback'
 import Dashboard from './features/home/Dashboard'
+import GuestHome from './features/home/GuestHome'
 import VerificationGate from './components/VerificationGate'
 import { mark } from './lib/perfMarks'
 import EventShell from './features/events/EventShell'
@@ -29,7 +30,7 @@ import { GROUP_SETTINGS_PATH } from './features/settings/settingsHelpers'
 import { useApp } from './context/useApp'
 
 // Code-split every route off the first paint. The app shell (Layout,
-// VerificationGate) and the logged-out landing (Dashboard) stay
+// VerificationGate) and the landing (Dashboard, GuestHome) stay
 // in the entry chunk; everything below loads on demand the first time its
 // route is hit. Each lazy() becomes its own Rollup chunk — see the bundle
 // treemap (`npm run build:analyze`) for the split.
@@ -217,6 +218,8 @@ function useLegacyNavigate(): EventNavigate {
 
 function HomeRoute() {
   const onNavigate = useLegacyNavigate()
+  const isGuest = useIsGuest()
+  if (isGuest) return <GuestHome onNavigate={onNavigate} />
   return <Dashboard onNavigate={onNavigate} />
 }
 

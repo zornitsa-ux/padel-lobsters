@@ -4,7 +4,10 @@ import type { Division, League, LeagueMatch, LeagueStatus, LeagueTeam } from './
 
 export const LEAGUE_PHASES: LeagueStatus[] = ['draft', 'group_stage', 'knockout', 'completed']
 
-export function isPublished(league: League): boolean {
+/** The fields that decide whether and which season players see. */
+export type LeagueVisibility = Pick<League, 'status' | 'published_at' | 'created_at'>
+
+export function isPublished(league: Pick<League, 'published_at'>): boolean {
   return league.published_at != null
 }
 
@@ -78,7 +81,11 @@ const IN_PROGRESS = ['group_stage', 'knockout']
  * progress, otherwise the newest published draft. Admins can read hidden
  * drafts, so visibility is checked here too, not only by RLS.
  */
-export function pickCurrentLeague({ leagues }: { leagues: League[] }): League | null {
+export function pickCurrentLeague<T extends LeagueVisibility>({
+  leagues,
+}: {
+  leagues: T[]
+}): T | null {
   const newestFirst = leagues
     .filter((l) => isPublished(l) && l.status !== 'completed')
     .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))

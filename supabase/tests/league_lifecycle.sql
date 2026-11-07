@@ -328,13 +328,12 @@ begin
   execute 'set local role anon';
   select count(*) into v_count from public.leagues where id in (v_hidden, v_published);
   if v_count <> 1 then raise exception 'CHECK 13 FAILED: anon sees % of the 2 leagues', v_count; end if;
-  select count(*) into v_count from public.league_teams where league_id = v_hidden;
-  if v_count <> 0 then raise exception 'CHECK 13 FAILED: anon sees hidden teams'; end if;
-  select count(*) into v_count from public.league_matches where league_id = v_hidden;
-  if v_count <> 0 then raise exception 'CHECK 13 FAILED: anon sees hidden matches'; end if;
-  select count(*) into v_count from public.league_teams where league_id = v_published;
-  if v_count <> 1 then raise exception 'CHECK 13 FAILED: anon cannot see published teams'; end if;
   execute 'reset role';
+  -- Teams and matches hold player IDs: members only, published or not (#150).
+  if has_table_privilege('anon', 'public.league_teams', 'SELECT')
+     or has_table_privilege('anon', 'public.league_matches', 'SELECT') then
+    raise exception 'CHECK 13 FAILED: anon can read league teams or matches';
+  end if;
 
   -- signed-in player
   perform set_config('request.jwt.claims', json_build_object('sub', v_players[3], 'role', 'authenticated')::text, true);
@@ -352,7 +351,7 @@ begin
   if v_count <> 1 then raise exception 'CHECK 13 FAILED: admin cannot see hidden matches'; end if;
   execute 'reset role';
 
-  raise notice 'CHECK 13 ok — hidden leagues, teams and matches are invisible to anon and players, visible to admins';
+  raise notice 'CHECK 13 ok — hidden leagues invisible to anon and players, teams and matches members-only, all visible to admins';
   raise notice '';
   raise notice 'All league lifecycle checks passed.';
 end $$;
