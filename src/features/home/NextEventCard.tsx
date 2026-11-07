@@ -4,7 +4,7 @@ import DateTile from '../../components/ui/DateTile'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Skeleton } from '../../components/ui/Skeleton'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
-import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
+import ShareEventButton from '../events/ShareEventButton'
 import { fmtEur } from '../../lib/format'
 import type { NormalisedTournament } from '../../lib/normalise'
 import { perPersonCost } from './homeHelpers'
@@ -104,7 +104,7 @@ export default function NextEventCard({
           )}
         </div>
         <div className="flex gap-1 flex-shrink-0">
-          <ShareWhatsAppButton tournament={upcoming} variant="icon" />
+          <ShareEventButton event={upcoming} variant="icon" />
           <AddToCalendarButton tournament={upcoming} variant="icon" />
         </div>
       </div>

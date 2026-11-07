@@ -237,7 +237,7 @@ describe('Info tab — share and calendar sit with the date', () => {
   it('puts both chips inside the date and time card', () => {
     renderInfo()
 
-    const share = screen.getByTitle('Share on WhatsApp')
+    const share = screen.getByRole('button', { name: 'Share' })
     const calendar = screen.getByTitle('Add to Google Calendar')
     // The meta card is the one holding the location; both chips live in it.
     const metaCard = screen.getByText('Padel Inc').closest('.card')

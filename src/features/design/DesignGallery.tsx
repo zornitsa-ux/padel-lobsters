@@ -29,7 +29,7 @@ import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { IconButton } from '../../components/ui/IconButton'
-import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
+import ShareEventButton from '../events/ShareEventButton'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
 import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { AlertBox } from '../../components/ui/AlertBox'
@@ -78,7 +78,17 @@ import { PlaytomicLevelField } from '../players/ProfileFields'
 
 // Dev-only (`/design`). Each design-system step adds its components here.
 
-const SAMPLE_EVENT = { id: 'sample', name: 'Lobster Cup', date: '2026-12-05', time: '19:00' }
+const SAMPLE_EVENT = {
+  id: 'sample',
+  name: 'Lobster Cup',
+  date: '2026-12-05',
+  time: '19:00',
+  duration: 90,
+  location: 'Padel Club Amsterdam',
+  format: 'americano',
+  totalPrice: 200,
+  maxPlayers: 16,
+}
 
 function GallerySection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -175,7 +185,7 @@ function ButtonSection() {
         </div>
       </Row>
       <Row label='utility actions: variant="neutral" size="sm"'>
-        <ShareWhatsAppButton tournament={SAMPLE_EVENT} variant="compact" />
+        <ShareEventButton event={SAMPLE_EVENT} registeredCount={12} variant="compact" />
         <AddToCalendarButton tournament={SAMPLE_EVENT} variant="compact" />
       </Row>
       <Row label="fullWidth · ActionRow (alternative first, confirm last)">

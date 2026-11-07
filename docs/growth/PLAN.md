@@ -49,7 +49,7 @@ shipped and the funnel has been measured.
 | G1  | Public event page           | Guests see the upcoming events list (`/events`, upcoming only) and `/events/:id/info`: a read-only card (name, date, time, location, format, price, spots left) plus a "Join to play" CTA, or "Join to get on the waitlist" when full. Other tabs stay protected. See G1 notes.                                                                                                        | Done (#151)        |
 | G2  | Link previews               | Per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview. See **Resume here** and G2 notes.                                                                                                                             | In progress (#152) |
 | G3  | Signup returns to the event | CTA → signup carrying the event as the return path (`returnPath.ts`). After verifying, land on the event with the register action focused (or the waitlist action, if it's full).                                                                                                                                                                                                      | Not started        |
-| G4  | Share button                | Extend the existing `ShareWhatsAppButton` (`src/components/ui`): `navigator.share` with the pre-written message and URL, falling back to WhatsApp and copy link. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | Not started        |
+| G4  | Share button                | Extend the existing `ShareWhatsAppButton` (`src/components/ui`): `navigator.share` with the pre-written message and URL, falling back to WhatsApp and copy link. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | In progress        |
 | G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                                                         | Not started        |
 | G5b | Traffic funnel              | Cookieless analytics (Vercel Web Analytics, or Plausible/Umami if custom events need a paid tier): public page views plus `event_page_view`, `share_tap`, `signup_start`, `signup_complete`, `event_register`, each tagged with `src`.                                                                                                                                                 | Deferred           |
 
@@ -121,6 +121,20 @@ source.
 - **Check after deploy.** The functions read `VITE_SUPABASE_URL` and
   `VITE_SUPABASE_ANON_KEY` at runtime from the Vercel project env. Paste an
   event link into WhatsApp, or `curl -A WhatsApp/2 <event url>`.
+
+### G4 notes
+
+- **Member share sheet first** (owner, 7 Nov): taken ahead of G3 and G5.
+  "Share" opens an in-app sheet (`ShareSheet`) showing the message, with the
+  phone's share sheet (`navigator.share`, where available), WhatsApp, copy
+  message and copy link. It replaces `ShareWhatsAppButton`, which went
+  straight to a `wa.me` page.
+- **Message** (`eventShareMessage.ts`): name, date and time, venue, format,
+  price per player, spots left (or "Full, join the waitlist") and the sign-up
+  link. No player names, unlike Playtomic's list of who's in: the message is
+  forwarded outside the group.
+- **Still to do:** the admin announcement text and "Download image", and
+  `?src=`/`?ref=` on the link once G5 lands.
 
 ### G5b: traffic funnel (deferred)
 
@@ -199,3 +213,5 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   Build log read (edge runtime rejected `@vercel/og`). Moved to Node, fixed
   import extensions, pinned `@vercel/og` 0.11.1. Static design and probe
   dropped.
+- 7 Nov 2026: G4 member share sheet built (in-app options, cleaner message),
+  ahead of G3 and G5 at the owner's request.
