@@ -100,10 +100,10 @@ export async function shareToLobstersGroup({
   groupLink,
 }: {
   message: string
-  groupLink: string | null | undefined
+  groupLink: string
 }): Promise<void> {
   await copyToClipboard(message)
-  if (groupLink) window.open(groupLink, '_blank', 'noopener,noreferrer')
+  window.open(groupLink, '_blank', 'noopener,noreferrer')
 }
 
 // Open the direct WhatsApp chat to the recipient. Returns false (no-op) if

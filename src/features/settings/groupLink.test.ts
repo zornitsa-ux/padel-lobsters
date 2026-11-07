@@ -36,9 +36,14 @@ describe('openGroupLink', () => {
     expect(tab.close).toHaveBeenCalled()
   })
 
-  it('falls back to opening the link directly when the blank tab was blocked', async () => {
-    const open = vi.fn<(url: string, target: string) => Window | null>(() => null)
-    await openGroupLink({ fetchLink: async () => 'https://chat.whatsapp.com/x', open })
-    expect(open).toHaveBeenLastCalledWith('https://chat.whatsapp.com/x', '_blank')
+  it('opens the link in this tab when the new tab was blocked', async () => {
+    const navigate = vi.fn()
+    const ok = await openGroupLink({
+      fetchLink: async () => 'https://chat.whatsapp.com/x',
+      open: () => null,
+      navigate,
+    })
+    expect(ok).toBe(true)
+    expect(navigate).toHaveBeenCalledWith('https://chat.whatsapp.com/x')
   })
 })

@@ -164,6 +164,17 @@ describe('SignupRequest — name matches', () => {
   })
 })
 
+describe('SignupRequest — double submit', () => {
+  it('sends one code when the form is submitted twice in a row', async () => {
+    const { container } = render(<SignupRequest onComplete={() => {}} onBack={() => {}} />)
+    await fillForm()
+    submit(container)
+    submit(container)
+    await waitFor(() => expect(mockRequestCode).toHaveBeenCalled())
+    expect(mockRequestCode).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe('SignupRequest — hook rejections', () => {
   const rejectWith = (message: string) =>
     mockRequestCode.mockResolvedValue({ error: { status: 400, code: 'unknown', message } })

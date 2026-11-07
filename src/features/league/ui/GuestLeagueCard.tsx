@@ -9,7 +9,7 @@ export function GuestLeagueCard() {
     queryKey: leagueKeys.publicCurrent(),
     queryFn: fetchPublicCurrentLeague,
   })
-  if (!league || league.status === 'completed') return null
+  if (!league) return null
   return (
     <LeagueCardFrame
       league={league}

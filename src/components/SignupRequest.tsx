@@ -205,18 +205,12 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
 
   const validate = (): string => profileProblem({ form, email: form.email })
 
+  // A ref, not `saving`: two taps before a re-render would both pass a state check.
+  const submittingRef = useRef(false)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (saving) return
+    if (submittingRef.current) return
     setError('')
-
-    // Never create a second row for a name already on the roster unless the
-    // user has said it isn't them (not allowed for placeholders).
-    const pending = unresolvedMatch(await lookUpName(combinedName))
-    if (pending) {
-      setNameMatch(pending)
-      return
-    }
 
     const invalid = validate()
     if (invalid) {
@@ -224,17 +218,30 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
       return
     }
 
+    submittingRef.current = true
     setSaving(true)
-    setFieldErrors({})
-    const { error: signupError } = await requestSignupCode()
-    setSaving(false)
-    if (!signupError) {
-      setAwaitingCode(true)
-      return
+    try {
+      // Never create a second row for a name already on the roster unless the
+      // user has said it isn't them (not allowed for placeholders).
+      const pending = unresolvedMatch(await lookUpName(combinedName))
+      if (pending) {
+        setNameMatch(pending)
+        return
+      }
+
+      setFieldErrors({})
+      const { error: signupError } = await requestSignupCode()
+      if (!signupError) {
+        setAwaitingCode(true)
+        return
+      }
+      const view = describeSignupError({ error: signupError })
+      if (view.field) setFieldErrors({ [view.field]: view.message })
+      else setError(view.message)
+    } finally {
+      submittingRef.current = false
+      setSaving(false)
     }
-    const view = describeSignupError({ error: signupError })
-    if (view.field) setFieldErrors({ [view.field]: view.message })
-    else setError(view.message)
   }
 
   const signupMetadata = () =>

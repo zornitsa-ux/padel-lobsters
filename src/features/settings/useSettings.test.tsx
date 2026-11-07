@@ -25,7 +25,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   ;(fetchSettings as ReturnType<typeof vi.fn>).mockResolvedValue(mockSettings)
   ;(saveSettings as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
-  mockUseApp.mockReturnValue({ session: { user: { id: 'p1' } } })
+  mockUseApp.mockReturnValue({ session: { user: { id: 'p1' } }, sessionSettled: true })
 })
 
 describe('useSettings', () => {
@@ -37,7 +37,7 @@ describe('useSettings', () => {
   })
 
   it('asks for the guest columns when signed out', async () => {
-    mockUseApp.mockReturnValue({ session: null })
+    mockUseApp.mockReturnValue({ session: null, sessionSettled: true })
     const { result } = renderHookWithClient(() => useSettings())
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(fetchSettings).toHaveBeenCalledWith({ signedIn: false })

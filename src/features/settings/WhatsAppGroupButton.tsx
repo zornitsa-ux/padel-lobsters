@@ -10,11 +10,13 @@ import { openGroupLink } from './groupLink'
  * Signed-out visitors fetch it on tap, so it isn't in the page for crawlers.
  */
 export function WhatsAppGroupButton() {
-  const signedIn = !!useApp().session
+  const { session, sessionSettled } = useApp()
   const { data: settings } = useSettings()
   const { showToast } = useToast()
 
-  if (signedIn) {
+  if (!sessionSettled) return null
+
+  if (session) {
     if (!settings?.whatsappLink) return null
     return (
       <Button

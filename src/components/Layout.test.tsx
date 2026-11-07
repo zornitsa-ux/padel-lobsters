@@ -25,7 +25,12 @@ import Layout from './Layout'
 beforeEach(() => {
   vi.clearAllMocks()
   window.localStorage.clear()
-  mockUseApp.mockReturnValue({ session: { user: { id: 'p1' } }, role: 'player', isAdmin: false })
+  mockUseApp.mockReturnValue({
+    session: { user: { id: 'p1' } },
+    sessionSettled: true,
+    role: 'player',
+    isAdmin: false,
+  })
   mockUseSettings.mockReturnValue({ data: {} })
 })
 
@@ -36,7 +41,12 @@ describe('Layout — shell', () => {
     render(<Layout>content</Layout>)
     expect(screen.queryByText('/admin')).toBeNull()
     cleanup()
-    mockUseApp.mockReturnValue({ session: { user: { id: 'p1' } }, role: 'admin', isAdmin: true })
+    mockUseApp.mockReturnValue({
+      session: { user: { id: 'p1' } },
+      sessionSettled: true,
+      role: 'admin',
+      isAdmin: true,
+    })
     render(<Layout>content</Layout>)
     expect(screen.getByText('/admin')).toBeTruthy()
   })
@@ -53,7 +63,12 @@ describe('Layout — shell', () => {
   })
 
   it('gives signed-out visitors a WhatsApp button with no link in the page', async () => {
-    mockUseApp.mockReturnValue({ session: null, role: 'guest', isAdmin: false })
+    mockUseApp.mockReturnValue({
+      session: null,
+      sessionSettled: true,
+      role: 'guest',
+      isAdmin: false,
+    })
     const { container } = render(<Layout>content</Layout>)
     expect(screen.getByRole('button', { name: /whatsapp/i })).toBeTruthy()
     expect(container.innerHTML).not.toContain('chat.whatsapp.com')
