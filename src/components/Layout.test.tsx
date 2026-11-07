@@ -14,6 +14,7 @@ vi.mock('../features/auth/useSignInDeepLink', () => ({
   useSignInDeepLink: () => ({ open: false, initialEmail: '', close: () => {} }),
 }))
 vi.mock('./ui/AuthGate', () => ({ SignInModal: () => null }))
+vi.mock('../lib/toastBus', () => ({ useToast: () => ({ showToast: vi.fn() }) }))
 vi.mock('react-router-dom', () => ({
   NavLink: ({ to }: { to: string }) => <a href={to}>{to}</a>,
   Link: ({ to, children }: { to: string; children?: ReactNode }) => <a href={to}>{children}</a>,
@@ -49,5 +50,12 @@ describe('Layout — shell', () => {
     expect(screen.getByText('WhatsApp').closest('a')?.getAttribute('href')).toBe(
       'https://chat.example',
     )
+  })
+
+  it('gives signed-out visitors a WhatsApp button with no link in the page', async () => {
+    mockUseApp.mockReturnValue({ session: null, role: 'guest', isAdmin: false })
+    const { container } = render(<Layout>content</Layout>)
+    expect(screen.getByRole('button', { name: /whatsapp/i })).toBeTruthy()
+    expect(container.innerHTML).not.toContain('chat.whatsapp.com')
   })
 })

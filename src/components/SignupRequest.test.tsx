@@ -10,7 +10,7 @@ const { mockRequestCode, mockVerifyCode, mockSetOwnAvatar, roster } = vi.hoisted
   mockRequestCode: vi.fn(),
   mockVerifyCode: vi.fn(),
   mockSetOwnAvatar: vi.fn(),
-  roster: { players: [] as { id: string; name: string; status: string }[] },
+  roster: { match: null as 'placeholder' | 'member' | null },
 }))
 
 vi.mock('../features/auth/authActions', () => ({
@@ -18,8 +18,9 @@ vi.mock('../features/auth/authActions', () => ({
   verifyEmailCode: mockVerifyCode,
   normaliseEmail: (email: string) => email.trim().toLowerCase(),
 }))
-vi.mock('../features/players/usePlayers', () => ({
-  usePlayers: () => ({ data: roster.players }),
+vi.mock('../features/players/signupNameMatch', () => ({
+  fetchSignupNameMatch: async ({ name }: { name: string }) =>
+    roster.match ? { kind: roster.match, name } : null,
 }))
 vi.mock('../features/players/playerQueries', () => ({ setOwnAvatar: mockSetOwnAvatar }))
 vi.mock('@tanstack/react-query', () => ({
@@ -59,7 +60,7 @@ const submit = (container: HTMLElement) =>
 
 beforeEach(() => {
   vi.clearAllMocks()
-  roster.players = []
+  roster.match = null
   mockSetOwnAvatar.mockResolvedValue('https://cdn.test/avatars/player-p1.webp')
   mockRequestCode.mockResolvedValue({ error: null })
   mockVerifyCode.mockResolvedValue({
@@ -130,7 +131,7 @@ describe('SignupRequest — public signup', () => {
 
 describe('SignupRequest — name matches', () => {
   it('blocks a placeholder name and points to the admin invite', async () => {
-    roster.players = [{ id: 'ph1', name: 'Ada  Lovelace', status: 'placeholder' }]
+    roster.match = 'placeholder'
     const { container } = render(<SignupRequest onComplete={() => {}} onBack={() => {}} />)
     await fillForm()
 
@@ -141,7 +142,7 @@ describe('SignupRequest — name matches', () => {
   })
 
   it('sends an active name match to sign-in', async () => {
-    roster.players = [{ id: 'a1', name: 'Ada Lovelace', status: 'active' }]
+    roster.match = 'member'
     const { container } = render(<SignupRequest onComplete={() => {}} onBack={() => {}} />)
     await fillForm()
 
@@ -152,7 +153,7 @@ describe('SignupRequest — name matches', () => {
   })
 
   it('lets a different person with the same name sign up', async () => {
-    roster.players = [{ id: 'a1', name: 'Ada Lovelace', status: 'active' }]
+    roster.match = 'member'
     const { container } = render(<SignupRequest onComplete={() => {}} onBack={() => {}} />)
     await fillForm()
 

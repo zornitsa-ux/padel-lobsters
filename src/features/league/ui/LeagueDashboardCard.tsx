@@ -1,10 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { Badge } from '../../../components/ui/Badge'
 import { CardLink } from '../../../components/ui/CardLink'
 import { leagueStatusPills, statusPill } from './statusPill'
 import { useActiveLeagueBundle } from '../hooks/useLeagueQueries'
 import { computeGroupStandings } from '../domain/standings'
 import { resolveTeamShortName } from '../domain/teamDisplay'
+import type { League } from '../domain/types'
 
 interface LeagueDashboardCardProps {
   myPlayerId: string | null
@@ -46,8 +47,6 @@ export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
   )
 
   if (!league || league.status === 'completed') return null
-
-  const { label, tone } = statusPill(STATUS_BADGE, league.status)
 
   const myPendingMatches = myTeam
     ? matches.filter(
@@ -127,6 +126,17 @@ export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
     return <p className="text-sm text-lob-muted">Groups forming soon</p>
   }
 
+  return <LeagueCardFrame league={league} body={renderBody()} />
+}
+
+interface LeagueCardFrameProps {
+  league: Pick<League, 'id' | 'name' | 'status'>
+  body: ReactNode
+}
+
+/** The card's header and footer; the body line is the caller's. */
+export function LeagueCardFrame({ league, body }: LeagueCardFrameProps) {
+  const { label, tone } = statusPill(STATUS_BADGE, league.status)
   return (
     <CardLink to={`/league/${league.id}`} flush>
       <div className="bg-gradient-to-r from-lob-teal to-lob-teal-dark px-4 pt-3.5 pb-3">
@@ -142,7 +152,7 @@ export function LeagueDashboardCard({ myPlayerId }: LeagueDashboardCardProps) {
       </div>
 
       <div className="bg-lob-teal-light px-4 py-2.5 flex items-center justify-between gap-2">
-        <div className="min-w-0">{renderBody()}</div>
+        <div className="min-w-0">{body}</div>
         <span className="text-xs font-semibold text-lob-teal flex-shrink-0">View →</span>
       </div>
     </CardLink>

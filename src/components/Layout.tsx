@@ -1,20 +1,11 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 import { useApp } from '../context/useApp'
-import { useSettings } from '../features/settings/useSettings'
+import { WhatsAppGroupButton } from '../features/settings/WhatsAppGroupButton'
 import { useSignInDeepLink } from '../features/auth/useSignInDeepLink'
 import { SignInModal } from './ui/AuthGate'
 import { IconButton } from './ui/IconButton'
-import {
-  LayoutDashboard,
-  Users,
-  Trophy,
-  Medal,
-  CircleUser,
-  Shield,
-  MessageCircle,
-  Info,
-} from 'lucide-react'
+import { LayoutDashboard, Users, Trophy, Medal, CircleUser, Shield, Info } from 'lucide-react'
 
 // Bottom nav — five tabs, each a NavLink so the active state tracks the URL.
 // `end={false}` for /events and /community so the tab stays highlighted on
@@ -35,7 +26,6 @@ const InstagramIcon = () => (
 
 export default function Layout({ children }: { children?: React.ReactNode }) {
   const { isAdmin } = useApp()
-  const { data: settings } = useSettings()
   const signInLink = useSignInDeepLink()
   const navItems = isAdmin
     ? [...NAV, { to: '/admin', label: 'Admin', icon: Shield, end: false }]
@@ -83,17 +73,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
               >
                 <InstagramIcon />
               </IconButton>
-              {settings?.whatsappLink && (
-                <a
-                  href={settings.whatsappLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-white text-xs font-semibold px-3 py-2 rounded-2xl transition-all active:scale-95 bg-white/15 backdrop-blur"
-                >
-                  <MessageCircle size={14} />
-                  WhatsApp
-                </a>
-              )}
+              <WhatsAppGroupButton />
             </div>
           </div>
         </header>

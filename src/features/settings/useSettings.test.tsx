@@ -5,6 +5,9 @@ import { renderHookWithClient, makeTestQueryClient } from '../../test/renderWith
 import { settingsKeys } from './settingsKeys'
 import { useSettings, useSaveSettings } from './useSettings'
 
+const { mockUseApp } = vi.hoisted(() => ({ mockUseApp: vi.fn() }))
+vi.mock('../../context/useApp', () => ({ useApp: mockUseApp }))
+
 vi.mock('./settingsQueries', () => ({
   fetchSettings: vi.fn(),
   saveSettings: vi.fn(),
@@ -22,6 +25,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   ;(fetchSettings as ReturnType<typeof vi.fn>).mockResolvedValue(mockSettings)
   ;(saveSettings as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
+  mockUseApp.mockReturnValue({ session: { user: { id: 'p1' } } })
 })
 
 describe('useSettings', () => {
@@ -29,6 +33,14 @@ describe('useSettings', () => {
     const { result } = renderHookWithClient(() => useSettings())
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data).toEqual(mockSettings)
+    expect(fetchSettings).toHaveBeenCalledWith({ signedIn: true })
+  })
+
+  it('asks for the guest columns when signed out', async () => {
+    mockUseApp.mockReturnValue({ session: null })
+    const { result } = renderHookWithClient(() => useSettings())
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(fetchSettings).toHaveBeenCalledWith({ signedIn: false })
   })
 })
 

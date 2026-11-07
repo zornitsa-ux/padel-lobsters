@@ -15,7 +15,6 @@
 // to the new path on first paint.
 
 export const APP_BASE_URL = 'https://padelobsters.nl'
-export const LOBSTERS_GROUP_URL = 'https://chat.whatsapp.com/KigGKm4ERxR3UY9uq0GH3f'
 
 // E.164: leading '+', country code + subscriber digits, 8–15 digits total
 // (per ITU-T E.164 recommendation). We strip spaces, dashes, and parens
@@ -94,12 +93,17 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
-// Open the Lobsters group invite URL. Caller is expected to have copied the
-// message to clipboard first; we surface that as a side-effect here so the
-// two-step UX is always atomic from the component's perspective.
-export async function shareToLobstersGroup(message: string): Promise<void> {
+// Copies the message, then opens the group. The link comes from settings
+// (members only), never from the bundle, so crawlers don't find it.
+export async function shareToLobstersGroup({
+  message,
+  groupLink,
+}: {
+  message: string
+  groupLink: string | null | undefined
+}): Promise<void> {
   await copyToClipboard(message)
-  window.open(LOBSTERS_GROUP_URL, '_blank', 'noopener,noreferrer')
+  if (groupLink) window.open(groupLink, '_blank', 'noopener,noreferrer')
 }
 
 // Open the direct WhatsApp chat to the recipient. Returns false (no-op) if

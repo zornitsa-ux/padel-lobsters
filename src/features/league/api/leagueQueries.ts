@@ -29,6 +29,19 @@ export async function fetchCurrentLeague(): Promise<League | null> {
   return pickCurrentLeague({ leagues: data ?? [] })
 }
 
+/** What a signed-out visitor may read about a league (anon column grant). */
+export type PublicLeague = Pick<League, 'id' | 'name' | 'status' | 'published_at' | 'created_at'>
+
+export async function fetchPublicCurrentLeague(): Promise<PublicLeague | null> {
+  const { data, error } = await supabase
+    .from('leagues')
+    .select('id,name,status,published_at,created_at')
+    .in('status', UNFINISHED)
+    .not('published_at', 'is', null)
+  if (error) throw error
+  return pickCurrentLeague({ leagues: data ?? [] })
+}
+
 // The current league plus its teams and matches in one round trip.
 //
 // The home screen used to chain fetchActiveLeague -> (fetchLeagueTeams,

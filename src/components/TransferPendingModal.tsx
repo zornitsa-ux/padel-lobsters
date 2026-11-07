@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { MessageCircle, Users, Clock } from 'lucide-react'
 import { useApp } from '../context/useApp'
 import { useTransferActions } from '../features/events/useTransfers'
+import { useSettings } from '../features/settings/useSettings'
 import { Modal } from './ui/Modal'
 import { useConfirm } from '../lib/confirmBus'
 import {
@@ -56,6 +57,7 @@ export default function TransferPendingModal({
   const [phone, setPhone] = useState<string | null>(null) // null = loading, '' = no phone
   const [busyAction, setBusyAction] = useState<PendingAction>(null)
   const [groupNote, setGroupNote] = useState(false)
+  const { data: settings } = useSettings()
 
   useEffect(() => {
     let active = true
@@ -87,7 +89,7 @@ export default function TransferPendingModal({
   const handleGroup = async () => {
     if (busyAction) return
     setBusyAction('group')
-    await shareToLobstersGroup(message)
+    await shareToLobstersGroup({ message, groupLink: settings?.whatsappLink })
     setGroupNote(true)
     setTimeout(() => setBusyAction(null), 600)
   }

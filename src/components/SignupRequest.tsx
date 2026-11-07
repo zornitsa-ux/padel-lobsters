@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
-import { usePlayers } from '../features/players/usePlayers'
+import { fetchSignupNameMatch, type NameMatch } from '../features/players/signupNameMatch'
 import { setOwnAvatar } from '../features/players/playerQueries'
 import { playerKeys } from '../features/players/playerKeys'
-import type { Player } from '../lib/normalise'
 import { processAvatar } from '../lib/processAvatar'
 import { ArrowLeft, UserPlus, Loader2 } from 'lucide-react'
 import { AvatarPicker } from './ui/AvatarPicker'
@@ -78,17 +77,18 @@ const LOBBY_PROMPTS = [
 ]
 const randomPrompt = () => LOBBY_PROMPTS[Math.floor(Math.random() * LOBBY_PROMPTS.length)]
 
-// Same normalisation the hook applies when matching a placeholder.
-const normName = (name: string | null | undefined) =>
-  (name || '').trim().replace(/\s+/g, ' ').toLowerCase()
+const normName = (name: string) => name.trim().replace(/\s+/g, ' ').toLowerCase()
 
-const findNameMatch = ({ players, name }: { players: Player[]; name: string }) => {
-  const typed = normName(name)
-  if (typed.split(' ').length < 2) return null
-  return players.find((p) => normName(p.name) === typed) ?? null
+// A lookup that fails shouldn't block signup: the server-side hook still
+// refuses a placeholder's name.
+const lookUpName = async (name: string): Promise<NameMatch | null> => {
+  if (normName(name).split(' ').length < 2) return null
+  try {
+    return await fetchSignupNameMatch({ name })
+  } catch {
+    return null
+  }
 }
-
-const isPlaceholder = (p: Player | null | undefined) => p?.status === 'placeholder'
 
 const PLACEHOLDER_INVITE_TEXT = SIGNUP_HOOK_MESSAGES.placeholder
 
@@ -132,7 +132,6 @@ interface SignupRequestProps {
 }
 
 export default function SignupRequest({ onComplete, onBack, compact = false }: SignupRequestProps) {
-  const { data: players = [] } = usePlayers()
   const queryClient = useQueryClient()
 
   const [form, setForm] = useState(emptyForm)
@@ -151,11 +150,11 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<SignupField, string>>>({})
 
-  // Name-match state. `nameMatch` is the roster row whose name equals the
-  // typed one (drives the banner); `declinedId` is an active match the user
-  // said is someone else, so the submit-time check stops re-raising it.
-  const [nameMatch, setNameMatch] = useState<Player | null>(null)
-  const [declinedId, setDeclinedId] = useState<string | null>(null)
+  // Name-match state. `nameMatch` is a roster name equal to the typed one
+  // (drives the banner); `declinedName` is a match the user said is someone
+  // else, so the submit-time check stops re-raising it.
+  const [nameMatch, setNameMatch] = useState<NameMatch | null>(null)
+  const [declinedName, setDeclinedName] = useState<string | null>(null)
 
   // Avatar state — file is uploaded after sign-in, preview is the dataURL
   // so the user sees their pick immediately.
@@ -167,22 +166,27 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
 
   const combinedName = fullName({ form })
   // Placeholder matches can't be dismissed; only an admin invite resolves them.
-  const unresolvedMatch = (p: Player | null) =>
-    p && (isPlaceholder(p) || p.id !== declinedId) ? p : null
+  const unresolvedMatch = (m: NameMatch | null) =>
+    m && (m.kind === 'placeholder' || normName(m.name) !== declinedName) ? m : null
   const bannerMatch = unresolvedMatch(nameMatch)
 
   // Debounced so the banner doesn't flicker while the user is typing.
   const matchDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   useEffect(() => {
     clearTimeout(matchDebounceRef.current)
-    matchDebounceRef.current = setTimeout(() => {
-      setNameMatch(findNameMatch({ players, name: combinedName }))
+    let current = true
+    matchDebounceRef.current = setTimeout(async () => {
+      const match = await lookUpName(combinedName)
+      if (current) setNameMatch(match)
     }, 400)
-    return () => clearTimeout(matchDebounceRef.current)
-  }, [combinedName, players])
+    return () => {
+      current = false
+      clearTimeout(matchDebounceRef.current)
+    }
+  }, [combinedName])
 
   const declineMatch = () => {
-    setDeclinedId(nameMatch?.id ?? null)
+    setDeclinedName(nameMatch ? normName(nameMatch.name) : null)
     setNameMatch(null)
     setError('')
   }
@@ -208,7 +212,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
 
     // Never create a second row for a name already on the roster unless the
     // user has said it isn't them (not allowed for placeholders).
-    const pending = unresolvedMatch(findNameMatch({ players, name: combinedName }))
+    const pending = unresolvedMatch(await lookUpName(combinedName))
     if (pending) {
       setNameMatch(pending)
       return
@@ -371,11 +375,11 @@ function NameMatchBanner({
   onSignIn,
   onDecline,
 }: {
-  match: Player
+  match: NameMatch
   onSignIn?: () => void
   onDecline: () => void
 }) {
-  const needsInvite = isPlaceholder(match)
+  const needsInvite = match.kind === 'placeholder'
   return (
     <AlertBox
       variant="warning"

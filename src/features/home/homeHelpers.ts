@@ -1,4 +1,6 @@
 import type { Player, NormalisedTournament } from '../../lib/normalise'
+import { isEventUpcoming } from '../events/eventPhase'
+import { tournamentStartMs } from '../../lib/tournamentStart'
 
 // Pure derivations behind the home-screen cards. They live outside the
 // components so they can be unit-tested (and so the component modules stay
@@ -44,4 +46,41 @@ export function perPersonCost(
   const total = tournament.totalPrice || 0
   const maxPlayers = tournament.maxPlayers || 16
   return total > 0 ? total / maxPlayers : 0
+}
+
+const byDate = (a: NormalisedTournament, b: NormalisedTournament) =>
+  (a.date || '') < (b.date || '') ? -1 : 1
+
+export function upcomingEvents<T extends NormalisedTournament>({ events }: { events: T[] }): T[] {
+  return events.filter((t) => isEventUpcoming({ tournament: t })).sort(byDate)
+}
+
+/** The nearest event whose start is still ahead, so the clock flips once one starts. */
+export function countdownTarget<T extends NormalisedTournament>({
+  events,
+  now = Date.now(),
+}: {
+  events: T[]
+  now?: number
+}): T | null {
+  return (
+    upcomingEvents({ events }).find((t) => {
+      const start = tournamentStartMs(t)
+      return start !== null && start > now
+    }) ?? null
+  )
+}
+
+export function tipOfTheDay({ tips, date = new Date() }: { tips: string[]; date?: Date }): string {
+  const dayIndex = (date.getFullYear() * 366 + date.getMonth() * 31 + date.getDate()) % tips.length
+  return tips[dayIndex]
+}
+
+export function formatHomeDate(d: string | null | undefined): string {
+  if (!d) return '—'
+  return new Date(d).toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
 }
