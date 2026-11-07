@@ -8,7 +8,7 @@ import tseslint from 'typescript-eslint'
 import tailwind from 'eslint-plugin-tailwindcss'
 
 export default [
-  { ignores: ['dist', 'dist-*', 'node_modules', '.claude'] },
+  { ignores: ['dist', 'dist-*', 'node_modules', '.claude', '.vercel'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
@@ -91,5 +91,10 @@ export default [
     rules: {
       'no-restricted-imports': ['error', { patterns: ['**/supabase', '**/supabase.ts'] }],
     },
+  },
+  {
+    // Vercel functions run on the server, so fast refresh doesn't apply.
+    files: ['api/**/*.{ts,tsx}'],
+    rules: { 'react-refresh/only-export-components': 'off' },
   },
 ]

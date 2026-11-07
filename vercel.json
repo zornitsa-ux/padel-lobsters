@@ -1,3 +1,25 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/events/:id/:tab(info)?",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|Slackbot|TelegramBot|Discordbot|LinkedInBot|Pinterest|SkypeUriPreview|redditbot|Iframely|Embedly|vkShare).*"
+        }
+      ],
+      "missing": [
+        {
+          "type": "query",
+          "key": "app"
+        }
+      ],
+      "destination": "/api/event-preview?id=:id&tab=:tab"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ]
 }

@@ -22,20 +22,40 @@ shipped and the funnel has been measured.
 
 ---
 
+## Resume here (6 Nov 2026)
+
+- **G1 is live** (#151, merged 4 Nov). Guests can browse upcoming events and
+  open an event page; "Join" goes through signup back to the event.
+- **G5b (traffic funnel) is deferred** by the owner. Don't build it unless
+  asked.
+- **G2 (link previews) is back on Vercel functions**, now on the Node.js
+  runtime, in #152 (branch `g2-link-previews`). With steady Vercel access the
+  owner reconsidered (6 Nov): functions stay always current with no rebuild
+  schedule, and crawler-only traffic is a tiny share of the Hobby plan's
+  1M invocations and 4 CPU-hours a month. The static build-time design and
+  its routing probe are dropped.
+- **Why #152's deploys failed:** the build log showed `The Edge Function
+"api/event-image" is referencing unsupported modules: module`. The edge
+  runtime is gone, and the fixes it took to run on Node are in the G2 notes.
+- **Next:** check the preview deployment as a crawler (it's behind Vercel
+  Deployment Protection), then review and merge #152.
+
+---
+
 ## Phase 1: shareable events (the leak)
 
-| #   | Task                        | What ships                                                                                                                                                                                                                                                                                                                                                                             | Status      |
-| --- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| G1  | Public event page           | Guests see the upcoming events list (`/events`, upcoming only) and `/events/:id/info`: a read-only card (name, date, time, location, format, price, spots left) plus a "Join to play" CTA, or "Join to get on the waitlist" when full. Other tabs stay protected. See G1 notes.                                                                                                        | In review   |
-| G2  | Link previews               | A Vercel function or middleware serves per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview.                                                                                                                        | Not started |
-| G3  | Signup returns to the event | CTA → signup carrying the event as the return path (`returnPath.ts`). After verifying, land on the event with the register action focused (or the waitlist action, if it's full).                                                                                                                                                                                                      | Not started |
-| G4  | Share button                | Extend the existing `ShareWhatsAppButton` (`src/components/ui`): `navigator.share` with the pre-written message and URL, falling back to WhatsApp and copy link. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | Not started |
-| G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                                                         | Not started |
-| G5b | Traffic funnel              | Cookieless analytics (Vercel Web Analytics, or Plausible/Umami if custom events need a paid tier): public page views plus `event_page_view`, `share_tap`, `signup_start`, `signup_complete`, `event_register`, each tagged with `src`. Ships with G1.                                                                                                                                  | Not started |
+| #   | Task                        | What ships                                                                                                                                                                                                                                                                                                                                                                             | Status             |
+| --- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| G1  | Public event page           | Guests see the upcoming events list (`/events`, upcoming only) and `/events/:id/info`: a read-only card (name, date, time, location, format, price, spots left) plus a "Join to play" CTA, or "Join to get on the waitlist" when full. Other tabs stay protected. See G1 notes.                                                                                                        | Done (#151)        |
+| G2  | Link previews               | Per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview. See **Resume here** and G2 notes.                                                                                                                             | In progress (#152) |
+| G3  | Signup returns to the event | CTA → signup carrying the event as the return path (`returnPath.ts`). After verifying, land on the event with the register action focused (or the waitlist action, if it's full).                                                                                                                                                                                                      | Not started        |
+| G4  | Share button                | Extend the existing `ShareWhatsAppButton` (`src/components/ui`): `navigator.share` with the pre-written message and URL, falling back to WhatsApp and copy link. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | Not started        |
+| G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                                                         | Not started        |
+| G5b | Traffic funnel              | Cookieless analytics (Vercel Web Analytics, or Plausible/Umami if custom events need a paid tier): public page views plus `event_page_view`, `share_tap`, `signup_start`, `signup_complete`, `event_register`, each tagged with `src`.                                                                                                                                                 | Deferred           |
 
-**Order:** G1 + G5b → G3 → G2 → G5 → G4. G2 needs G1, because a preview that
-opens to a sign-in wall wastes the tap. G5 ships before G4, so shares are
-counted from day one.
+**Order:** G1 → G2 → G3 → G5 → G4. G2 needs G1, because a preview that opens
+to a sign-in wall wastes the tap. G5 ships before G4, so shares are counted
+from day one. G5b (traffic funnel) is deferred by the owner (4 Nov).
 
 **Done when:** a logged-out phone opens a WhatsApp-shared event link and sees
 a rich preview, then the event details. It can sign up and be registered
@@ -64,7 +84,45 @@ source.
 - **Full events.** The card shows "Full" and "Join to get on the waitlist".
   Signup continues to the event's waitlist (G3).
 
-### G5b: traffic funnel
+### G2 notes
+
+- **Crawlers only.** `vercel.json` sends link-preview crawlers (WhatsApp,
+  `facebookexternalhit` for Facebook and Instagram, iMessage, Telegram,
+  Discord and others) on `/events/:id` and `/events/:id/info` to
+  `api/event-preview`. People, including Instagram and Facebook in-app
+  browsers, get the app as before. Search crawlers (Googlebot, Applebot) are
+  left out so they index the app. A person matched by mistake is sent on to
+  the link they opened, query included, with `?app=1`, which the rule skips.
+- **Tags and image.** The function reads event facts only (name, date, time,
+  venue, format) and returns `og:*` tags. `api/event-image` renders the
+  1200×630 card. Its URL carries a version from those facts, so it's cached
+  hard and an edited event gets a new image; any other URL for the event
+  (wrong version, extra params) redirects to the current one, so only real
+  events render, once per version. No spot count (cached). Started, finished
+  or past events say sign-ups are closed, judged by Amsterdam's date. The
+  logo is inlined, so a render fetches nothing.
+- **Fallback.** `index.html` carries site-wide tags (from `siteMeta.js`),
+  used for every other link, and by the function when the event is unknown,
+  or Supabase fails or takes over 2.5s. After a Supabase failure the page
+  isn't cached. The image function sends an unknown id to the static
+  `logo-hd.png`, and answers a Supabase failure with an uncached 503, so a
+  crawler retries rather than keeping a wrong image.
+- **Not covered:** links to the other event tabs (schedule, results) get the
+  site card. Those are for members, not sharing.
+- **Font.** The card uses the regular weight `@vercel/og` ships with, so no
+  font file is bundled.
+- **Node.js runtime.** The functions export `{ fetch }` and run as plain Node
+  ES modules, so relative imports carry a `.js` extension (a test enforces
+  it). Vercel's file tracer maps `.js` to a `.ts` source but not to `.tsx`,
+  so the share card lives in `api/event-image.tsx` itself.
+- **`@vercel/og` is pinned to 0.11.1.** Every 1.0.x release crashes when
+  loaded as an ES module in Node (`Dynamic require of "fs"` from its bundled
+  `harfbuzzjs`). Retest before upgrading.
+- **Check after deploy.** The functions read `VITE_SUPABASE_URL` and
+  `VITE_SUPABASE_ANON_KEY` at runtime from the Vercel project env. Paste an
+  event link into WhatsApp, or `curl -A WhatsApp/2 <event url>`.
+
+### G5b: traffic funnel (deferred)
 
 **Why.** G5 records sources only for people who convert. G5b counts the
 anonymous steps before that (link opened → page viewed → signup started), so
@@ -115,7 +173,8 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
 3. **Instagram:** reuse the G2 preview image as a "Download image" action
    (G4). No separate story design.
 4. **Full events:** offer "Join to get on the waitlist".
-5. **New-event email (G7):** dropped.
+   . **Link previews (G2), 6 Nov:** Vercel functions on the Node.js runtime,
+   not static pages built at deploy time.
 
 ## Log
 
@@ -129,3 +188,14 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
 - 4 Nov 2026: G1 built (guest events list, guest event page, join via the
   sign-in gate). Anon database access split out as its own project. Case
   study corrected: a WhatsApp share button already exists.
+- 4 Nov 2026: G1 merged (#151). G5b deferred by the owner. G2 built (crawler
+  previews and share image).
+- 4 Nov 2026: G2 review fixes. Every Vercel deploy of #152 failed; logs not
+  readable.
+- 5 Nov 2026: owner prefers no Vercel edge functions. Direction: static
+  previews at build time. Probe pushed but blocked by preview protection.
+  Paused until the owner has Vercel access (see Resume here).
+- 6 Nov 2026: owner has Vercel access and chose functions again, on Node.js.
+  Build log read (edge runtime rejected `@vercel/og`). Moved to Node, fixed
+  import extensions, pinned `@vercel/og` 0.11.1. Static design and probe
+  dropped.

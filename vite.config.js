@@ -2,15 +2,34 @@ import process from 'node:process'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
+import { SITE_DESCRIPTION, SITE_IMAGE_PATH, SITE_NAME, SITE_URL } from './siteMeta.js'
 
 // Opt-in bundle treemap. `npm run build:analyze` sets ANALYZE=true, which
 // emits dist/stats.html (gzip + brotli sizes) and opens it. Off by default
 // so normal/CI builds don't pay for it or leak the report into dist.
 const analyze = process.env.ANALYZE === 'true'
 
+const meta = (attr, key, content) => ({ tag: 'meta', attrs: { [attr]: key, content } })
+
+// Site-wide link preview tags, from the text api/event-preview falls back to.
+const siteMetaTags = () => ({
+  name: 'site-meta-tags',
+  transformIndexHtml: () => [
+    meta('name', 'description', SITE_DESCRIPTION),
+    meta('property', 'og:site_name', SITE_NAME),
+    meta('property', 'og:type', 'website'),
+    meta('property', 'og:title', SITE_NAME),
+    meta('property', 'og:description', SITE_DESCRIPTION),
+    meta('property', 'og:url', SITE_URL),
+    meta('property', 'og:image', `${SITE_URL}${SITE_IMAGE_PATH}`),
+    meta('name', 'twitter:card', 'summary'),
+  ],
+})
+
 export default defineConfig({
   plugins: [
     react(),
+    siteMetaTags(),
     analyze &&
       visualizer({
         filename: 'dist/stats.html',
@@ -51,6 +70,10 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.{js,jsx,ts,tsx}', 'scripts/prod-rehearsal/*.test.ts'],
+    include: [
+      'src/**/*.test.{js,jsx,ts,tsx}',
+      'api/**/*.test.{ts,tsx}',
+      'scripts/prod-rehearsal/*.test.ts',
+    ],
   },
 })
