@@ -21,7 +21,7 @@ import TipOfTheDay from './TipOfTheDay'
 import NextEventCard from './NextEventCard'
 import RecentlyCompletedBanners from './RecentlyCompletedBanners'
 import AdminAlerts from './AdminAlerts'
-import PinUpgradeCard from './PinUpgradeCard'
+import AddEmailCard from './AddEmailCard'
 import LobsterWayLink from '../../components/LobsterWayLink'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
 import type { Player, NormalisedTournament } from '../../lib/normalise'
@@ -267,7 +267,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           </AlertBox>
         )}
 
-        <PinUpgradeCard />
+        <AddEmailCard />
 
         <TransferOfferBanners
           incomingTransfers={myIncomingTransfers}

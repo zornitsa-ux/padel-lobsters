@@ -1,6 +1,5 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { PIN_SUNSET_LABEL } from '../auth/pinSunset'
 import { authReadinessKey, fetchAuthReadiness, type AuthReadiness } from './authReadiness'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Spinner } from '../../components/ui/Spinner'
@@ -54,7 +53,7 @@ export default function AuthReadinessPanel() {
   return (
     <div className="card space-y-3" data-testid="auth-readiness">
       <p className="text-xs font-bold text-lob-muted uppercase tracking-wide">
-        Sign-in readiness · PINs stop working on {PIN_SUNSET_LABEL}
+        Sign-in readiness · PINs retired
       </p>
       {isLoading && <Spinner size="inline" />}
       {isError && (

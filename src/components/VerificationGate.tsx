@@ -118,7 +118,7 @@ export default function VerificationGate({ children }: { children?: React.ReactN
 
         {mode === 'signin' && (
           <>
-            <SignInForm variant="page" initialEmail={initialEmail} allowPin />
+            <SignInForm variant="page" initialEmail={initialEmail} />
             <Button variant="secondary" fullWidth icon={<UserPlus />} onClick={enterSignup}>
               New here? Sign up
             </Button>

@@ -27,7 +27,7 @@ const renderModal = (props: Partial<Parameters<typeof SignInModal>[0]> = {}) =>
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mockUseApp.mockReturnValue({ role: 'guest', loginWithPin: vi.fn() })
+  mockUseApp.mockReturnValue({ role: 'guest' })
   requestEmailCode.mockResolvedValue({ error: null })
 })
 afterEach(cleanup)
@@ -47,7 +47,7 @@ describe('SignInModal', () => {
   })
 
   it('closes itself once the session has a role', () => {
-    mockUseApp.mockReturnValue({ role: 'player', loginWithPin: vi.fn() })
+    mockUseApp.mockReturnValue({ role: 'player' })
     const onClose = vi.fn()
     renderModal({ onClose })
 
@@ -57,7 +57,7 @@ describe('SignInModal', () => {
 
 describe('SignInModal — role', () => {
   it('stays open for an admin prompt when a player is signed in', () => {
-    mockUseApp.mockReturnValue({ role: 'player', loginWithPin: vi.fn() })
+    mockUseApp.mockReturnValue({ role: 'player' })
     const onClose = vi.fn()
     renderModal({ onClose, role: 'admin' })
 
@@ -66,7 +66,7 @@ describe('SignInModal — role', () => {
   })
 
   it('closes for an admin prompt when an admin is signed in', () => {
-    mockUseApp.mockReturnValue({ role: 'admin', loginWithPin: vi.fn() })
+    mockUseApp.mockReturnValue({ role: 'admin' })
     const onClose = vi.fn()
     renderModal({ onClose, role: 'admin' })
 

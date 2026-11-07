@@ -15,7 +15,6 @@ import EventDefaultTabRedirect from './features/events/EventDefaultTabRedirect'
 import Layout from './components/Layout'
 import { RouteFallback } from './components/ui/RouteFallback'
 import Dashboard from './features/home/Dashboard'
-import PinSignInInterstitial from './features/auth/PinSignInInterstitial'
 import VerificationGate from './components/VerificationGate'
 import { mark } from './lib/perfMarks'
 import EventShell from './features/events/EventShell'
@@ -83,7 +82,6 @@ export default function App() {
     <AppProvider>
       <BrowserRouter>
         <DeepLinkMigrator />
-        <PinSignInInterstitial />
         <PartnerOnboardingRedirect />
         <Layout>
           <VerificationGate>

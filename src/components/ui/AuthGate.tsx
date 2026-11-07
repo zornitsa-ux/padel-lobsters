@@ -112,12 +112,7 @@ export function SignInModal({
           </AlertBox>
         )}
 
-        <SignInForm
-          variant="modal"
-          initialEmail={initialEmail}
-          onSignedIn={handleSignedIn}
-          allowPin={false}
-        />
+        <SignInForm variant="modal" initialEmail={initialEmail} onSignedIn={handleSignedIn} />
 
         {onNavigate && (
           <div className="text-center">

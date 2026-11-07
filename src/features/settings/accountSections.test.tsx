@@ -9,8 +9,8 @@ import { mockSupabase } from '../../test/mockSupabase'
 // supabase client module.
 vi.mock('../../supabase', () => mockSupabase())
 vi.mock('../auth/SignInForm', () => ({
-  default: ({ variant, allowPin }: { variant: string; allowPin: boolean }) => (
-    <div data-testid="sign-in-form" data-variant={variant} data-allow-pin={String(allowPin)} />
+  default: ({ variant }: { variant: string }) => (
+    <div data-testid="sign-in-form" data-variant={variant} />
   ),
 }))
 
@@ -27,7 +27,6 @@ describe('AccountSection', () => {
 
     const form = screen.getByTestId('sign-in-form')
     expect(form.getAttribute('data-variant')).toBe('inline')
-    expect(form.getAttribute('data-allow-pin')).toBe('false')
     expect(screen.queryByRole('button', { name: /sign out/i })).toBeNull()
   })
 })

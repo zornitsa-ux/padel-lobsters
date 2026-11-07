@@ -42,7 +42,6 @@ vi.mock('../../context/useApp', () => ({
   useApp: () => ({
     session: { user: { id: 'p1', app_metadata: { role: 'player' } } },
     role: 'player',
-    loginWithPin: vi.fn(),
     logout: vi.fn(),
     requestMyEmailChange: vi.fn(),
   }),

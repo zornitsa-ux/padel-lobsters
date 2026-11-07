@@ -22,7 +22,7 @@ const renderPrompt = (props: Partial<Parameters<typeof SignInPrompt>[0]> = {}) =
   )
 
 beforeEach(() => {
-  mockUseApp.mockReturnValue({ role: 'guest', loginWithPin: vi.fn() })
+  mockUseApp.mockReturnValue({ role: 'guest' })
 })
 afterEach(cleanup)
 

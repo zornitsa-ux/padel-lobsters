@@ -1,10 +1,8 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
-import { Check, KeyRound, Mail } from 'lucide-react'
-import { useApp } from '../../context/useApp'
+import { Check, Mail } from 'lucide-react'
 import {
-  currentSession,
   looksLikeEmail,
   normaliseEmail,
   requestEmailCode,
@@ -16,8 +14,7 @@ import { takeReturnPath } from './returnPath'
 import { FormError } from '../../components/ui/FormError'
 import { PasswordInput } from './PasswordInput'
 import { OtpCodeStep } from './OtpCodeStep'
-import { markPinSignIn } from './pinSignInFlag'
-import { PIN_SUNSET_LABEL } from './pinSunset'
+import { PinRetiredExplainer } from './PinRetiredExplainer'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 
@@ -25,10 +22,9 @@ export interface SignInFormProps {
   variant: 'page' | 'modal' | 'inline'
   initialEmail?: string
   onSignedIn?: (session: Session) => void
-  allowPin: boolean
 }
 
-type Step = 'email' | 'code' | 'password' | 'forgot' | 'recovery-code' | 'pin' | 'done'
+type Step = 'email' | 'code' | 'password' | 'forgot' | 'recovery-code' | 'done'
 
 const INVALID_EMAIL_MESSAGE = 'Please enter a valid email address.'
 
@@ -57,16 +53,14 @@ function EmailField({ email, onChange }: EmailFieldProps) {
   )
 }
 
-export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }: SignInFormProps) {
+export function SignInForm({ variant, initialEmail = '', onSignedIn }: SignInFormProps) {
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState(initialEmail)
   const [password, setPassword] = useState('')
-  const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const firedRef = useRef(false)
   const navigate = useNavigate()
-  const { loginWithPin } = useApp()
 
   function signedIn(session: Session) {
     if (firedRef.current) return
@@ -138,23 +132,6 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
     })
   }
 
-  async function handlePinSubmit(event: FormEvent) {
-    event.preventDefault()
-    if (busy || !pin) return
-    setBusy(true)
-    setError('')
-    const result = await loginWithPin(pin)
-    setBusy(false)
-    const session = result.success ? await currentSession() : null
-    if (!session) {
-      setPin('')
-      setError(typeof result.error === 'string' && result.error ? result.error : 'Login failed')
-      return
-    }
-    markPinSignIn()
-    signedIn(session)
-  }
-
   function handleRecoveryVerified() {
     navigate('/auth/confirm?type=recovery&verified=1')
   }
@@ -171,11 +148,7 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
           <Button variant="neutral" fullWidth onClick={() => goTo('password')}>
             Sign in with password
           </Button>
-          {allowPin && (
-            <TextButton onClick={() => goTo('pin')}>
-              Sign in with PIN (until {PIN_SUNSET_LABEL})
-            </TextButton>
-          )}
+          <PinRetiredExplainer />
         </form>
       )}
 
@@ -236,32 +209,6 @@ export function SignInForm({ variant, initialEmail = '', onSignedIn, allowPin }:
           onChangeEmail={() => goTo('forgot')}
           resend={() => sendPasswordReset({ email: address })}
         />
-      )}
-
-      {step === 'pin' && (
-        <form onSubmit={handlePinSubmit} className="space-y-3">
-          <label htmlFor="signin-pin" className="label flex items-center gap-1.5">
-            <KeyRound size={12} className="text-lob-teal" /> Your PIN
-          </label>
-          <input
-            id="signin-pin"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={6}
-            value={pin}
-            onChange={(e) => {
-              setPin(e.target.value.replace(/\D/g, ''))
-              setError('')
-            }}
-            placeholder="••••"
-            className="input text-center text-2xl tracking-[0.5em] font-bold"
-          />
-          <FormError message={error} />
-          <Button type="submit" disabled={busy || !pin} fullWidth>
-            {busy ? 'Checking…' : 'Sign in with PIN'}
-          </Button>
-          <TextButton onClick={() => goTo('email')}>Use my email instead</TextButton>
-        </form>
       )}
 
       {step === 'done' && (

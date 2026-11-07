@@ -94,8 +94,3 @@ export async function signOutEverywhere(): Promise<AuthResult> {
   const { error } = await supabase.auth.signOut({ scope: 'global' })
   return { error }
 }
-
-export async function currentSession(): Promise<Session | null> {
-  const { data } = await supabase.auth.getSession()
-  return data.session
-}

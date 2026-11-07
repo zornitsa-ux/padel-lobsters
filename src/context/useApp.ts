@@ -6,7 +6,6 @@ export interface AppContextValue {
   sessionSettled: boolean
   role: string
   isAdmin: boolean
-  loginWithPin: (pin: string) => Promise<{ success: boolean; role: string; error: unknown }>
   logout: () => Promise<void>
   fetchMyProfile: () => Promise<unknown>
   requestMyEmailChange: (email: string) => Promise<unknown>
