@@ -24,14 +24,15 @@ shipped and the funnel has been measured.
 
 ## Resume here (7 Nov 2026)
 
-- **G1, G2, G4 and G4b are live** (#151, #152, #154, #155). G4b merged 7 Nov;
-  gap 6 (Manage tab "Fill the spots") was dropped by the owner.
-- **G3 (signup returns to the event) is in review.** See G3 notes. After it
-  merges, the owner pastes `magic_link.html` and `confirmation.html` into the
-  hosted dashboard's email templates. Merge by ~11 Nov (release freeze before
-  the 15 Nov event), or after the 15th.
-- **Next: G5** (attribution, needs a migration). Then G5b (traffic funnel):
-  first look into Vercel Web Analytics and Speed Insights (see G5b).
+- **G1, G2, G3, G4 and G4b are live** (#151, #152, #156, #154, #155). The G3
+  after-merge step is done (owner, 7 Nov): `magic_link.html` and
+  `confirmation.html` are pasted into the hosted email templates, and the
+  hosted redirect allow-list now has `https://padelobsters.nl/**` (it held
+  only `/auth/confirm` before).
+- **G5 is paused** (owner, 7 Nov). See G5 notes. It comes back, if at all,
+  with G5b.
+- **Next: G5b** (traffic funnel): first look into Vercel Web Analytics and
+  Speed Insights, and what each costs (see G5b).
 - **G4 leftovers** (admin announcement text, "Download image") are still open.
 
 ---
@@ -42,10 +43,10 @@ shipped and the funnel has been measured.
 | --- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
 | G1  | Public event page           | Guests see the upcoming events list (`/events`, upcoming only) and `/events/:id/info`: a read-only card (name, date, time, location, format, price, spots left) plus a "Join to play" CTA, or "Join to get on the waitlist" when full. Other tabs stay protected. See G1 notes.                                                                                         | Done (#151) |
 | G2  | Link previews               | Per-event `og:title`/`og:description`/`og:image` for `/events/:id*`, with a generated image (date, format, venue). No live spot count, because previews are cached. Check it in the WhatsApp and Instagram link preview. See G2 notes.                                                                                                                                  | Done (#152) |
-| G3  | Signup returns to the event | CTA → signup carrying the event as the return path (`returnPath.ts`), also when the email link opens in another browser. Land on the event's Info tab with the sign-up action on screen (or the waitlist action, if it's full). See G3 notes.                                                                                                                           | In review   |
+| G3  | Signup returns to the event | CTA → signup carrying the event as the return path (`returnPath.ts`), also when the email link opens in another browser. Land on the event's Info tab with the sign-up action on screen (or the waitlist action, if it's full). See G3 notes.                                                                                                                           | Done (#156) |
 | G4  | Share button                | `ShareEventButton` opens an in-app `ShareSheet`: the message, then `navigator.share` (where available), copy message and copy link. See G4 notes. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | Done (#154) |
 | G4b | More places to share        | A full-width "Share with friends" variant, then share right after signing up (`JoinEventCard` registered state), after an admin creates an event, in the event header on every tab while sign-ups are open (`EventShell`), and on the You tab. Then the signed-out event page. The Manage tab ("Fill the spots") was dropped. See G4 notes.                             | Done (#155) |
-| G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                                          | Not started |
+| G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                                          | Paused      |
 | G5b | Traffic funnel              | Cookieless analytics (Vercel Web Analytics, or Plausible/Umami if custom events need a paid tier): public page views plus `event_page_view`, `share_tap`, `signup_start`, `signup_complete`, `event_register`, each tagged with `src`.                                                                                                                                  | Later       |
 
 **Order:** G1 → G2 → G3 → G5 → G4. G2 needs G1, because a preview that opens
@@ -209,8 +210,29 @@ source.
 - **Not shared:** past events, partner invites (a private invite), the
   signed-out events list (its cards are already links), and the waitlist
   notice (sharing a full event only grows the waitlist).
-- **Still to do:** the admin announcement text and "Download image", and
-  `?src=`/`?ref=` on the link once G5 lands.
+- **Still to do:** the admin announcement text and "Download image".
+
+### G5 notes: paused
+
+- **Paused by the owner (7 Nov).** A build (#157, closed unmerged) tagged
+  share links with where in the app they were shared from (UTM
+  `utm_content`), carried the tag through join, signup and the email link,
+  and stored it on the new player. The owner found it more than needed for
+  now, and UTM reporting is a paid Vercel Web Analytics feature, so the
+  standard-tag reason fell away.
+- **Owner direction for any restart:** collect as little as needed. The
+  question is where in the app links get shared from. No referral code
+  (`ref`: no planned use, and a cost to maintain), no in-app admin view.
+  Signups can be counted in Supabase.
+- **Learned from the build, for a restart:**
+  - `registrations` is readable by anon and every member, so any per-
+    registration tag needs its own table, not a column.
+  - New `players` columns are client-invisible (column-level SELECT on four
+    columns, no UPDATE), but `get_my_profile_v2` returns the player's own row.
+  - The guest `/events/:id` → `info` and `join` → `info` redirects drop the
+    query string.
+  - A signup tag in metadata must never be able to fail GoTrue's
+    confirmation: validate in one place, store null otherwise.
 
 ### G5b: traffic funnel (later)
 
@@ -220,14 +242,14 @@ like `share_tap` need a paid plan on Hobby) and Speed Insights (real-user load
 times, alongside the existing perf CI). Check each against the acceptance
 criteria below before choosing a vendor.
 
-**Why.** G5 records sources only for people who convert. G5b counts the
+**Why.** G5 (paused) would record sources only for people who convert. G5b counts the
 anonymous steps before that (link opened → page viewed → signup started), so
 a weak result can be traced to the preview, the page or the signup form.
 Before G1 there is almost no anonymous traffic, so it ships with G1, not
 earlier.
 
 **Sources of truth.** The analytics tool covers the top of the funnel only.
-Signups and registrations are counted from the database (G5).
+Signups and registrations are counted from the database.
 
 **Acceptance criteria**
 
@@ -236,13 +258,14 @@ Signups and registrations are counted from the database (G5).
   against the bundle-size CI comment.
 - **No traffic writes to Supabase.** A row per page view adds disk-IO the
   Micro instance can't spare.
-- **Query strings are dropped** before anything is sent. Only `src` and
-  `ref` are kept. Sign-in deep links carry `?email=`
+- **Query strings are dropped** before anything is sent. Only campaign tags
+  (UTM), if any are used, are kept. Sign-in deep links carry `?email=`
   (`useSignInDeepLink.ts`) and the app only strips it after load.
 - **`/auth/*` is never tracked** (it carries confirmation tokens).
-- **No player IDs, names or emails** go to the vendor. `ref` goes only as an
-  opaque code, never a player ID.
+- **No player IDs, names or emails** go to the vendor.
 - **SPA route changes** are counted as page views.
+- **Cost:** note which features need a paid tier (UTM reporting is paid in
+  Vercel Web Analytics; check custom events too).
 - **Reviewed monthly** against the owner's private baseline. No live
   dashboards.
 
@@ -321,3 +344,8 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   (`safeAppPath`) instead of string checks; the invite return uses it too. No
   npm package fit: `@braintree/sanitize-url` blocks XSS schemes, not
   off-site redirects.
+- 7 Nov 2026: G3 merged (#156). Owner pasted the email templates and added
+  `https://padelobsters.nl/**` to the hosted redirect allow-list.
+- 7 Nov 2026: G5 built as share placement (#157), then paused by the owner and
+  closed unmerged: more than needed now, and UTM reporting is paid in Vercel
+  Web Analytics. Next is G5b's tool comparison.
