@@ -122,6 +122,9 @@ source.
 - **Check after deploy.** The functions read `VITE_SUPABASE_URL` and
   `VITE_SUPABASE_ANON_KEY` at runtime from the Vercel project env. Paste an
   event link into WhatsApp, or `curl -A WhatsApp/2 <event url>`.
+- **Region.** The functions run in `fra1` (Frankfurt), set by `regions` in
+  `vercel.json`: EU processing, and the nearest Vercel region to the Supabase
+  database in Zurich. Hobby allows one region.
 
 ### G3 notes
 
@@ -319,7 +322,7 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
 3. **Instagram:** reuse the G2 preview image as a "Download image" action
    (G4). No separate story design.
 4. **Full events:** offer "Join to get on the waitlist".
-   . **Link previews (G2), 6 Nov:** Vercel functions on the Node.js runtime,
+5. **Link previews (G2), 6 Nov:** Vercel functions on the Node.js runtime,
    not static pages built at deploy time.
 
 ## Log
@@ -380,5 +383,8 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   only (owner). Custom events and UTM are paid, so the funnel is page views
   plus Supabase counts. Speed Insights later.
 - 7 Nov 2026: owner: research and create a privacy page (none exists yet).
+- 7 Nov 2026: Vercel functions (link previews) moved from `iad1` (US) to
+  `fra1` (Frankfurt), the EU region nearest the Supabase database in Zurich
+  (owner). Set in `vercel.json`.
 - 7 Nov 2026: country flags self-hosted in `public/flags/` (64 SVGs from
   `country-flag-icons`, MIT), replacing flagcdn.com (#160, owner).
