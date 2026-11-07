@@ -20,6 +20,8 @@ interface NextEventCardProps {
   loading?: boolean
   /** Registrations still in flight, so this player's sign-up state is unknown. */
   registrationsPending?: boolean
+  /** Registered players for the share message's spots line; undefined while unknown. */
+  registeredCount?: number
   onNavigate: (page: string, tournament?: NormalisedTournament) => void
   formatDate: (date: string | null | undefined) => string
   /** King of the Court: the viewer's starting court or placing. */
@@ -58,6 +60,7 @@ export default function NextEventCard({
   isRegistered,
   loading = false,
   registrationsPending = false,
+  registeredCount,
   onNavigate,
   formatDate,
   kingOfCourtLine = null,
@@ -104,7 +107,7 @@ export default function NextEventCard({
           )}
         </div>
         <div className="flex gap-1 flex-shrink-0">
-          <ShareEventButton event={upcoming} variant="icon" />
+          <ShareEventButton event={upcoming} registeredCount={registeredCount} variant="icon" />
           <AddToCalendarButton tournament={upcoming} variant="icon" />
         </div>
       </div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Copy, Link2, MessageCircle, Share2 } from 'lucide-react'
 import { Modal } from './Modal'
 import { OptionRow } from './OptionRow'
-import { copyToClipboard } from '../../lib/whatsapp'
+import { buildShareUrl, copyToClipboard } from '../../lib/whatsapp'
 
 interface ShareSheetProps {
   open: boolean
@@ -13,34 +13,50 @@ interface ShareSheetProps {
   url: string
 }
 
-type Copied = 'message' | 'link' | null
+type Target = 'native' | 'message' | 'link'
+type Outcome = { target: Target; ok: boolean } | null
 
 const canShareNatively = () => typeof navigator !== 'undefined' && 'share' in navigator
-
-const whatsAppUrl = (message: string) => `https://wa.me/?text=${encodeURIComponent(message)}`
 
 /**
  * A bottom sheet for sharing a message and link: the phone's own share sheet (where the browser
  * has one), WhatsApp, or a copy of the message or the link. Shows the message as it will be sent.
  */
 export function ShareSheet({ open, onClose, title, message, url }: ShareSheetProps) {
-  const [copied, setCopied] = useState<Copied>(null)
+  const [outcome, setOutcome] = useState<Outcome>(null)
 
   useEffect(() => {
-    if (!open) setCopied(null)
+    if (!open) setOutcome(null)
   }, [open])
 
-  const copy = async (what: Exclude<Copied, null>) => {
-    const ok = await copyToClipboard(what === 'message' ? message : url)
-    setCopied(ok ? what : null)
+  const subtitle = ({
+    target,
+    ok,
+    fail,
+    idle,
+  }: {
+    target: Target
+    ok: string
+    fail: string
+    idle: string
+  }) => (outcome?.target !== target ? idle : outcome.ok ? ok : fail)
+
+  const copy = async (target: 'message' | 'link') => {
+    const ok = await copyToClipboard(target === 'message' ? message : url)
+    setOutcome({ target, ok })
   }
 
+  // The link stays in the text rather than in `url`: WhatsApp on iOS appends `url` to the text,
+  // which would print it twice.
   const shareNatively = async () => {
     try {
       await navigator.share({ title, text: message })
       onClose()
-    } catch {
-      // Dismissed, or the target refused: the sheet stays open for another option.
+    } catch (err) {
+      // Dismissing the phone's sheet is not a failure; the sheet stays open for another option.
+      if (err instanceof DOMException && err.name === 'AbortError') return
+      console.warn('navigator.share failed:', err)
+      setOutcome({ target: 'native', ok: false })
     }
   }
 
@@ -57,7 +73,12 @@ export function ShareSheet({ open, onClose, title, message, url }: ShareSheetPro
           {canShareNatively() && (
             <OptionRow
               title="Share via…"
-              subtitle="Messages, Instagram, Telegram and more"
+              subtitle={subtitle({
+                target: 'native',
+                ok: '',
+                fail: "Couldn't open. Try WhatsApp or copy the message.",
+                idle: 'Messages, Instagram, Telegram and more',
+              })}
               leading={<Share2 size={18} />}
               onClick={shareNatively}
             />
@@ -66,19 +87,29 @@ export function ShareSheet({ open, onClose, title, message, url }: ShareSheetPro
             title="WhatsApp"
             subtitle="Send to a chat or group"
             leading={<MessageCircle size={18} />}
-            href={whatsAppUrl(message)}
+            href={buildShareUrl(message)}
             external
             onClick={onClose}
           />
           <OptionRow
             title="Copy message"
-            subtitle={copied === 'message' ? 'Copied' : 'Text and link, ready to paste'}
+            subtitle={subtitle({
+              target: 'message',
+              ok: 'Copied',
+              fail: "Couldn't copy. Select the text above instead.",
+              idle: 'Text and link, ready to paste',
+            })}
             leading={<Copy size={18} />}
             onClick={() => copy('message')}
           />
           <OptionRow
             title="Copy link"
-            subtitle={copied === 'link' ? 'Copied' : url}
+            subtitle={subtitle({
+              target: 'link',
+              ok: 'Copied',
+              fail: "Couldn't copy the link.",
+              idle: 'Just the event link',
+            })}
             leading={<Link2 size={18} />}
             onClick={() => copy('link')}
           />

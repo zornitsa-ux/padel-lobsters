@@ -3,7 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 const { mockCopy } = vi.hoisted(() => ({ mockCopy: vi.fn() }))
-vi.mock('../../lib/whatsapp', () => ({ copyToClipboard: mockCopy }))
+vi.mock('../../lib/whatsapp', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../lib/whatsapp')>()),
+  copyToClipboard: mockCopy,
+}))
 
 import { ShareSheet } from './ShareSheet'
 
@@ -48,6 +51,15 @@ describe('ShareSheet', () => {
     expect(mockCopy).toHaveBeenLastCalledWith(url)
   })
 
+  it('says so when copying fails', async () => {
+    mockCopy.mockResolvedValue(false)
+    renderSheet()
+
+    fireEvent.click(screen.getByRole('button', { name: /Copy message/ }))
+
+    await waitFor(() => expect(screen.getByText(/Couldn't copy/)).toBeTruthy())
+  })
+
   it('hides the native option where the browser has no share sheet', () => {
     renderSheet()
     expect(screen.queryByRole('button', { name: /Share via/ })).toBeNull()
@@ -74,6 +86,19 @@ describe('ShareSheet', () => {
     fireEvent.click(screen.getByRole('button', { name: /Share via/ }))
 
     await waitFor(() => expect(share).toHaveBeenCalled())
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('says so when the native share fails for another reason', async () => {
+    const share = vi.fn().mockRejectedValue(new DOMException('no', 'NotAllowedError'))
+    vi.stubGlobal('navigator', { ...navigator, share })
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const onClose = vi.fn()
+    renderSheet(onClose)
+
+    fireEvent.click(screen.getByRole('button', { name: /Share via/ }))
+
+    await waitFor(() => expect(screen.getByText(/Couldn't open/)).toBeTruthy())
     expect(onClose).not.toHaveBeenCalled()
   })
 })

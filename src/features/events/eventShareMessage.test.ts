@@ -33,6 +33,12 @@ describe('buildEventShareMessage', () => {
     )
   })
 
+  it('writes single-digit days without a leading zero', () => {
+    expect(buildEventShareMessage({ event: { ...event, date: '2026-12-05' }, url })).toContain(
+      '📅 Saturday 5 Dec, 10:30 (90 min)',
+    )
+  })
+
   it('points a full event at the waitlist', () => {
     expect(buildEventShareMessage({ event, url, registeredCount: 16 })).toContain(
       '✅ Full, join the waitlist',

@@ -23,7 +23,7 @@ export const eventShareUrl = ({ event, origin }: { event: ShareableEvent; origin
 const whenLine = ({ date, time, duration }: ShareableEvent): string => {
   const day = parseLocalDate(date)
   const dayLabel = day
-    ? day.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'short' })
+    ? day.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })
     : ''
   const timeLabel = time ? `${time}${duration ? ` (${duration} min)` : ''}` : ''
   return [dayLabel, timeLabel].filter(Boolean).join(', ')
