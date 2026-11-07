@@ -48,9 +48,9 @@ const MISSING_TOKEN_ERROR = 'This link is missing its verification token. Reques
 // execute links, and an automatic verify would burn the single-use token before
 // the person clicks.
 //
-// Sign-in types go to the saved return path, then the email's `return_to` (the
-// page the code was requested from, for a link opened in another browser), then
-// `next`, then /home. A recovery
+// Sign-in types go to the email's `return_to` (the page this link's code was
+// asked for on, in any browser), then the saved return path, then `next`, then
+// /home. A recovery
 // link lands on "Set a new password". email_change stops on a confirmation
 // screen: the change applies on the first redemption (GoTrue v2.189 collapses
 // the double confirm for the token_hash flow), so the second email's link
@@ -74,14 +74,10 @@ export default function AuthConfirm() {
   const view = verifiedRecovery ? recoveryView({ session, sessionSettled }) : status
 
   const goToDestination = () => {
+    const saved = takeReturnPath()
+    const emailed = returnPathFromUrl({ url: params.get('return_to') })
     const next = params.get('next')
-    const emailed = returnPathFromUrl({
-      url: params.get('return_to'),
-      origin: window.location.origin,
-    })
-    navigate(takeReturnPath() ?? emailed ?? (isSafeReturnPath(next) ? next : '/home'), {
-      replace: true,
-    })
+    navigate(emailed ?? saved ?? (isSafeReturnPath(next) ? next : '/home'), { replace: true })
   }
 
   async function confirm() {

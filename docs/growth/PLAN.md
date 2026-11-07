@@ -128,14 +128,15 @@ source.
   and the return path lived only in the first browser's storage, so signing up
   in Instagram's in-app browser and tapping the link in Mail lost the event.
   `requestEmailCode` now sends the current page as `emailRedirectTo`, and the
-  magic-link and signup templates add it to the link as
-  `return_to={{ .RedirectTo }}`. `AuthConfirm` uses it (same origin only, never
-  `/auth/*`) after the saved path and before `next`. If GoTrue drops it (not on
-  the redirect allow-list) it sends the site URL, which is ignored. The hosted
-  allow-list is the production origin `/**` (pin-auth-removal DESIGN §2).
-  Either deploy order is safe: app first sends no `return_to` to old
-  templates; templates first get the old `/auth/confirm` URL, which is
-  ignored.
+  magic-link and signup templates add it to the link as `return_to`
+  (`{{ .RedirectTo | urlquery }}`, so a page with several query params comes
+  back whole). `AuthConfirm` keeps only its path (never `/` or `/auth/*`) and
+  puts it first, since it belongs to the link being opened; then the saved
+  path, then `next`. If GoTrue drops it (not on the redirect allow-list) it
+  sends the site URL, which is ignored. The hosted allow-list is the
+  production origin `/**` (pin-auth-removal DESIGN §2). Either deploy order is
+  safe: app first sends no `return_to` to old templates; templates first get
+  the old `/auth/confirm` URL, which is ignored.
 - **Register on screen on landing, for everyone** (owner, 7 Nov). The owner
   called the old layout a design flaw, not something to work around with a
   scroll or highlight after signup. The Info tab now puts the sign-up card
@@ -294,3 +295,5 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
 - 7 Nov 2026: G3 built. Owner: sign-up must be on screen on landing for
   everyone (moved above the description), and fix the email link in this PR
   (`return_to` from RedirectTo). E2e for the signup → event paths.
+- 7 Nov 2026: G3 review fixes: the link's `return_to` beats an older saved
+  path, is URL-encoded in the template, and is read as a path only.

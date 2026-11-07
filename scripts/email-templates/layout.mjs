@@ -6,7 +6,7 @@ const FOOT_TEXT = 'margin: 0; font-size: 13px; color: #6b8a92; line-height: 1.5'
 
 // returnTo adds RedirectTo (the page the code was requested from) for AuthConfirm.
 const confirmUrl = ({ type, next, returnTo }) =>
-  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=${type}&next=${next}${returnTo ? '&return_to={{ .RedirectTo }}' : ''}`
+  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=${type}&next=${next}${returnTo ? '&return_to={{ .RedirectTo | urlquery }}' : ''}`
 
 const codeBlock = ({
   codeLabel,

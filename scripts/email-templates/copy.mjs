@@ -1,4 +1,4 @@
-const RETURN_TO = `  The link carries return_to={{ .RedirectTo }}: the page the code was asked
+const RETURN_TO = `  The link carries return_to (RedirectTo, encoded): the page the code was asked
   for on (emailRedirectTo), so the link lands there in any browser. GoTrue
   sends the site URL instead when it isn't on the redirect allow-list, and
   AuthConfirm then falls back to next.

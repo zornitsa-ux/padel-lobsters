@@ -29,17 +29,11 @@ export function emailReturnUrl(): string {
 }
 
 /**
- * Reads an email link's `return_to` (RedirectTo) back into a path. Only this
- * origin counts, and never an /auth/ page or the bare site URL, so a link from
- * another browser lands on the page it was requested from or falls through.
+ * Reads an email link's `return_to` (RedirectTo) back into a path. Only the
+ * path is kept, so it never leaves the app. The bare site URL and /auth/ pages
+ * fall through, so the caller uses `next` instead.
  */
-export function returnPathFromUrl({
-  url,
-  origin,
-}: {
-  url: string | null | undefined
-  origin: string
-}): string | null {
+export function returnPathFromUrl({ url }: { url: string | null | undefined }): string | null {
   if (!url) return null
   let parsed: URL
   try {
@@ -47,8 +41,7 @@ export function returnPathFromUrl({
   } catch {
     return null
   }
-  if (parsed.origin !== origin) return null
-  const path = parsed.pathname + parsed.search
   if (parsed.pathname === '/' || parsed.pathname.startsWith('/auth/')) return null
+  const path = parsed.pathname + parsed.search
   return isSafeReturnPath(path) ? path : null
 }

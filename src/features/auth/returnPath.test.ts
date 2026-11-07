@@ -45,22 +45,23 @@ describe('returnPath', () => {
 })
 
 describe('returnPathFromUrl', () => {
-  const origin = 'https://padel.example'
-
-  it('turns a same-origin URL into a path', () => {
-    expect(returnPathFromUrl({ url: `${origin}/events/7/join?signup=1`, origin })).toBe(
-      '/events/7/join?signup=1',
+  it('keeps only the path and query', () => {
+    expect(returnPathFromUrl({ url: 'https://padel.example/events/7/join?signup=1&src=ig' })).toBe(
+      '/events/7/join?signup=1&src=ig',
     )
   })
 
+  it('keeps the path of another origin too: navigation never leaves the app', () => {
+    expect(returnPathFromUrl({ url: 'https://www.padel.example/events/7' })).toBe('/events/7')
+  })
+
   it.each([
-    ['another origin', 'https://evil.example/events/7'],
-    ['the bare site URL', origin],
-    ['the site URL with a slash', `${origin}/`],
-    ['an auth page', `${origin}/auth/confirm?next=/home`],
+    ['the bare site URL', 'https://padel.example'],
+    ['the site URL with a slash', 'https://padel.example/'],
+    ['an auth page', 'https://padel.example/auth/confirm?next=/home'],
     ['a path, not a URL', '/events/7'],
     ['nothing', null],
   ])('ignores %s', (_label, url) => {
-    expect(returnPathFromUrl({ url, origin })).toBeNull()
+    expect(returnPathFromUrl({ url })).toBeNull()
   })
 })
