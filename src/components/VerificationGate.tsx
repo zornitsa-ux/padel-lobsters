@@ -28,7 +28,7 @@ const SignupRequest = lazy(() => import('./SignupRequest'))
  *      otherwise show the auth card.
  *
  * Auth card modes:
- *   - signin (default): SignInForm (email code, password, or PIN until the sunset).
+ *   - signin (default): SignInForm (email code or password).
  *   - signup: self-serve native signup (email code).
  */
 type GateMode = 'signin' | 'signup'
@@ -118,7 +118,7 @@ export default function VerificationGate({ children }: { children?: React.ReactN
 
         {mode === 'signin' && (
           <>
-            <SignInForm variant="page" initialEmail={initialEmail} allowPin />
+            <SignInForm variant="page" initialEmail={initialEmail} />
             <Button variant="secondary" fullWidth icon={<UserPlus />} onClick={enterSignup}>
               New here? Sign up
             </Button>

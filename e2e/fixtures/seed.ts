@@ -6,7 +6,6 @@ export interface Account {
   name: string
   email: string
   password: string
-  pin: string
 }
 
 const player = (n: number) => `00000000-0000-4000-a000-0000000000${String(n).padStart(2, '0')}`
@@ -16,7 +15,6 @@ export const ADMIN: Account = {
   name: 'Mara Quint',
   email: 'admin@lobsters.test',
   password: 'Lobster-Admin-9999',
-  pin: '9999',
 }
 
 export const PLAYER: Account = {
@@ -24,7 +22,6 @@ export const PLAYER: Account = {
   name: 'Theo Lind',
   email: 'player@lobsters.test',
   password: 'Lobster-Player-1234',
-  pin: '1234',
 }
 
 export const SEED_PLAYERS = {

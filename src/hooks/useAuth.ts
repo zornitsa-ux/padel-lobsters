@@ -34,14 +34,6 @@ export default function useAuth() {
     roleRef.current = role
   }, [role])
 
-  const loginWithPin = useCallback(async (enteredPin: string) => {
-    const result = await authApi.loginWithPin(enteredPin)
-    if (result.success && result.session) {
-      setSession(result.session)
-    }
-    return { success: result.success, role: result.role ?? 'guest', error: result.error }
-  }, [])
-
   const fetchMyProfile = useCallback(async () => {
     if (!session?.user) return null
     return authApi.fetchMyProfile()
@@ -62,7 +54,6 @@ export default function useAuth() {
     role,
     isAdmin,
     roleRef,
-    loginWithPin,
     logout,
     fetchMyProfile,
     requestMyEmailChange,

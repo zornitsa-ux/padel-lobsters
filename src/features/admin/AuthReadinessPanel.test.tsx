@@ -9,7 +9,6 @@ vi.mock('./authReadiness', async (orig) => ({
   ...(await orig<typeof import('./authReadiness')>()),
   fetchAuthReadiness: h.fetchAuthReadiness,
 }))
-vi.mock('../auth/pinSunset', () => ({ PIN_SUNSET_LABEL: '10 November' }))
 
 import AuthReadinessPanel from './AuthReadinessPanel'
 
@@ -17,7 +16,7 @@ beforeEach(() => vi.clearAllMocks())
 afterEach(cleanup)
 
 describe('AuthReadinessPanel', () => {
-  it('shows the lists, counts and sunset date', async () => {
+  it('shows the lists and counts', async () => {
     h.fetchAuthReadiness.mockResolvedValue({
       no_email: [{ id: 'a', name: 'Ana Nomail' }],
       recent_pin_users: [{ id: 'b', name: 'Ben Pin', last_pin_at: '2026-10-18T10:00:00Z' }],
@@ -27,11 +26,11 @@ describe('AuthReadinessPanel', () => {
     renderWithClient(<AuthReadinessPanel />)
     expect(await screen.findByText('Ana Nomail')).toBeTruthy()
     expect(screen.getByText('No real email — contact these players')).toBeTruthy()
-    expect(screen.getByText('Signed in with a PIN in the last 14 days')).toBeTruthy()
+    expect(screen.getByText('Last signed in with a PIN, in the past 14 days')).toBeTruthy()
     expect(screen.getByText('Ben Pin')).toBeTruthy()
     expect(screen.getByText('18 Oct')).toBeTruthy()
-    expect(screen.getByText('Switched to email: 7 · Still on PIN: 3')).toBeTruthy()
-    expect(screen.getByText(/10 November/)).toBeTruthy()
+    expect(screen.getByText('Switched to email: 7 · Last signed in with a PIN: 3')).toBeTruthy()
+    expect(screen.getByText(/PINs retired/)).toBeTruthy()
   })
 
   it('hides empty lists', async () => {
@@ -42,7 +41,9 @@ describe('AuthReadinessPanel', () => {
       still_pin_count: 0,
     })
     renderWithClient(<AuthReadinessPanel />)
-    expect(await screen.findByText('Switched to email: 0 · Still on PIN: 0')).toBeTruthy()
+    expect(
+      await screen.findByText('Switched to email: 0 · Last signed in with a PIN: 0'),
+    ).toBeTruthy()
     expect(screen.queryByText('No real email — contact these players')).toBeNull()
   })
 

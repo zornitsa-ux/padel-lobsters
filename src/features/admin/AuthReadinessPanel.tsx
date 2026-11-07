@@ -1,6 +1,5 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { PIN_SUNSET_LABEL } from '../auth/pinSunset'
 import { authReadinessKey, fetchAuthReadiness, type AuthReadiness } from './authReadiness'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Spinner } from '../../components/ui/Spinner'
@@ -22,7 +21,7 @@ function ReadinessBody({ readiness }: { readiness: AuthReadiness }) {
   return (
     <>
       <p className="text-sm font-semibold text-lob-slate">
-        Switched to email: {switched_count} · Still on PIN: {still_pin_count}
+        Switched to email: {switched_count} · Last signed in with a PIN: {still_pin_count}
       </p>
       {no_email.length > 0 && (
         <NameList title="No real email — contact these players">
@@ -32,7 +31,7 @@ function ReadinessBody({ readiness }: { readiness: AuthReadiness }) {
         </NameList>
       )}
       {recent_pin_users.length > 0 && (
-        <NameList title="Signed in with a PIN in the last 14 days">
+        <NameList title="Last signed in with a PIN, in the past 14 days">
           {recent_pin_users.map((p) => (
             <li key={p.id} className="flex justify-between gap-2">
               <span>{p.name}</span>
@@ -54,7 +53,7 @@ export default function AuthReadinessPanel() {
   return (
     <div className="card space-y-3" data-testid="auth-readiness">
       <p className="text-xs font-bold text-lob-muted uppercase tracking-wide">
-        Sign-in readiness · PINs stop working on {PIN_SUNSET_LABEL}
+        Sign-in readiness · PINs retired
       </p>
       {isLoading && <Spinner size="inline" />}
       {isError && (

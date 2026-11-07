@@ -10,7 +10,6 @@
 //            categories, profile fields)
 //   - steps: [{ title, text }]           — numbered walkthrough
 //   - note:  string                      — short closing aside
-import { PIN_SUNSET_LABEL } from '../features/auth/pinSunset'
 
 // ── Content shape ────────────────────────────────────────────────────────────
 export interface LobsterWayListRow {
@@ -76,7 +75,7 @@ const LOBSTER_WAY_CONTENT: LobsterWayCategory[] = [
       },
       {
         q: '🔑 How do I sign in?',
-        a: `Enter your email and we'll send you a 6-digit code. Type it in, or tap the link in the same email. PINs stop working on ${PIN_SUNSET_LABEL}, so it's worth switching to email now.`,
+        a: "Enter your email and we'll send you a 6-digit code. Type it in, or tap the link in the same email. PINs have retired, so if you used one before, sign in with the email on your account.",
       },
       {
         q: "📬 I don't get the email",

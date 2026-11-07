@@ -8,7 +8,7 @@ import {
   PLAYER_PASSWORD,
 } from './fixtures/db'
 import { clearInbox, waitForCode, waitForConfirmPath } from './fixtures/mailpit'
-import { PLAYER, SEED_EVENTS, SIGN_IN_EMAILS } from './fixtures/seed'
+import { SEED_EVENTS, SIGN_IN_EMAILS } from './fixtures/seed'
 import { allowConsoleErrors, expect, test } from './fixtures/test'
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -276,7 +276,7 @@ test('an account with no players row sees the incomplete-account panel and can s
 })
 
 /* ════════════════════════════════════════════════════════════════════════════
-   PIN sunset comms: post-PIN interstitial and the Home upgrade card.
+   After the PIN cutover: the explainer and the Home add-email card.
    ════════════════════════════════════════════════════════════════════════════ */
 
 async function openHomeSignedIn({ page, email }: { page: Page; email: string }) {
@@ -284,42 +284,11 @@ async function openHomeSignedIn({ page, email }: { page: Page; email: string }) 
   await page.goto('/home')
 }
 
-test('PIN sign-in shows the interstitial once, with the player email', async ({ page }) => {
+test('sign-in offers no PIN, only the retired-PIN explainer', async ({ page }) => {
   await page.goto('/community')
-  await page.getByRole('button', { name: /sign in with pin \(until/i }).click()
-  await page.getByLabel(/your pin/i).fill(PLAYER.pin)
-  await page.getByRole('button', { name: /^sign in with pin$/i }).click()
-
-  const dialogTitle = page.getByText(/^PINs stop working on /)
-  await expect(dialogTitle).toBeVisible()
-  await expect(page.getByText(PLAYER.email)).toBeVisible()
-  await page.getByRole('button', { name: /^got it$/i }).click()
-  await expect(dialogTitle).toHaveCount(0)
-
-  await page.reload()
-  await page.waitForLoadState('networkidle')
-  await expect(dialogTitle).toHaveCount(0)
-})
-
-test('upgrade card on Home: shows the email, Got it dismisses it for good', async ({ page }) => {
-  const email = `e2e-card-${Date.now()}@lobsters.test`
-  const { id } = await createPlayer({ email })
-  try {
-    await openHomeSignedIn({ page, email })
-    const card = page.getByTestId('pin-upgrade-card')
-    await expect(card).toContainText('Signing in is getting easier')
-    await expect(card).toContainText(email)
-
-    await card.getByRole('button', { name: /^got it$/i }).click()
-    await expect(card).toHaveCount(0)
-
-    await page.reload()
-    await page.waitForLoadState('networkidle')
-    await expect(page.getByText('Welcome to Padel Lobsters!')).toHaveCount(0)
-    await expect(page.getByTestId('pin-upgrade-card')).toHaveCount(0)
-  } finally {
-    await deletePlayer({ id })
-  }
+  await expect(page.getByRole('button', { name: /sign in with pin/i })).toHaveCount(0)
+  await page.getByRole('button', { name: /used a pin before\?/i }).click()
+  await expect(page.getByText(/^PINs have retired\./)).toBeVisible()
 })
 
 test('synthetic account sees the add-email card until an admin sets a real email', async ({
@@ -327,10 +296,10 @@ test('synthetic account sees the add-email card until an admin sets a real email
 }) => {
   const synthetic = `player-${crypto.randomUUID()}@padelobsters.internal`
   const realEmail = `e2e-fixed-${Date.now()}@lobsters.test`
-  const { id } = await createPlayer({ email: synthetic })
+  const { id, firstName } = await createPlayer({ email: synthetic })
   try {
     await openHomeSignedIn({ page, email: synthetic })
-    const card = page.getByTestId('pin-upgrade-card')
+    const card = page.getByTestId('add-email-card')
     await expect(card).toContainText('Add your email so you can keep signing in')
     await expect(card.getByRole('button')).toHaveCount(0)
     await expect(page.getByText('padelobsters.internal')).toHaveCount(0)
@@ -345,7 +314,8 @@ test('synthetic account sees the add-email card until an admin sets a real email
     await page.getByRole('button', { name: /^sign out$/i }).click()
     await signIn({ page, email: realEmail, password: PLAYER_PASSWORD })
     await page.goto('/home')
-    await expect(page.getByTestId('pin-upgrade-card')).toContainText('Signing in is getting easier')
+    await expect(page.getByText(new RegExp(firstName))).toBeVisible()
+    await expect(page.getByTestId('add-email-card')).toHaveCount(0)
   } finally {
     await deletePlayer({ id })
   }

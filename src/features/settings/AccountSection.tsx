@@ -11,7 +11,7 @@ export default function AccountSection() {
       description="We'll email you a 6-digit code. No password needed."
     >
       <div className="card">
-        <SignInForm variant="inline" allowPin={false} />
+        <SignInForm variant="inline" />
       </div>
     </Section>
   )

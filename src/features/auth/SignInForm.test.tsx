@@ -8,26 +8,20 @@ const actions = vi.hoisted(() => ({
   verifyEmailCode: vi.fn(),
   signInWithPassword: vi.fn(),
   sendPasswordReset: vi.fn(),
-  currentSession: vi.fn(),
 }))
-const { loginWithPin, mockNavigate } = vi.hoisted(() => ({
-  loginWithPin: vi.fn(),
-  mockNavigate: vi.fn(),
-}))
+const { mockNavigate } = vi.hoisted(() => ({ mockNavigate: vi.fn() }))
 
 vi.mock('./authActions', () => ({
   ...actions,
   normaliseEmail: (email: string) => email.trim().toLowerCase(),
   looksLikeEmail: (email: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email),
 }))
-vi.mock('../../context/useApp', () => ({ useApp: () => ({ loginWithPin }) }))
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useNavigate: () => mockNavigate,
 }))
 
-import { hasPinSignIn } from './pinSignInFlag'
-import { PIN_SUNSET_LABEL } from './pinSunset'
+import { PIN_RETIRED_EXPLAINER } from './PinRetiredExplainer'
 import { SignInForm, type SignInFormProps } from './SignInForm'
 
 const session = { user: { id: 'u1' } }
@@ -40,7 +34,7 @@ const rateLimit = {
 const renderForm = (props: Partial<SignInFormProps> = {}) =>
   render(
     <MemoryRouter>
-      <SignInForm variant="page" allowPin={false} {...props} />
+      <SignInForm variant="page" {...props} />
     </MemoryRouter>,
   )
 
@@ -58,8 +52,6 @@ beforeEach(() => {
   actions.verifyEmailCode.mockResolvedValue({ session, error: null })
   actions.signInWithPassword.mockResolvedValue({ session, error: null })
   actions.sendPasswordReset.mockResolvedValue({ error: null })
-  actions.currentSession.mockResolvedValue(session)
-  loginWithPin.mockResolvedValue({ success: true, role: 'player', error: undefined })
 })
 afterEach(cleanup)
 
@@ -107,9 +99,12 @@ describe('SignInForm — email step', () => {
     expect((await screen.findByRole('alert')).textContent).toMatch(/wait 25 seconds/i)
   })
 
-  it('offers no PIN unless allowed', () => {
+  it('offers no PIN sign-in, only the retired-PIN explainer', () => {
     renderForm()
     expect(screen.queryByText(/sign in with pin/i)).toBeNull()
+    expect(screen.queryByText(PIN_RETIRED_EXPLAINER)).toBeNull()
+    click(/used a pin before\?/i)
+    expect(screen.getByText(PIN_RETIRED_EXPLAINER)).toBeTruthy()
   })
 })
 
@@ -313,38 +308,5 @@ describe('SignInForm — forgot password', () => {
     click(/send reset code/i)
 
     expect((await screen.findByRole('alert')).textContent).toMatch(/wait 25 seconds/i)
-  })
-})
-
-describe('SignInForm — PIN sub-state', () => {
-  it('labels the PIN link with the sunset date and reuses loginWithPin', async () => {
-    const onSignedIn = vi.fn()
-    renderForm({ allowPin: true, onSignedIn })
-    click(`Sign in with PIN (until ${PIN_SUNSET_LABEL})`)
-    fireEvent.change(screen.getByLabelText(/your pin/i), { target: { value: '1234' } })
-    click(/sign in with pin$/i)
-
-    await waitFor(() => expect(onSignedIn).toHaveBeenCalledWith(session))
-    expect(loginWithPin).toHaveBeenCalledWith('1234')
-    expect(hasPinSignIn()).toBe(true)
-  })
-
-  it('does not flag an email-code sign-in', async () => {
-    const onSignedIn = vi.fn()
-    renderForm({ onSignedIn })
-    typeEmail('ada@example.com')
-    click(/email me a sign-in code/i)
-    await screen.findByLabelText(/code/i)
-    expect(hasPinSignIn()).toBe(false)
-  })
-
-  it('shows the server error for a wrong PIN', async () => {
-    loginWithPin.mockResolvedValue({ success: false, role: 'guest', error: 'Wrong PIN' })
-    renderForm({ allowPin: true })
-    click(/sign in with pin \(until/i)
-    fireEvent.change(screen.getByLabelText(/your pin/i), { target: { value: '0000' } })
-    click(/sign in with pin$/i)
-
-    expect((await screen.findByRole('alert')).textContent).toBe('Wrong PIN')
   })
 })

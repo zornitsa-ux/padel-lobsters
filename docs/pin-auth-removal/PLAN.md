@@ -47,13 +47,14 @@ signed in gets logged out.
 | T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [~]   |
 | T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [x]   |
 | T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [~]   |
-| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | W     | T8              | 4        | [ ]   |
+| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | C     | T8              | 4        | [~]   |
 | T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [ ]   |
 | T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]   |
 | T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]   |
 | T15 | Phase 5a: client reads the role from token claims         | W     | T1              | #50      | [x]   |
 | T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]   |
 | T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10       | [ ]   |
+| T18 | Invite emails: admin confirms the send; clearer copy      | W     | owner direction | 11       | [ ]   |
 
 C = coordinator · W = worker (worktree) · O = owner.
 States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
@@ -554,33 +555,60 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   the orphan that leaves would be listed by integrity check 2 (and get
   C-12's panel). This belongs with T16/T17 (auth ownership via the Admin API).
 
-**Resume here (as of 2026-10-21, after T₀):**
+- 2026-11-07: **PR 4 built** (T9, `pin-auth-4-cutover`, from `main` at
+  #152). The coordinator built it, with no worker.
+  - **Cutover date moved:** 5 Nov passed without PR 4. The next events are
+    Sun 15 Nov and Sun 29 Nov, so the cutover must merge by **Thu 12 Nov**.
+  - **Production reads (C, read-only, counts only):** 3 active players
+    without an email (unchanged). 3 PIN sign-ins in the last 7 days, the last
+    on 5 Nov. 9 auth users created since T₀, all with a `players` row. 24
+    sign-ins since T₀. 0 unconfirmed. `lobster_way_content` is still NULL.
+  - **Client changes:**
+    - the PIN step, `allowPin` and `loginWithPin` are removed (`api/auth.ts`,
+      `useAuth`, `AppContext`);
+    - `pinSunset.ts`, `pinSignInFlag.ts`, the post-PIN interstitial and the
+      card dismissal are deleted;
+    - `SignInForm` shows the "Used a PIN before?" explainer (DESIGN Phase 3
+      copy) in every variant;
+    - the FAQ and the readiness panel say "PINs retired".
+  - **Deviation: the Home card stays for synthetic accounts only**, as
+    `AddEmailCard`. A signed-in synthetic account can't sign in again once
+    its session ends, and Home is the only place it would see that. The
+    real-email variant and its dismissal are gone, as planned.
+  - **Deviation: the stub's `error` is a sentence**, with `code:
+'pin_retired'` beside it. Every client from before the cutover shows
+    `verify-pin`'s `error` verbatim, and no current client calls the
+    function. The stub logs `[verify-pin] pin_retired` per call, which the
+    48h watch counts.
+  - **Gates:** typecheck, lint (0 errors), format, `design:check`, unit
+    tests (2452), build, and `test:e2e` 55/55. The stub was served locally:
+    `POST` → 410 with the sentence, `OPTIONS` → 200. There's no migration, so
+    no `db:test` or `db:types`. **The §4.5 rehearsal didn't run:** this PR
+    touches no SQL and no auth config, so parity can't change.
 
-- **Owner, now:** send the announcement email and the T₀ WhatsApp (Appendix,
-  date "5 November"). Confirm the 3 admins were told that invites send an
-  email (open since R2). Then T8 is `[x]`.
-- **Daily until cutover (C, read-only):** the readiness RPC (counts), the
-  auth logs (429s, `otp_disabled`, SMTP errors), new signups having player
-  rows, and Resend usage on tournament days (upgrade above ~70/day). §4.4.
-- **Mon 2 Nov:** the WhatsApp reminder (owner).
-- **Before cutover, hard gates (§5):**
-  - **§4.3 devices:** recruit the iPhone tester, plus Android Gmail,
-    desktop link and password reset, and a `+alias` signup.
-  - **The 3 no-email players:** each has a real email, or an admin has
-    accepted the risk by name.
-  - **The integrity check:** still meets the T₀ column.
-  - **#13:** on or after Sun 8 Nov.
-- **Build PR 4 (T9) during the window:** remove the PIN client path and
-  `pinSunset.ts` (the FAQ, card, interstitial and panel import it), add the
-  "Used a PIN before?" explainer, and replace `verify-pin` with the 410 stub.
-  It carries PLAN's next log entry, and gets the §4.5 rehearsal (§4.1).
-- **Cutover Thu 5 Nov:** merge PR 4 → Vercel → `functions deploy verify-pin`
-  → WhatsApp → 48h watch → PR 5 (revoke).
+**Resume here (as of 2026-11-07, PR 4 open):**
+
+- **Owner, cutover go/no-go (§5):**
+  - **The 3 no-email players:** each gets a real email, or an admin accepts
+    the risk for each by name.
+  - **§4.3 devices:** these were never confirmed done. Run them, or accept
+    them as covered by the 24 real sign-ins since T₀.
+  - Confirm the 3 admins were told that invites send an email (open since
+    R2), and that the T₀ announcement and the 2 Nov reminder went out.
+- **Cutover, by Thu 12 Nov:** merge PR 4 → Vercel deploys →
+  `npx supabase functions deploy verify-pin` from `main` → WhatsApp "PINs
+  retired" (Appendix) → C runs §4.4's cutover checks.
+- **48h watch (C, read-only):** `[verify-pin] pin_retired` hits, auth logs
+  (`otp_disabled`, 429s, SMTP errors), new signups with player rows. Then PR 5
+  (revoke `verify_player_pin_v2` from anon).
 - **Noted for later:**
   - an admin path that deletes the auth account (T16/T17);
-  - the dead `invalid_pin` text in `oscarsPhase.ts`, which goes in PR 6;
-  - session-email staleness after an admin email fix: the card catches up at
-    the next token refresh.
+  - PR 6's additions from PR 4's review: the shared transfer error map, the
+    PIN-era transfer argument, `invalid_pin`, `lib/deviceId.ts` (§3.6);
+  - invite-email consent: T18, PR 11 (§3.6a). The owner decides the policy
+    first.
+  - `AddEmailCard` goes with the explainer in PR 7, or with the synthetic
+    accounts in PR 10, whichever is first.
 
 ---
 
@@ -596,7 +624,7 @@ on or after Sun 8 Nov** (cutover ≥ 3 days before it).
 | R2: dark backend (PR 1/3)        | **Done 2026-10-21**                        | The hook and invite emails run in production before players see the new UI |
 | **T₀**: PRs 2/3 + 3/3 + announce | **Done 2026-10-21** (owner)                | T₀ ≤ #13 − 17 days                                                         |
 | WhatsApp reminder                | **Mon 2 Nov** (cutover − 3 days)           |                                                                            |
-| **Cutover** (PR 4)               | **Thu 5 Nov** (owner; T₀ + 15)             | ≥ 3 days before #13; go/no-go in §5                                        |
+| **Cutover** (PR 4)               | **By Thu 12 Nov** (was 5 Nov; slipped)     | ≥ 3 days before the 15 Nov event; go/no-go in §5                           |
 | Revoke (PR 5)                    | Cutover + 2 days                           | After the 48h watch is clean                                               |
 | Phase 4 cleanup (PR 6)           | ≥ Cutover + 14 days, once stub hits are ~0 | Not within 3 days of an event                                              |
 | Explainer removal (PR 7)         | Cutover + ~2 months                        |                                                                            |
@@ -764,8 +792,40 @@ verify-pin`.
 - **PR 5 (T10):** the migration revoking `verify_player_pin_v2` from anon, plus
   the grants file update.
 - **PR 6 (T11):** DESIGN §3 Phase 4 in full. Functions are deployed or deleted
-  first, then db push.
+  first, then db push. Also, from PR 4's review (2026-11-07):
+  - **One transfer error map.** The same status → message map (`wrong_pin`,
+    `not_found`, …) is copied in `Dashboard.tsx`, `Registration.tsx`,
+    `TransferSpotModal.tsx` and `TransferAccept.tsx`. Extract one shared map
+    first, then rename `wrong_pin` → `not_signed_in` once.
+  - **PIN-era transfer arguments.** `create_transfer` and `cancel_transfer`
+    no longer take a PIN, but `respond_to_transfer` still has an optional
+    `input_device_id`, and `AdminTransferPanel`'s header comment still says
+    cancelling needs the sender's PIN. Drop the argument if nothing reads it,
+    and correct the comment.
+  - **The dead `invalid_pin` status** in `oscarsPhase.ts` (its copy was
+    neutralised in PR 4) and `lib/deviceId.ts`, which has no caller left.
 - **PR 7 (T12):** removes the explainer.
+
+### 3.6a PR 11: invite emails (T18)
+
+Raised by the owner on 2026-11-07. Since R2, `admin_add_player` (with an email),
+`admin_invite_league_player` and `admin_resend_invite` email the player at
+once through `private.send_invite_email` → `send-invite-email`, with no step in
+between. That's a service email, not marketing, but the app can't tell whether
+the person asked to join. The "added" copy says only "An admin has set up your
+account".
+
+- **Confirm before sending:** the admin is asked "Send them an invite email?"
+  when saving a new player with an email, and can decline. Resend invite
+  already is an explicit action. The league invite is an admin action for a
+  player already in the league, so it keeps sending (confirm with the owner).
+- **Copy:** each email says why the player is getting it, with "Not you?
+  Ignore this email or reply and we'll remove you."
+- **Owner first:** whether this is enough, or whether the policy itself
+  changes (for example, admins only add people who asked to join). Not legal
+  advice; the owner decides.
+- No dependency on the PIN cutover. It can ship any time, but not within 3
+  days of an event if it touches the add-player flow.
 
 ### 3.7 PRs 0c and 0d: prod-data rehearsal kit (T13, T14)
 
