@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ErrorBoundary } from './ErrorBoundary'
+import * as chunkReload from '../../lib/chunkReload'
+
+beforeEach(() => {
+  vi.spyOn(console, 'error').mockImplementation(() => {})
+})
 
 afterEach(() => {
   cleanup()
@@ -14,7 +19,6 @@ function Boom(): never {
 
 describe('ErrorBoundary', () => {
   it('shows a reload fallback instead of unmounting', () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {})
     render(
       <ErrorBoundary resetKey="/a">
         <Boom />
@@ -25,7 +29,6 @@ describe('ErrorBoundary', () => {
   })
 
   it('clears the error when the reset key changes', () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {})
     const { rerender } = render(
       <ErrorBoundary resetKey="/a">
         <Boom />
@@ -37,5 +40,24 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>,
     )
     expect(screen.getByText('Next page')).toBeTruthy()
+  })
+
+  it('renders the given fallback, including nothing', () => {
+    const { container } = render(
+      <ErrorBoundary fallback={null}>
+        <Boom />
+      </ErrorBoundary>,
+    )
+    expect(container.innerHTML).toBe('')
+  })
+
+  it('shows the loading spinner, not the error, while a chunk reload is under way', () => {
+    vi.spyOn(chunkReload, 'isChunkReloading').mockReturnValue(true)
+    render(
+      <ErrorBoundary>
+        <Boom />
+      </ErrorBoundary>,
+    )
+    expect(screen.queryByText('Something went wrong')).toBeNull()
   })
 })

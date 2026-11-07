@@ -88,8 +88,8 @@ export default function App() {
         <FunnelAnalytics />
         <PartnerOnboardingRedirect />
         <Layout>
-          <VerificationGate>
-            <RouteErrorBoundary>
+          <RouteErrorBoundary>
+            <VerificationGate>
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
                   <Route path="/" element={<Navigate to="/home" replace />} />
@@ -160,8 +160,8 @@ export default function App() {
                   <Route path="*" element={<Navigate to="/home" replace />} />
                 </Routes>
               </Suspense>
-            </RouteErrorBoundary>
-          </VerificationGate>
+            </VerificationGate>
+          </RouteErrorBoundary>
         </Layout>
       </BrowserRouter>
     </AppProvider>
@@ -170,8 +170,8 @@ export default function App() {
 
 // Keeps the header and nav up when a route throws, and clears on navigation.
 function RouteErrorBoundary({ children }: { children: React.ReactNode }) {
-  const { pathname } = useLocation()
-  return <ErrorBoundary resetKey={pathname}>{children}</ErrorBoundary>
+  const { pathname, search } = useLocation()
+  return <ErrorBoundary resetKey={pathname + search}>{children}</ErrorBoundary>
 }
 
 // Translate the legacy onNavigate(page, tournament?) signature to URL
@@ -383,8 +383,10 @@ function FunnelAnalytics() {
   if (!guestSeen && sessionSettled && !session) setGuestSeen(true)
   if (!import.meta.env.PROD || !guestSeen) return null
   return (
-    <Suspense fallback={null}>
-      <GuestAnalytics />
-    </Suspense>
+    <ErrorBoundary fallback={null}>
+      <Suspense fallback={null}>
+        <GuestAnalytics />
+      </Suspense>
+    </ErrorBoundary>
   )
 }

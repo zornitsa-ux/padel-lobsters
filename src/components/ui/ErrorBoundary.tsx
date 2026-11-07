@@ -1,12 +1,16 @@
 import React from 'react'
 import { RefreshCw, TriangleAlert } from 'lucide-react'
+import { isChunkReloading } from '../../lib/chunkReload'
 import { Button } from './Button'
 import { EmptyState } from './EmptyState'
+import { RouteFallback } from './RouteFallback'
 
 interface ErrorBoundaryProps {
   children: React.ReactNode
-  /** Clears the error when it changes, e.g. the route path, so navigating away recovers. */
+  /** Clears the error when it changes, e.g. the route path and query, so navigating away recovers. */
   resetKey?: string
+  /** Shown instead of the reload card. `null` hides an optional piece without a trace. */
+  fallback?: React.ReactNode
 }
 
 interface ErrorBoundaryState {
@@ -31,12 +35,14 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: unknown) {
-    console.error('[ErrorBoundary]', error)
+    if (!isChunkReloading()) console.error('[ErrorBoundary]', error)
   }
 
   render() {
     if (!this.state.error) return this.props.children
-    return <ErrorFallback />
+    // A cancelled chunk error resolves the import to undefined; the page is already reloading.
+    if (isChunkReloading()) return <RouteFallback />
+    return this.props.fallback === undefined ? <ErrorFallback /> : this.props.fallback
   }
 }
 
