@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Section } from '../../../components/ui/Section'
 import { GroupStandingsTable } from './GroupStandingsTable'
-import { computeGroupStandings } from '../domain/standings'
+import { computeGroupStandings, TIEBREAK_NOTE } from '../domain/standings'
 import type { GroupLabel, LeagueMatch, LeagueTeam } from '../domain/types'
 
 const GROUP_LABELS: GroupLabel[] = ['A', 'B']
@@ -48,9 +48,7 @@ export function GroupStandings({
             />
           </div>
         ))}
-        <p className="text-xs text-lob-muted-light">
-          Ties on points: head-to-head → set +/− → game +/−
-        </p>
+        <p className="text-xs text-lob-muted-light">{TIEBREAK_NOTE}</p>
       </div>
     </Section>
   )

@@ -2,11 +2,20 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import { GroupStandings } from './GroupStandings'
-import type { LeagueTeam } from '../domain/types'
+import { TIEBREAK_NOTE } from '../domain/standings'
+import type { GroupLabel, LeagueTeam } from '../domain/types'
 
 afterEach(cleanup)
 
-function makeTeam({ id, name }: { id: string; name: string }): LeagueTeam {
+function makeTeam({
+  id,
+  name,
+  group,
+}: {
+  id: string
+  name: string
+  group: GroupLabel
+}): LeagueTeam {
   return {
     id,
     league_id: 'league1',
@@ -18,7 +27,7 @@ function makeTeam({ id, name }: { id: string; name: string }): LeagueTeam {
     spirit_animal: null,
     experience_level: 'intermediate',
     preferred_play_times: null,
-    group_label: 'A',
+    group_label: group,
     created_at: '',
   }
 }
@@ -26,19 +35,23 @@ function makeTeam({ id, name }: { id: string; name: string }): LeagueTeam {
 const noop = () => {}
 
 describe('GroupStandings', () => {
-  it('explains the tiebreak order under the tables', () => {
+  it('explains the tiebreak order once, under both group tables', () => {
     render(
       <GroupStandings
         title="Standings"
         icon={null}
-        divTeams={[makeTeam({ id: 'a', name: 'Alpha' }), makeTeam({ id: 'b', name: 'Beta' })]}
+        divTeams={[
+          makeTeam({ id: 'a', name: 'Alpha', group: 'A' }),
+          makeTeam({ id: 'b', name: 'Beta', group: 'B' }),
+        ]}
         divMatches={[]}
         myTeamId={null}
         onTeamClick={noop}
       />,
     )
     expect(screen.getByText('Group A')).toBeTruthy()
-    expect(screen.getByText(/Ties on points: head-to-head → set \+\/− → game \+\/−/)).toBeTruthy()
+    expect(screen.getByText('Group B')).toBeTruthy()
+    expect(screen.getAllByText(TIEBREAK_NOTE)).toHaveLength(1)
   })
 
   it('renders nothing, and no note, before groups exist', () => {
