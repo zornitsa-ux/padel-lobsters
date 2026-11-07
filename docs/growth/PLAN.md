@@ -27,7 +27,7 @@ shipped and the funnel has been measured.
 - **G1 is live** (#151, merged 4 Nov). Guests can browse upcoming events and
   open an event page; "Join" goes through signup back to the event.
 - **G4 share sheet is live** (#154 merged). **G4b** (more places to share)
-  is in review on branch `g4b-share-placements`: items 1 to 5 built. Items 6
+  is in review (#155): gaps 1 to 4 in the G4 notes are built. Gaps 5 and 6
   (signed-out event page, Manage tab "Fill the spots") wait for the owner to
   say whether they're still wanted.
 - **G5b (traffic funnel) is back in scope** (owner, 7 Nov), for after G4b and

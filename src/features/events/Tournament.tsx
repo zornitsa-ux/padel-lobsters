@@ -9,7 +9,6 @@ import AdminTransferPanel from '../../components/AdminTransferPanel'
 import { DEFAULT_EVENT_DESCRIPTION } from './eventConstants'
 import EventFormModal from './EventFormModal'
 import { EventShareSheet } from './ShareEventButton'
-import { isOpenToJoin } from './public/publicEventHelpers'
 import UpcomingEventCard from './UpcomingEventCard'
 import { AwaitingResultsCard } from './AwaitingResultsCard'
 import { LeagueDashboardCard } from '../league/ui/LeagueDashboardCard'
@@ -178,15 +177,13 @@ export default function Tournament({ onNavigate }: { onNavigate: EventNavigate }
         </CollapsibleSection>
 
         <EventFormModal {...eventForm.modalProps} onSubmit={(e) => void handleSubmit(e)} />
-        {/* A back-dated event isn't taking sign-ups, so there's nothing to share. */}
-        {eventForm.created && isOpenToJoin({ event: eventForm.created }) && (
+        {eventForm.created && (
           <EventShareSheet
             event={eventForm.created}
             registeredCount={0}
             open
             onClose={eventForm.dismissCreated}
-            title="Your event is live"
-            lead="Share it now so people can sign up."
+            lead="Your event is live. Share it now so people can sign up."
           />
         )}
       </div>

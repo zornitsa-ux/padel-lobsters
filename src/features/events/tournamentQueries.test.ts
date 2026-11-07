@@ -142,6 +142,12 @@ describe('addTournament', () => {
     expect(saved).toMatchObject({ id: 'new-id', name: 'Test Cup' })
   })
 
+  it('returns null rather than failing when the saved row does not parse', async () => {
+    mockInsertSingle.mockResolvedValue({ data: { id: 42 }, error: null })
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    await expect(addTournament({ name: 'X' })).resolves.toBeNull()
+  })
+
   it('throws on insert error and logs to console.error', async () => {
     const err = { message: 'insert failed' }
     mockInsertSingle.mockResolvedValue({ data: null, error: err })

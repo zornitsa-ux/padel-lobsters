@@ -7,6 +7,7 @@ import { useEventPhase } from './useEventPhase'
 import { useRegistrations } from './useRegistrations'
 import ShareEventButton from './ShareEventButton'
 import { isOpenToJoin } from './public/publicEventHelpers'
+import { splitRegistrationsByStatus } from './registration/utils'
 import { visibleEventTabs } from './eventPhase'
 import type { EventTab } from './eventPhase'
 
@@ -30,7 +31,7 @@ export default function EventShell({ tournament }: Props) {
   const openToJoin = isOpenToJoin({ event: tournament })
   // Same query key as the tabs, so the spots-left count costs no extra fetch.
   const { data: regs } = useRegistrations(openToJoin ? tournament.id : null)
-  const registeredCount = regs?.filter((r) => r.status === 'registered').length
+  const registeredCount = regs && splitRegistrationsByStatus(regs).registered.length
 
   // Which tabs exist is a phase question, not a role question — splitting on
   // `isAdmin` alone is what put a Results tab on events with no scores.

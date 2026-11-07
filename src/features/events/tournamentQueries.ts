@@ -50,8 +50,11 @@ export async function fetchTournaments(): Promise<NormalisedTournament[]> {
   return normaliseTournaments(rows)
 }
 
-/** Inserts the event and returns it as saved, so the admin can be offered a share right away. */
-export async function addTournament(data: TournamentInput): Promise<NormalisedTournament> {
+/**
+ * Inserts the event and returns it as saved, so the admin can be offered a share right away.
+ * Returns null if the saved row doesn't parse: the insert has committed, so it isn't a failure.
+ */
+export async function addTournament(data: TournamentInput): Promise<NormalisedTournament | null> {
   const payload: TablesInsert<'tournaments'> = {
     name: data.name ?? '',
     date: data.date,
@@ -77,7 +80,12 @@ export async function addTournament(data: TournamentInput): Promise<NormalisedTo
     console.error('addTournament error:', error)
     throw error
   }
-  return normaliseTournaments([tournamentRowSchema.parse(row)])[0]
+  const parsed = tournamentRowSchema.safeParse(row)
+  if (!parsed.success) {
+    console.warn('addTournament: saved row did not parse:', parsed.error)
+    return null
+  }
+  return normaliseTournaments([parsed.data])[0]
 }
 
 export async function updateTournament(id: string, data: TournamentInput): Promise<void> {

@@ -44,7 +44,8 @@ beforeEach(() => {
 
 describe('useEventForm', () => {
   it('holds a created event for the share prompt until dismissed', async () => {
-    m.add.mockResolvedValue(kotc)
+    const upcoming = { ...kotc, status: 'upcoming', date: '2099-06-01' }
+    m.add.mockResolvedValue(upcoming)
     const { result } = renderHook(() => useEventForm())
     act(() => result.current.openNew())
 
@@ -52,9 +53,21 @@ describe('useEventForm', () => {
       await result.current.save()
     })
 
-    expect(result.current.created).toBe(kotc)
+    expect(result.current.created).toBe(upcoming)
     expect(result.current.modalProps.open).toBe(false)
     act(() => result.current.dismissCreated())
+    expect(result.current.created).toBeNull()
+  })
+
+  it('offers no share prompt for a back-dated event', async () => {
+    m.add.mockResolvedValue({ ...kotc, status: 'upcoming', date: '2020-06-01' })
+    const { result } = renderHook(() => useEventForm())
+    act(() => result.current.openNew())
+
+    await act(async () => {
+      await result.current.save()
+    })
+
     expect(result.current.created).toBeNull()
   })
 

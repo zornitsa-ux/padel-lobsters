@@ -12,8 +12,13 @@ import {
   withSavedFormat,
 } from './eventFormModel'
 import type { NormalisedTournament } from '../../lib/normalise'
+import { isOpenToJoin } from './public/publicEventHelpers'
 
 export type EventFormSaveResult = 'saved' | 'format_reverted'
+
+// A back-dated event isn't taking sign-ups, so there's nothing to share.
+const promptToShare = (saved: NormalisedTournament | null) =>
+  saved && isOpenToJoin({ event: saved }) ? saved : null
 
 // The admin event form behind EventFormModal: open, edit courts, save, and the
 // format lock. The server refuses an entry-mode change once anyone has signed
@@ -53,7 +58,7 @@ export function useEventForm() {
     try {
       const data = buildEventData({ form })
       if (editing) await updateMut.mutateAsync({ id: editing.id, data })
-      else setCreated(await addMut.mutateAsync(data))
+      else setCreated(promptToShare(await addMut.mutateAsync(data)))
       setOpen(false)
       return 'saved'
     } catch (err) {
