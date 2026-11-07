@@ -137,6 +137,21 @@ source.
   production origin `/**` (pin-auth-removal DESIGN §2). Either deploy order is
   safe: app first sends no `return_to` to old templates; templates first get
   the old `/auth/confirm` URL, which is ignored.
+- **Security (7 Nov).** Anyone can ask GoTrue to email a sign-in link to
+  any address, with any allow-listed `redirect_to`, so `return_to` is chosen
+  by whoever asked for the email. That's acceptable because:
+  - it's reduced to an in-app path. `//host`, `/\host`, `javascript:` and
+    `data:` are rejected (unit tests), and a page outside the app can't be
+    reached;
+  - no page writes on load: transfers, team invites and registration all
+    need a tap (checked 7 Nov). Keep it that way: a route that acts on open
+    would make this a one-click attack;
+  - the value is URL-encoded in the email (`urlquery`), so it can't add or
+    override link params.
+    The return path (saved and emailed) drops the sign-in deep link's
+    `?signin=1&email=`, so no address travels in a link. The hosted allow-list
+    must stay the production origin `/**` only: no other hosts, no preview
+    patterns.
 - **Register on screen on landing, for everyone** (owner, 7 Nov). The owner
   called the old layout a design flaw, not something to work around with a
   scroll or highlight after signup. The Info tab now puts the sign-up card
@@ -297,3 +312,5 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   (`return_to` from RedirectTo). E2e for the signup → event paths.
 - 7 Nov 2026: G3 review fixes: the link's `return_to` beats an older saved
   path, is URL-encoded in the template, and is read as a path only.
+- 7 Nov 2026: G3 security pass on the redirects: return paths drop
+  `?signin`/`email`, more unsafe-URL tests, notes in G3.

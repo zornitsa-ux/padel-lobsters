@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/useApp'
 import { isPublicPath } from '../../lib/authPaths'
+import { withoutDeepLinkParams } from './returnPath'
 
 export interface SignInDeepLink {
   requested: boolean
@@ -12,14 +13,6 @@ export function parseSignInDeepLink({ search }: { search: string }): SignInDeepL
   const params = new URLSearchParams(search)
   const email = (params.get('email') ?? '').trim().toLowerCase()
   return { requested: params.has('signin'), email: email.includes('@') ? email : '' }
-}
-
-function withoutDeepLinkParams({ search }: { search: string }): string {
-  const params = new URLSearchParams(search)
-  params.delete('signin')
-  params.delete('email')
-  const rest = params.toString()
-  return rest ? `?${rest}` : ''
 }
 
 // Opens the sign-in modal for `?signin=1[&email=]` when signed out on a public path.

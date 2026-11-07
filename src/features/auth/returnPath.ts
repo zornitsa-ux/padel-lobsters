@@ -7,9 +7,22 @@ export function isSafeReturnPath(path: string | null | undefined): path is strin
   return !path.startsWith('//') && !path.startsWith('/\\')
 }
 
+/** Drops the sign-in deep link's `?signin=1&email=` from a query string. */
+export function withoutDeepLinkParams({ search }: { search: string }): string {
+  const params = new URLSearchParams(search)
+  params.delete('signin')
+  params.delete('email')
+  const rest = params.toString()
+  return rest ? `?${rest}` : ''
+}
+
+// The current page without the sign-in deep link's ?signin/&email, so an
+// address never travels in a return path or an email link.
+const currentPath = () =>
+  window.location.pathname + withoutDeepLinkParams({ search: window.location.search })
+
 export function saveReturnPath(): void {
-  const { pathname, search, hash } = window.location
-  writeStorage({ area: 'local', key: STORAGE_KEY, value: pathname + search + hash })
+  writeStorage({ area: 'local', key: STORAGE_KEY, value: currentPath() + window.location.hash })
 }
 
 export function takeReturnPath(): string | null {
@@ -24,8 +37,7 @@ export function takeReturnPath(): string | null {
  * or swaps in the site URL when it isn't allowed. No hash: GoTrue may drop it.
  */
 export function emailReturnUrl(): string {
-  const { origin, pathname, search } = window.location
-  return `${origin}${pathname}${search}`
+  return window.location.origin + currentPath()
 }
 
 /**
