@@ -7,6 +7,13 @@
 -- production. This turns those defaults off on both, and removes the extra
 -- grants production already gave the tables created since then.
 --
+-- Supabase is making the same change on its side ("Tables no longer
+-- auto-exposed to the Data API", github.com/orgs/supabase/discussions/45329):
+-- new projects and the local image already have it, and existing projects
+-- were due from 30 Oct 2026; this one still had the old defaults on 7 Nov.
+-- Their version also revokes service_role's defaults; this one leaves
+-- service_role alone, but local tests already run without them.
+--
 -- Functions are not covered: their EXECUTE comes from Postgres' built-in
 -- PUBLIC grant, which default privileges don't remove on this stack
 -- (20260727194010, section 2). db:grants:check guards functions and tables.
