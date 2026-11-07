@@ -28,6 +28,7 @@ import WaitlistNotice from './registration/WaitlistNotice'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { isSettled, isUnpaid } from './paymentStatus'
 import PaymentStatusBadge from './registration/PaymentStatusBadge'
+import ShareEventButton from './ShareEventButton'
 
 type Props = {
   tournament: NormalisedTournament
@@ -215,9 +216,21 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
     />
   ) : null
 
+  const isRegistered = teamEvent
+    ? myEntry?.status === 'registered'
+    : view.registration.status === 'registered'
+  const shareSection = isRegistered ? (
+    <ShareEventButton
+      key="share"
+      event={tournament}
+      registeredCount={registered.length}
+      variant="full"
+    />
+  ) : null
+
   const sectionsByPhase: Record<EventPhase, ReactNode[]> = {
-    open: [registrationSection],
-    set: [registrationSection, roundsSection],
+    open: [registrationSection, shareSection],
+    set: [registrationSection, shareSection, roundsSection],
     live: [roundsSection, registrationSection],
     sealed: [roundsSection, registrationSection],
     social: [roundsSection, registrationSection],

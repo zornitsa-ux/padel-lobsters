@@ -10,7 +10,6 @@ import TransferPendingModal from '../../components/TransferPendingModal'
 import DateTile from '../../components/ui/DateTile'
 import { EmptyState } from '../../components/ui/EmptyState'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
-import ShareEventButton from './ShareEventButton'
 import EventDescription from './EventDescription'
 import EventAdminMenu from './EventAdminMenu'
 import EventFormModal from './EventFormModal'
@@ -37,6 +36,7 @@ import { paymentChangeConfirm } from './paymentChangeConfirm'
 import RegistrationPaymentSheetModal from './registration/RegistrationPaymentSheetModal'
 import AddPlayerCard from './registration/AddPlayerCard'
 import JoinEventCard from './registration/JoinEventCard'
+import ShareEventButton from './ShareEventButton'
 import { useSelfRegister } from './registration/useSelfRegister'
 import { findMyEntry, rosterLine } from './registration/team/teamHelpers'
 import { useTeamEntries } from './teams/useTeams'
@@ -471,15 +471,8 @@ export default function Registration({
             Format:{' '}
             <span className="font-medium text-lob-slate">{formatLabel(tournament.format)}</span>
           </p>
-          {/* Share + calendar sit with the date and time they act on. */}
-          <div className="flex gap-2">
-            <ShareEventButton
-              event={tournament}
-              registeredCount={registered.length}
-              variant="compact"
-            />
-            <AddToCalendarButton tournament={tournament} variant="compact" />
-          </div>
+          {/* Calendar sits with the date and time it acts on. Share is in the event header. */}
+          <AddToCalendarButton tournament={tournament} variant="compact" />
         </div>
       </div>
 
@@ -512,6 +505,9 @@ export default function Registration({
           onSignedUp={handleTeamSignedUp}
         />
       )}
+      {isTeamEvent && !isAdmin && !isCompleted && myTeamEntry?.status === 'registered' && (
+        <ShareEventButton event={tournament} registeredCount={registered.length} variant="full" />
+      )}
 
       {!isTeamEvent && !isAdmin && claimedId && !isCompleted && (
         <JoinEventCard
@@ -522,6 +518,13 @@ export default function Registration({
           error={selfRegister.error}
           onRegister={() => void selfRegister.register()}
           onGoToPayment={() => onNavigate('me', tournament)}
+          share={
+            <ShareEventButton
+              event={tournament}
+              registeredCount={registered.length}
+              variant="full"
+            />
+          }
         />
       )}
 

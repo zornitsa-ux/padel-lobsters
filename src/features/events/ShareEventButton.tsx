@@ -7,17 +7,74 @@ import { isOpenToJoin } from './public/publicEventHelpers'
 import type { OverTournament } from './eventPhase'
 import { buildEventShareMessage, eventShareUrl, type ShareableEvent } from './eventShareMessage'
 
+export type ShareEvent = ShareableEvent & OverTournament
+
 interface ShareEventButtonProps {
-  event?: (ShareableEvent & OverTournament) | null
+  event?: ShareEvent | null
   /** Registered players now, for a spots-left line. Omit when unknown. */
   registeredCount?: number
-  /** 'icon' (square) or 'compact' (a small labelled button under content). */
-  variant?: 'icon' | 'compact'
+  /**
+   * 'icon' (square, for headers and cards) or 'full' (a full-width "Share with friends", for
+   * the moments worth asking: just registered, the You tab).
+   */
+  variant?: 'icon' | 'full'
+}
+
+interface EventShareSheetProps {
+  event: ShareEvent
+  registeredCount?: number
+  open: boolean
+  onClose: () => void
+  title?: string
+  lead?: string
+}
+
+/** The share sheet for an event's link, with a ready-written message. */
+export function EventShareSheet({
+  event,
+  registeredCount,
+  open,
+  onClose,
+  title = 'Share event',
+  lead,
+}: EventShareSheetProps) {
+  const url = eventShareUrl({ event, origin: window.location.origin })
+  return (
+    <ShareSheet
+      open={open}
+      onClose={onClose}
+      title={title}
+      lead={lead}
+      message={buildEventShareMessage({ event, url, registeredCount })}
+      url={url}
+    />
+  )
+}
+
+function ShareTrigger({
+  variant,
+  onClick,
+}: {
+  variant: NonNullable<ShareEventButtonProps['variant']>
+  onClick: () => void
+}) {
+  if (variant === 'icon') {
+    return (
+      <IconButton onClick={onClick} aria-label="Share event" variant="success">
+        <Share2 />
+      </IconButton>
+    )
+  }
+  return (
+    <Button variant="secondary" onClick={onClick} icon={<Share2 />} fullWidth>
+      Share with friends
+    </Button>
+  )
 }
 
 /**
- * Opens the share sheet for an event's link, with a ready-written message. Renders nothing once
- * sign-ups close (started, finished or past), since the message invites people to sign up.
+ * Opens the share sheet for an event. Renders nothing once sign-ups close (started, finished or
+ * past), since the message invites people to sign up.
  */
 export default function ShareEventButton({
   event,
@@ -27,26 +84,14 @@ export default function ShareEventButton({
   const [open, setOpen] = useState(false)
   if (!event?.id || !isOpenToJoin({ event })) return null
 
-  const openSheet = () => setOpen(true)
-  const url = eventShareUrl({ event, origin: window.location.origin })
-
   return (
     <>
-      {variant === 'icon' ? (
-        <IconButton onClick={openSheet} aria-label="Share event" variant="success">
-          <Share2 />
-        </IconButton>
-      ) : (
-        <Button variant="neutral" size="sm" onClick={openSheet} icon={<Share2 />}>
-          Share
-        </Button>
-      )}
-      <ShareSheet
+      <ShareTrigger variant={variant} onClick={() => setOpen(true)} />
+      <EventShareSheet
+        event={event}
+        registeredCount={registeredCount}
         open={open}
         onClose={() => setOpen(false)}
-        title="Share event"
-        message={buildEventShareMessage({ event, url, registeredCount })}
-        url={url}
       />
     </>
   )

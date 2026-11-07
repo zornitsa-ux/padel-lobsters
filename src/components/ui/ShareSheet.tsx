@@ -8,6 +8,8 @@ interface ShareSheetProps {
   open: boolean
   onClose: () => void
   title: string
+  /** A line above the message saying why to share now, e.g. right after creating the event. */
+  lead?: string
   /** The full message, link included. */
   message: string
   url: string
@@ -22,7 +24,7 @@ const canShareNatively = () => typeof navigator !== 'undefined' && 'share' in na
  * A bottom sheet for sharing a message and link: the phone's own share sheet (where the browser
  * has one), WhatsApp, or a copy of the message or the link. Shows the message as it will be sent.
  */
-export function ShareSheet({ open, onClose, title, message, url }: ShareSheetProps) {
+export function ShareSheet({ open, onClose, title, lead, message, url }: ShareSheetProps) {
   const [outcome, setOutcome] = useState<Outcome>(null)
 
   useEffect(() => {
@@ -63,6 +65,7 @@ export function ShareSheet({ open, onClose, title, message, url }: ShareSheetPro
   return (
     <Modal open={open} onClose={onClose} title={title}>
       <div className="space-y-4">
+        {lead && <p className="text-sm text-lob-slate">{lead}</p>}
         <p
           data-testid="share-message"
           className="rounded-xl bg-lob-well px-4 py-3 text-sm text-lob-dark whitespace-pre-line break-words"

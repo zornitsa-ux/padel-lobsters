@@ -41,8 +41,9 @@ describe('ShareEventButton', () => {
     expect(message).toContain(`Sign up: ${window.location.origin}/events/t1`)
   })
 
-  it('renders the compact variant as a labelled button', () => {
-    render(<ShareEventButton event={event} variant="compact" />)
-    expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy()
+  it('renders the full variant as "Share with friends"', () => {
+    render(<ShareEventButton event={event} variant="full" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Share with friends' }))
+    expect(screen.getByTestId('share-message')).toBeTruthy()
   })
 })

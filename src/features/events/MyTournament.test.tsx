@@ -182,6 +182,32 @@ describe('MyTournament — no schedule yet', () => {
   })
 })
 
+describe('MyTournament — share with friends', () => {
+  const open = { date: '2099-06-01' }
+
+  it('asks a registered player to share while sign-ups are open', () => {
+    registrations = [mkRegistration({ id: 'r1', playerId: 'p1', status: 'registered' })]
+    mockPhase = 'open'
+
+    renderMyTournament(open)
+
+    expect(screen.getByRole('button', { name: 'Share with friends' })).not.toBeNull()
+  })
+
+  it('does not ask a player who has not registered, or once the event has started', () => {
+    registrations = [mkRegistration({ id: 'r1', playerId: 'someone-else', status: 'registered' })]
+    mockPhase = 'open'
+    renderMyTournament(open)
+    expect(screen.queryByRole('button', { name: 'Share with friends' })).toBeNull()
+    cleanup()
+
+    registrations = [mkRegistration({ id: 'r1', playerId: 'p1', status: 'registered' })]
+    mockPhase = 'live'
+    renderMyTournament({ ...open, status: 'active' })
+    expect(screen.queryByRole('button', { name: 'Share with friends' })).toBeNull()
+  })
+})
+
 describe('MyTournament — still renders after completion', () => {
   it('keeps showing the players own match results once the tournament is completed', () => {
     registrations = [mkRegistration({ id: 'r1', playerId: 'p1', status: 'registered' })]

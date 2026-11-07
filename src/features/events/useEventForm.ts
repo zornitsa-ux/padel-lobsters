@@ -27,6 +27,7 @@ export function useEventForm() {
   const [form, setForm] = useState<EventFormValues>(emptyForm)
   const [saving, setSaving] = useState(false)
   const [serverLocked, setServerLocked] = useState(false)
+  const [created, setCreated] = useState<NormalisedTournament | null>(null)
   const { data: registrations = [], isPending: registrationsPending } = useRegistrations(
     editing?.id ?? null,
   )
@@ -52,7 +53,7 @@ export function useEventForm() {
     try {
       const data = buildEventData({ form })
       if (editing) await updateMut.mutateAsync({ id: editing.id, data })
-      else await addMut.mutateAsync(data)
+      else setCreated(await addMut.mutateAsync(data))
       setOpen(false)
       return 'saved'
     } catch (err) {
@@ -74,6 +75,9 @@ export function useEventForm() {
     openNew,
     openEdit,
     save,
+    /** The event just created, until the admin dismisses the prompt to share it. */
+    created,
+    dismissCreated: () => setCreated(null),
     /** Everything EventFormModal needs except onSubmit. */
     modalProps: {
       open,

@@ -43,6 +43,33 @@ beforeEach(() => {
 })
 
 describe('useEventForm', () => {
+  it('holds a created event for the share prompt until dismissed', async () => {
+    m.add.mockResolvedValue(kotc)
+    const { result } = renderHook(() => useEventForm())
+    act(() => result.current.openNew())
+
+    await act(async () => {
+      await result.current.save()
+    })
+
+    expect(result.current.created).toBe(kotc)
+    expect(result.current.modalProps.open).toBe(false)
+    act(() => result.current.dismissCreated())
+    expect(result.current.created).toBeNull()
+  })
+
+  it('offers no share prompt after an edit', async () => {
+    m.update.mockResolvedValue(undefined)
+    const { result } = renderHook(() => useEventForm())
+    act(() => result.current.openEdit(kotc))
+
+    await act(async () => {
+      await result.current.save()
+    })
+
+    expect(result.current.created).toBeNull()
+  })
+
   it('saves an edit and closes', async () => {
     m.update.mockResolvedValue(undefined)
     const { result } = renderHook(() => useEventForm())

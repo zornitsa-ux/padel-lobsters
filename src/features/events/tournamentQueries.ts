@@ -50,7 +50,8 @@ export async function fetchTournaments(): Promise<NormalisedTournament[]> {
   return normaliseTournaments(rows)
 }
 
-export async function addTournament(data: TournamentInput): Promise<void> {
+/** Inserts the event and returns it as saved, so the admin can be offered a share right away. */
+export async function addTournament(data: TournamentInput): Promise<NormalisedTournament> {
   const payload: TablesInsert<'tournaments'> = {
     name: data.name ?? '',
     date: data.date,
@@ -67,11 +68,16 @@ export async function addTournament(data: TournamentInput): Promise<void> {
     notes: data.notes,
     status: 'upcoming',
   }
-  const { error } = await supabase.from('tournaments').insert(payload)
+  const { data: row, error } = await supabase
+    .from('tournaments')
+    .insert(payload)
+    .select('*')
+    .single()
   if (error) {
     console.error('addTournament error:', error)
     throw error
   }
+  return normaliseTournaments([tournamentRowSchema.parse(row)])[0]
 }
 
 export async function updateTournament(id: string, data: TournamentInput): Promise<void> {
