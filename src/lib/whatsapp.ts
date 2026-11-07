@@ -58,6 +58,10 @@ export function buildTransferMessage(
   return `${base} It's already paid for, so there's nothing more to do after you accept. Thanks a lot!`
 }
 
+// Opens WhatsApp's chat picker with the message pre-filled.
+export const buildShareUrl = (message: string): string =>
+  `https://wa.me/?text=${encodeURIComponent(message)}`
+
 // Direct chat URL — opens WhatsApp to a 1:1 conversation with the recipient
 // and pre-fills the message. Returns null if the phone isn't E.164-valid.
 export function buildDirectChatUrl(

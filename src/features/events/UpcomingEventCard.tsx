@@ -4,7 +4,7 @@ import { Users, MapPin, Clock, CheckCircle, Circle, ShieldCheck } from 'lucide-r
 import EventAdminMenu from './EventAdminMenu'
 import { EventHeading } from './EventHeading'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
-import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
+import ShareEventButton from './ShareEventButton'
 import { fmtEur } from '../../lib/format'
 import { errorMessage } from '../../lib/errors'
 import { formatLabel, pricePerPlayer } from './eventHelpers'
@@ -57,6 +57,7 @@ export default function UpcomingEventCard({
   const bookedCount = (t.courts || []).filter((c) => c.booked).length
   const totalCourts = (t.courts || []).length
   const ppCost = pricePerPlayer(t)
+  const regCount = regsData.filter((r) => r.status === 'registered').length
   const [bookError, setBookError] = useState('')
   const [bookingIndex, setBookingIndex] = useState<number | null>(null)
 
@@ -87,7 +88,7 @@ export default function UpcomingEventCard({
           />
           {!over && (
             <div className="flex gap-1">
-              <ShareWhatsAppButton tournament={t} variant="icon" />
+              <ShareEventButton event={t} registeredCount={regCount} variant="icon" />
               <AddToCalendarButton tournament={t} variant="icon" />
             </div>
           )}
@@ -96,7 +97,6 @@ export default function UpcomingEventCard({
 
       {/* Stats row — compact for mobile */}
       {(() => {
-        const regCount = regsData.filter((r) => r.status === 'registered').length
         const maxP = t.maxPlayers || '?'
         const isFull = typeof maxP === 'number' && regCount >= maxP
         return (

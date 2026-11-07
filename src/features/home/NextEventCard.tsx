@@ -4,7 +4,7 @@ import DateTile from '../../components/ui/DateTile'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Skeleton } from '../../components/ui/Skeleton'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
-import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
+import ShareEventButton from '../events/ShareEventButton'
 import { fmtEur } from '../../lib/format'
 import type { NormalisedTournament } from '../../lib/normalise'
 import { perPersonCost } from './homeHelpers'
@@ -20,6 +20,8 @@ interface NextEventCardProps {
   loading?: boolean
   /** Registrations still in flight, so this player's sign-up state is unknown. */
   registrationsPending?: boolean
+  /** Registered players for the share message's spots line; undefined while unknown. */
+  registeredCount?: number
   onNavigate: (page: string, tournament?: NormalisedTournament) => void
   formatDate: (date: string | null | undefined) => string
   /** King of the Court: the viewer's starting court or placing. */
@@ -58,6 +60,7 @@ export default function NextEventCard({
   isRegistered,
   loading = false,
   registrationsPending = false,
+  registeredCount,
   onNavigate,
   formatDate,
   kingOfCourtLine = null,
@@ -104,7 +107,7 @@ export default function NextEventCard({
           )}
         </div>
         <div className="flex gap-1 flex-shrink-0">
-          <ShareWhatsAppButton tournament={upcoming} variant="icon" />
+          <ShareEventButton event={upcoming} registeredCount={registeredCount} variant="icon" />
           <AddToCalendarButton tournament={upcoming} variant="icon" />
         </div>
       </div>

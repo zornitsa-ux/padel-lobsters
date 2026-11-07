@@ -10,7 +10,7 @@ import TransferPendingModal from '../../components/TransferPendingModal'
 import DateTile from '../../components/ui/DateTile'
 import { EmptyState } from '../../components/ui/EmptyState'
 import AddToCalendarButton from '../../components/ui/AddToCalendarButton'
-import ShareWhatsAppButton from '../../components/ui/ShareWhatsAppButton'
+import ShareEventButton from './ShareEventButton'
 import EventDescription from './EventDescription'
 import EventAdminMenu from './EventAdminMenu'
 import EventFormModal from './EventFormModal'
@@ -473,7 +473,11 @@ export default function Registration({
           </p>
           {/* Share + calendar sit with the date and time they act on. */}
           <div className="flex gap-2">
-            <ShareWhatsAppButton tournament={tournament} variant="compact" />
+            <ShareEventButton
+              event={tournament}
+              registeredCount={registered.length}
+              variant="compact"
+            />
             <AddToCalendarButton tournament={tournament} variant="compact" />
           </div>
         </div>

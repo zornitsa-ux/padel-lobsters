@@ -303,6 +303,9 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           isRegistered={isRegistered}
           loading={tournamentsPending}
           registrationsPending={registrationsPending}
+          registeredCount={
+            registrationsPending ? undefined : regs.filter((r) => r.status === 'registered').length
+          }
           onNavigate={onNavigate}
           formatDate={formatDate}
           kingOfCourtLine={

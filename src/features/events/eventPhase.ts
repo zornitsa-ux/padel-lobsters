@@ -293,7 +293,7 @@ export function visibleEventTabs({
  * Where `/events/:id` lands when no tab is named.
  *
  * `isSignedIn` is not a nicety: shared links are bare `/events/:id`
- * (`ShareWhatsAppButton`), so the recipient of a "register and see details"
+ * (`ShareEventButton`), so the recipient of a "register and see details"
  * message is exactly the viewer who has nothing on the You tab — sending them
  * there lands them on a sign-in wall instead of the event.
  */
