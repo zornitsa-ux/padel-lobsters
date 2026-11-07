@@ -1,6 +1,4 @@
 import {
-  SITE_DESCRIPTION,
-  SITE_NAME,
   appUrlFor,
   fetchPreviewEvent,
   imageUrlFor,
@@ -10,6 +8,7 @@ import {
   todayInAmsterdam,
 } from './_lib/eventPreview.js'
 import { supabaseEnv } from './_lib/env.js'
+import { SITE_DESCRIPTION, SITE_IMAGE_PATH, SITE_NAME } from '../siteMeta.js'
 
 // Served only to link-preview crawlers on /events/:id and /events/:id/info
 // (see vercel.json); people get the app as usual.
@@ -36,7 +35,7 @@ async function handler(request: Request): Promise<Response> {
         description: SITE_DESCRIPTION,
         pageUrl,
         appUrl,
-        imageUrl: `${url.origin}/logo-hd.png`,
+        imageUrl: `${url.origin}${SITE_IMAGE_PATH}`,
       })
 
   return new Response(html, {

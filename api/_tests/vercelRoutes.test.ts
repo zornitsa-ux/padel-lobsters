@@ -15,17 +15,12 @@ const crawlerUa = new RegExp(crawlerRules[0].has![0].value)
 
 describe('vercel.json crawler routes', () => {
   it('covers the event index and info paths, before the app catch-all', () => {
-    expect(crawlerRules.map((r) => r.source)).toEqual(['/events/:id', '/events/:id/info'])
+    expect(crawlerRules.map((r) => r.source)).toEqual(['/events/:id/:tab(info)?'])
     expect(rewrites.at(-1)?.source).toBe('/((?!api/).*)')
-    // Two rules, one regex: keep them identical.
-    expect(new Set(crawlerRules.map((r) => r.has![0].value)).size).toBe(1)
   })
 
   it('tells the preview which tab was opened', () => {
-    expect(crawlerRules.map((r) => r.destination)).toEqual([
-      '/api/event-preview?id=:id',
-      '/api/event-preview?id=:id&tab=info',
-    ])
+    expect(crawlerRules[0].destination).toBe('/api/event-preview?id=:id&tab=:tab')
   })
 
   it('leaves out search crawlers, which should index the app', () => {

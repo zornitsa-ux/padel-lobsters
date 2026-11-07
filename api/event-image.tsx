@@ -1,9 +1,9 @@
 import { ImageResponse } from '@vercel/og'
 import { formatLabel } from '../src/features/events/eventHelpers.js'
 import { coral, cream, teal, tealDark } from '../brandColors.js'
+import { SITE_IMAGE_PATH, SITE_NAME } from '../siteMeta.js'
 import {
   IMAGE_SIZE,
-  SITE_NAME,
   formatPreviewDate,
   type PreviewEvent,
   type PreviewLookup,
@@ -89,7 +89,7 @@ async function handler(request: Request): Promise<Response> {
     return new Response(null, { status: 503, headers: { 'cache-control': 'no-store' } })
   }
   if (lookup.status === 'missing') {
-    return Response.redirect(`${url.origin}/logo-hd.png`, 308)
+    return Response.redirect(`${url.origin}${SITE_IMAGE_PATH}`, 308)
   }
 
   const canonical = imageUrlFor({ origin: url.origin, event: lookup.event })

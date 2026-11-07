@@ -1,4 +1,5 @@
 import { formatLabel } from '../../src/features/events/eventHelpers.js'
+import { SITE_NAME } from '../../siteMeta.js'
 
 // Link previews for shared event links. Event facts only: no player data,
 // and no spot count, because WhatsApp and Instagram cache previews.
@@ -13,10 +14,7 @@ export interface PreviewEvent {
   status: string | null
 }
 
-export const SITE_NAME = 'Padel Lobsters'
 export const IMAGE_SIZE = { width: 1200, height: 630 }
-export const SITE_DESCRIPTION =
-  'The Amsterdam padel community. See upcoming events and join the next one.'
 
 const PREVIEW_COLUMNS = 'id,name,date,time,location,format,status'
 const FETCH_TIMEOUT_MS = 2500

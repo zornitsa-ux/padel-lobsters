@@ -18,22 +18,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Padel Lobsters" />
     <title>Padel Lobsters</title>
-    <!-- Site-wide link preview. Shared event links get their own tags from
-         api/event-preview (crawlers only, see vercel.json). -->
-    <meta
-      name="description"
-      content="The Amsterdam padel community. See upcoming events and join the next one."
-    />
-    <meta property="og:site_name" content="Padel Lobsters" />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="Padel Lobsters" />
-    <meta
-      property="og:description"
-      content="The Amsterdam padel community. See upcoming events and join the next one."
-    />
-    <meta property="og:url" content="https://padelobsters.nl" />
-    <meta property="og:image" content="https://padelobsters.nl/logo-hd.png" />
-    <meta name="twitter:card" content="summary" />
+    <!-- Site-wide link preview tags are injected from siteMeta.js (vite.config.js).
+         Shared event links get their own from api/event-preview. -->
   </head>
   <body>
     <div id="root"></div>
