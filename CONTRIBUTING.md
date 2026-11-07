@@ -1,3 +1,7 @@
+Vite picks the env file from the mode. Every mode also reads `.env` and
+`.env.local`, and the mode's own files (`.env.[mode]`, `.env.[mode].local`) win
+over them. The table lists the files this project uses.
+
 # Contributing to Padel Lobsters
 
 ## Working with the database
@@ -147,6 +151,32 @@ templates changed: `npm run db:stop && npm run db:start`.
 - **New pages and flows** get a check in the matching spec in the same PR.
 - **A known app bug** that fails a test: open an issue and mark the test
   `test.fail(true, '… #NN')`, so it goes red again once the bug is fixed.
+
+---
+
+## Environment files
+
+Vite picks the env file from the mode. Every mode also reads `.env`, and the
+mode's own file wins over it.
+
+| Command                        | Mode                    | Reads                   | Points at             |
+| ------------------------------ | ----------------------- | ----------------------- | --------------------- |
+| `npm run dev`, `npm run build` | development, production | `.env`                  | whatever `.env` holds |
+| `npm run dev:local` (and e2e)  | `localdev`              | `.env.localdev`         | local Supabase        |
+| `npm run dev:prod`             | `prod`                  | `.env.prod`             | production Supabase   |
+| `npm test` (Vitest)            | `test`                  | `.env.test` (committed) | placeholders only     |
+
+- Set up: copy `.env.localdev.example` to `.env.localdev`, and to `.env` too, so
+  plain `dev`/`build` use the local stack and never production.
+- **Don't keep values in `.env.local`.** The Vercel CLI owns it: `vercel link`
+  and `vercel env pull` overwrite it with an OIDC token, and it beats `.env` in
+  every mode. To pull Vercel's env, name a file: `vercel env pull .env.vercel`.
+- `npm run build` runs without any env file (worktrees, fresh clones): the
+  Supabase preconnect tags are left out and it warns. The app it builds won't
+  run without `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. In CI and on
+  Vercel a missing URL fails the build.
+- All `.env.*` files are gitignored except the committed `.env.example`,
+  `.env.localdev.example` and `.env.test`.
 
 ---
 
