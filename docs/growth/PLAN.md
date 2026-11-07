@@ -457,3 +457,5 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
 - 7 Nov 2026: Vercel functions (link previews) moved from `iad1` (US) to
   `fra1` (Frankfurt), the EU region nearest the Supabase database in Zurich
   (owner). Set in `vercel.json`.
+- 7 Nov 2026: country flags self-hosted in `public/flags/` (64 SVGs from
+  `country-flag-icons`, MIT), replacing flagcdn.com (#160, owner).

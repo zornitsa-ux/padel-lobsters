@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import CountryPicker, { FlagImg } from './CountryPicker'
+import CountryPicker, { FLAG_CODES, FlagImg } from './CountryPicker'
 import { propsOf } from '../../test/element'
 
 afterEach(cleanup)
@@ -15,10 +17,21 @@ describe('FlagImg', () => {
     expect(FlagImg({ code: 'NLD' })).toBeNull()
   })
 
-  it('builds a lowercase flagcdn URL', () => {
+  it('renders nothing for a code the picker does not offer', () => {
+    expect(FlagImg({ code: 'XX' })).toBeNull()
+  })
+
+  it('points at the self-hosted flag', () => {
     const el = FlagImg({ code: 'NL' })
-    expect(propsOf(el).src).toBe('https://flagcdn.com/20x15/nl.png')
+    expect(propsOf(el).src).toBe('/flags/nl.svg')
     expect(propsOf(el).alt).toBe('NL')
+  })
+
+  it('has a flag file for every country in the picker', () => {
+    const missing = [...FLAG_CODES].filter(
+      (code) => !existsSync(resolve(__dirname, `../../../public/flags/${code.toLowerCase()}.svg`)),
+    )
+    expect(missing).toEqual([])
   })
 })
 
