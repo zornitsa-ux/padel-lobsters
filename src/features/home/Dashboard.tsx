@@ -13,7 +13,6 @@ import { mark } from '../../lib/perfMarks'
 import { getGreeting } from './greetings'
 import useGreetingName from './useGreetingName'
 import useCountdown from './useCountdown'
-import { tournamentStartMs } from '../../lib/tournamentStart'
 import Greeting from './Greeting'
 import TransferOfferBanners from './TransferOfferBanners'
 import CountdownClock from './CountdownClock'
@@ -28,7 +27,8 @@ import type { Player, NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedMatch } from '../events/matchQueries'
 import type { NormalisedRegistration } from '../events/registrationQueries'
 import type { NormalisedTransfer } from '../events/transferQueries'
-import { isEventOver, isEventUpcoming } from '../events/eventPhase'
+import { isEventOver } from '../events/eventPhase'
+import { countdownTarget, formatHomeDate, tipOfTheDay, upcomingEvents } from './homeHelpers'
 import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
 import MyKingOfCourtLine from '../events/kingOfCourt/MyKingOfCourtLine'
 import { isKingOfTheCourt } from '../events/eventFormat'
@@ -159,10 +159,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     enabled: claimedId != null,
   })
 
-  // Next upcoming tournament
-  const upcoming = tournaments
-    .filter((t) => isEventUpcoming({ tournament: t }))
-    .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))[0]
+  const upcoming = upcomingEvents({ events: tournaments })[0]
 
   // Memoised: the King of the Court line derives its whole view model from it.
   const regs = useMemo(
@@ -176,18 +173,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
       ? regs.some((r) => r.playerId === claimedId && r.status === 'registered')
       : false
 
-  // Live countdown — targets the nearest event whose start time is still in the
-  // future. Once the current event starts, the clock automatically flips to the
-  // next one so there's always a countdown visible when future events exist.
-  const allUpcoming = tournaments
-    .filter((t) => isEventUpcoming({ tournament: t }))
-    .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))
-  const countdownTournament =
-    allUpcoming.find((t) => {
-      const start = tournamentStartMs(t)
-      return start !== null && start > Date.now()
-    }) || null
-  const countdown = useCountdown(countdownTournament)
+  const countdown = useCountdown(countdownTarget({ events: tournaments }))
 
   // Attendance streak — consecutive completed tournaments the player registered
   // for. Shown in CountdownClock as a motivational nudge.
@@ -209,34 +195,13 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     return s
   }, [claimedId, tournaments, getTournamentRegistrations])
 
-  const formatDate = (d: string | null | undefined): string => {
-    if (!d) return '—'
-    return new Date(d).toLocaleDateString('en-GB', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-    })
-  }
-
-  // Greeting — members get the rotating "Snap snap, {name}!" set, guests
-  // (no claimed player, no admin, no league admin) get a generic welcome
-  // that invites them to sign in. Keeps the home page identical for
-  // logged-in and logged-out visitors except for the top line.
-  //
-  // The name comes from the roster, which lands after the session does. Rather
-  // than greet a placeholder and swap (see useGreetingName), reuse the name
-  // cached from the last visit, and if there isn't one, hold the greeting until
-  // the roster resolves.
-  //
-  // Before the session settles claimedId is null, which is indistinguishable
-  // from a real guest — greeting a member with "sign in with your email" and then
-  // swapping is worse than holding the line for the few ms auth takes.
-  const isGuest = !claimedId && !isAdmin
+  // Members only: signed-out visitors get GuestHome. The name comes from the
+  // roster, which lands after the session does. Rather than greet a placeholder
+  // and swap (see useGreetingName), reuse the name cached from the last visit,
+  // and if there isn't one, hold the greeting until the roster resolves.
   const greetingName = useGreetingName({ playerId: claimedId, name: claimedPlayer?.name })
   const nameStillLoading = !sessionSettled || (!!claimedId && !greetingName && playersPending)
-  const [greetHello, greetSub] = isGuest
-    ? ['Welcome to Padel Lobsters!', 'Sign in with your email to join the fun.']
-    : getGreeting(greetingName || (isAdmin ? 'Admin' : null))
+  const [greetHello, greetSub] = getGreeting(greetingName || (isAdmin ? 'Admin' : null))
 
   // Marks are first-call-wins, so both conditions have to mean "settled", not
   // "nothing loaded yet": before the session resolves claimedId is null, and an
@@ -250,11 +215,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
   const tips =
     settings?.padelTips && settings.padelTips.length > 0 ? settings.padelTips : DEFAULT_TIPS
-  const todayTip = useMemo(() => {
-    const now = new Date()
-    const dayIndex = (now.getFullYear() * 366 + now.getMonth() * 31 + now.getDate()) % tips.length
-    return tips[dayIndex]
-  }, [tips])
+  const todayTip = useMemo(() => tipOfTheDay({ tips }), [tips])
 
   return (
     <div className="-mx-4">
@@ -307,7 +268,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             registrationsPending ? undefined : regs.filter((r) => r.status === 'registered').length
           }
           onNavigate={onNavigate}
-          formatDate={formatDate}
+          formatDate={formatHomeDate}
           kingOfCourtLine={
             upcoming &&
             claimedId &&

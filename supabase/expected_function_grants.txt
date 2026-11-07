@@ -42,6 +42,8 @@ public.cancel_transfer(input_transfer_id uuid) authenticated
 public.change_team_partner(input_team_id uuid, input_partner_id uuid, input_new_partner jsonb, input_partner_consent boolean) authenticated
 public.check_new_partner_email(input_email text) authenticated
 public.create_transfer(input_to_player_id uuid, input_tournament_id uuid, input_from_player_id uuid) authenticated
+public.get_group_link() anon
+public.get_group_link() authenticated
 public.get_my_account_setup() authenticated
 public.get_my_profile_v2() authenticated
 public.get_my_team_invites() authenticated
@@ -66,6 +68,8 @@ public.respond_to_team_invite(input_team_id uuid, input_accept boolean) authenti
 public.respond_to_transfer(input_transfer_id uuid, input_accept boolean) authenticated
 public.self_signup_player(input_payload jsonb, input_device_id text, input_user_agent text) anon
 public.set_registration_payment(input_registration_id uuid, input_payment_status text, input_payment_method text) authenticated
+public.signup_name_match(input_name text) anon
+public.signup_name_match(input_name text) authenticated
 public.sync_my_role() authenticated
 public.update_my_profile(input_payload jsonb) authenticated
 public.verify_player_pin_v2(input_pin text, input_device_id text, input_user_agent text) anon

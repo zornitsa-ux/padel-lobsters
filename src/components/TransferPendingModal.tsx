@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { MessageCircle, Users, Clock } from 'lucide-react'
 import { useApp } from '../context/useApp'
 import { useTransferActions } from '../features/events/useTransfers'
+import { useSettings } from '../features/settings/useSettings'
 import { Modal } from './ui/Modal'
 import { useConfirm } from '../lib/confirmBus'
 import {
@@ -56,6 +57,7 @@ export default function TransferPendingModal({
   const [phone, setPhone] = useState<string | null>(null) // null = loading, '' = no phone
   const [busyAction, setBusyAction] = useState<PendingAction>(null)
   const [groupNote, setGroupNote] = useState(false)
+  const { data: settings } = useSettings()
 
   useEffect(() => {
     let active = true
@@ -72,22 +74,24 @@ export default function TransferPendingModal({
 
   const message = buildTransferMessage(toPlayer?.name, transferId, tikkieLink)
   const phoneIsValid = phone !== null && isE164(phone)
+  // The group action only shows once a link is set, so its note is never wrong.
+  const groupLink = settings?.whatsappLink || null
 
   const handleDirect = () => {
     if (busyAction) return
     setBusyAction('whatsapp')
     const ok = shareToDirectChat(phone, message)
     setTimeout(() => setBusyAction(null), 600)
-    if (!ok) {
+    if (!ok && groupLink) {
       // Phone unexpectedly invalid — fall back automatically.
       handleGroup()
     }
   }
 
   const handleGroup = async () => {
-    if (busyAction) return
+    if (busyAction || !groupLink) return
     setBusyAction('group')
-    await shareToLobstersGroup(message)
+    await shareToLobstersGroup({ message, groupLink })
     setGroupNote(true)
     setTimeout(() => setBusyAction(null), 600)
   }
@@ -140,15 +144,17 @@ export default function TransferPendingModal({
           </Button>
         )}
 
-        <Button
-          variant="secondary"
-          fullWidth
-          icon={<Users />}
-          onClick={handleGroup}
-          disabled={!!busyAction}
-        >
-          {busyAction === 'group' ? 'Copying message…' : 'Post in Lobsters WhatsApp group'}
-        </Button>
+        {groupLink && (
+          <Button
+            variant="secondary"
+            fullWidth
+            icon={<Users />}
+            onClick={handleGroup}
+            disabled={!!busyAction}
+          >
+            {busyAction === 'group' ? 'Copying message…' : 'Post in Lobsters WhatsApp group'}
+          </Button>
+        )}
 
         {groupNote && (
           <p className="text-xs text-lob-muted text-center">
@@ -156,7 +162,7 @@ export default function TransferPendingModal({
           </p>
         )}
 
-        {phone === '' && (
+        {phone === '' && groupLink && (
           <p className="text-xs text-lob-muted-light text-center">
             No WhatsApp number on file for {(toPlayer?.name || 'this player').split(/\s+/)[0]} — use
             the group instead.

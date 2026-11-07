@@ -2137,6 +2137,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_group_link: { Args: never; Returns: string }
       get_my_account_setup: {
         Args: never
         Returns: {
@@ -2376,6 +2377,7 @@ export type Database = {
           status: string
         }[]
       }
+      signup_name_match: { Args: { input_name: string }; Returns: string }
       sync_my_role: { Args: never; Returns: Json }
       tournament_start_ts: {
         Args: { input_tournament_id: string }

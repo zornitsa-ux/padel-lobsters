@@ -1,7 +1,15 @@
 process.env.TZ = 'UTC'
 
 import { describe, it, expect } from 'vitest'
-import { perPersonCost, upcomingBirthdays } from './homeHelpers'
+import {
+  countdownTarget,
+  formatHomeDate,
+  perPersonCost,
+  tipOfTheDay,
+  upcomingBirthdays,
+  upcomingEvents,
+} from './homeHelpers'
+import type { NormalisedTournament } from '../../lib/normalise'
 
 describe('perPersonCost', () => {
   it('splits the total price across the player cap', () => {
@@ -56,5 +64,32 @@ describe('upcomingBirthdays', () => {
       today: new Date('2026-12-28T09:00:00Z'),
     })
     expect(result).toEqual([{ p: player('p1', 'January', '1990-01-02'), diff: 5 }])
+  })
+})
+
+describe('upcoming events, countdown and tip', () => {
+  const ev = (id: string, date: string, time = '18:00') =>
+    ({ id, date, time, status: 'upcoming' }) as unknown as NormalisedTournament
+
+  it('orders upcoming events by date', () => {
+    const events = [ev('b', '2099-03-02'), ev('a', '2099-03-01')]
+    expect(upcomingEvents({ events }).map((e) => e.id)).toEqual(['a', 'b'])
+  })
+
+  it('counts down to the first event still ahead', () => {
+    const events = [ev('a', '2099-03-01'), ev('b', '2099-03-02')]
+    const afterA = Date.parse('2099-03-01T20:00:00Z')
+    expect(countdownTarget({ events, now: afterA })?.id).toBe('b')
+  })
+
+  it('picks the same tip all day', () => {
+    const tips = ['one', 'two', 'three']
+    expect(tipOfTheDay({ tips, date: new Date('2026-11-07T08:00:00Z') })).toBe(
+      tipOfTheDay({ tips, date: new Date('2026-11-07T20:00:00Z') }),
+    )
+  })
+
+  it('formats a missing date as a dash', () => {
+    expect(formatHomeDate(null)).toBe('—')
   })
 })

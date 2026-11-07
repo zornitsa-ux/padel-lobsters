@@ -9,15 +9,19 @@ import { queryClient } from './lib/queryClient'
 import { mark } from './lib/perfMarks'
 import { prefetchPlayers } from './features/players/usePlayers'
 import { prefetchTournaments } from './features/events/useTournaments'
+import { hasStoredSession } from './lib/storedSession'
 import './index.css'
 
 mark('boot')
 
 // Issue the two requests that gate the most visible home-screen content (the
 // greeting name and the next-event card) before React mounts, so they overlap
-// with rendering instead of queueing behind it.
-prefetchPlayers(queryClient)
-prefetchTournaments(queryClient)
+// with rendering instead of queueing behind it. Members only: signed-out
+// visitors can't read these tables, and GuestHome reads public events instead.
+if (hasStoredSession()) {
+  prefetchPlayers(queryClient)
+  prefetchTournaments(queryClient)
+}
 
 const rootElement = document.getElementById('root')
 

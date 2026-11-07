@@ -12,10 +12,15 @@ function normaliseSettings(row: ReturnType<typeof settingsRowSchema.parse>): Set
   }
 }
 
-export async function fetchSettings(): Promise<Settings | null> {
+// Signed-out visitors may read only these (anon column grant). The WhatsApp
+// link comes from fetchGroupLink, on tap, so crawlers don't find it.
+const GUEST_COLUMNS = 'id, group_name, padel_tips'
+const MEMBER_COLUMNS = 'id, whatsapp_link, group_name, padel_tips, lobster_way_content'
+
+export async function fetchSettings({ signedIn }: { signedIn: boolean }): Promise<Settings | null> {
   const { data, error } = await supabase
     .from('settings')
-    .select('id, whatsapp_link, group_name, padel_tips, lobster_way_content')
+    .select(signedIn ? MEMBER_COLUMNS : GUEST_COLUMNS)
     .eq('id', 1)
     .single()
   if (error) throw error
@@ -50,4 +55,10 @@ export async function saveSettings({
     console.error('saveSettings error:', error)
     throw error
   }
+}
+
+export async function fetchGroupLink(): Promise<string | null> {
+  const { data, error } = await supabase.rpc('get_group_link')
+  if (error) throw error
+  return data || null
 }
