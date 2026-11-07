@@ -77,6 +77,17 @@ npx supabase db push
 migrations. If a migration fails on production, do not edit or delete the
 failed file — write a new migration that fixes the issue.
 
+Then compare production's grants with the reviewed ones (read-only):
+
+```bash
+npm run db:grants:prod
+```
+
+It diffs what anon and authenticated can call, read and write in production
+against `supabase/expected_function_grants.txt` and
+`supabase/expected_table_grants.txt`. Any difference is drift to fix in a new
+migration.
+
 ### Deploying Edge Functions
 
 Also manual, and also only from `main` after merge. A PR that changes

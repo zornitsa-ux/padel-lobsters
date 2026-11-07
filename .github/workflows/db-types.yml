@@ -38,7 +38,7 @@ jobs:
       # The CLI comes from the `supabase` devDependency rather than
       # supabase/setup-cli, so package-lock.json is the single place the version
       # is pinned. A second pin here drifted ahead once and changed
-      # `db query --output-format json`'s shape, breaking dump-function-grants.sh
+      # `db query --output-format json`'s shape, breaking dump-grants.sh
       # with no code change on our side. The binary ships as an optional
       # dependency, not a postinstall download, so --ignore-scripts is fine.
       - name: Install dependencies
@@ -61,9 +61,10 @@ jobs:
           fi
           echo 'database.types.ts matches the migrations.'
 
-      # Same idea as the types check above, applied to function EXECUTE grants:
-      # the stack from `supabase start` is already running, so checking the
-      # anon/authenticated allowlist here is nearly free and catches a
-      # migration that silently re-widens (or narrows) who can call what.
-      - name: Check for function grant drift
+      # Same idea as the types check above, applied to grants: the stack from
+      # `supabase start` is already running, so checking the anon/authenticated
+      # allowlists (function EXECUTE, table/view/sequence and column grants)
+      # here is nearly free and catches a migration that silently re-widens
+      # (or narrows) who can call or read what.
+      - name: Check for grant drift
         run: npm run db:grants:check

@@ -36,12 +36,12 @@ shipped and the funnel has been measured.
   perf work.
 - **G4 leftovers deferred** (owner, 7 Nov): the admin announcement text and
   "Download image" are not being pursued for now.
-- **Anon lockdown (#150) in review.** Signed-out visitors read only what the
-  guest pages show. See "Anon lockdown (#150)". After merge: Vercel deploys
-  first, then `npx supabase db push` from `main` (the app must stop asking
-  for data before the database stops giving it). Must land by Wed 11 Nov
-  (release freeze), or wait until after 15 Nov. #102 (grant drift check)
-  follows in its own PR.
+- **Anon lockdown (#150) is live** (#164, pushed 7 Nov). Checked in
+  production: the public API refuses everything but the guest-page columns,
+  and the signed-out site works (desktop, and on a phone by the owner).
+- **Grant drift (#102) in review.** Same default privileges in production and
+  locally, a table grants check in CI, and `npm run db:grants:prod` to compare
+  production read-only after each `db push`.
 - **Privacy page: researched, parked as an open planning item** (owner, 7 Nov).
   See "Privacy page (open)". It needs a controller and contact before it can
   be built.
@@ -334,6 +334,11 @@ Members keep the access they had. Anon has no write privileges.
 league name). The roster and events prefetch in `main.tsx` runs only when a
 saved session exists. Settings asks guests for their columns only.
 
+**Live 7 Nov.** Production refuses anon reads of every other table and
+column; the anon column list matches the allowlist. A visitor whose saved
+sign-in has expired makes a few refused member requests on the first load
+(the prefetch sees the stale key); nothing is returned and the page loads.
+
 **After merge (owner, optional):** reset the WhatsApp invite link in the group
 and paste the new one in Group settings. The old link stays in public git
 history.
@@ -507,3 +512,5 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
 - 7 Nov 2026: anon lockdown (#150) built: guests read only the guest-page
   columns; signed-out Home, signup's name check and the WhatsApp link moved
   off member tables. #102 next.
+- 7 Nov 2026: #164 merged and pushed; production verified. #102 (grant
+  defaults and table grants check) opened.
