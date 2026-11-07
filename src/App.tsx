@@ -34,6 +34,7 @@ import { useApp } from './context/useApp'
 // route is hit. Each lazy() becomes its own Rollup chunk — see the bundle
 // treemap (`npm run build:analyze`) for the split.
 const AuthConfirm = lazy(() => import('./components/AuthConfirm'))
+const GuestAnalytics = lazy(() => import('./features/growth/GuestAnalytics'))
 const Players = lazy(() => import('./features/community/Players'))
 const PlayerDetailPage = lazy(() => import('./features/community/PlayerDetailPage'))
 const Tournament = lazy(() => import('./features/events/Tournament'))
@@ -82,6 +83,7 @@ export default function App() {
     <AppProvider>
       <BrowserRouter>
         <DeepLinkMigrator />
+        <FunnelAnalytics />
         <PartnerOnboardingRedirect />
         <Layout>
           <VerificationGate>
@@ -357,4 +359,16 @@ function DeepLinkMigrator() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   return null
+}
+
+// G5b: Vercel Web Analytics, production builds only, loaded after first paint and once auth has
+// settled (see GuestAnalytics).
+function FunnelAnalytics() {
+  const { sessionSettled } = useApp()
+  if (!import.meta.env.PROD || !sessionSettled) return null
+  return (
+    <Suspense fallback={null}>
+      <GuestAnalytics />
+    </Suspense>
+  )
 }

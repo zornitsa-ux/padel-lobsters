@@ -31,8 +31,9 @@ shipped and the funnel has been measured.
   only `/auth/confirm` before).
 - **G5 is paused** (owner, 7 Nov). See G5 notes. It comes back, if at all,
   with G5b.
-- **Next: G5b** (traffic funnel): first look into Vercel Web Analytics and
-  Speed Insights, and what each costs (see G5b).
+- **G5b (traffic funnel) is in review.** Vercel Web Analytics on Hobby,
+  signed-out funnel pages only. See G5b. After merge, the owner enables Web
+  Analytics on the Vercel project. Speed Insights later, with the perf work.
 - **G4 leftovers** (admin announcement text, "Download image") are still open.
 
 ---
@@ -47,7 +48,7 @@ shipped and the funnel has been measured.
 | G4  | Share button                | `ShareEventButton` opens an in-app `ShareSheet`: the message, then `navigator.share` (where available), copy message and copy link. See G4 notes. Shown on the event page for members and admins. The admin version has a longer "announcement" text for WhatsApp, plus "Download image", which serves the G2 preview image for an Instagram story with a link sticker. | Done (#154) |
 | G4b | More places to share        | A full-width "Share with friends" variant, then share right after signing up (`JoinEventCard` registered state), after an admin creates an event, in the event header on every tab while sign-ups are open (`EventShell`), and on the You tab. Then the signed-out event page. The Manage tab ("Fill the spots") was dropped. See G4 notes.                             | Done (#155) |
 | G5  | Attribution                 | Shared URLs carry `?src=` (`wa`, `ig`, `share`) and `?ref=` (the sharing member's opaque referral code, never a player ID). Stored on signup (`players.signup_source`, `referred_by`) and on the registration. Admin view: signups and first events by source.                                                                                                          | Paused      |
-| G5b | Traffic funnel              | Cookieless analytics (Vercel Web Analytics, or Plausible/Umami if custom events need a paid tier): public page views plus `event_page_view`, `share_tap`, `signup_start`, `signup_complete`, `event_register`, each tagged with `src`.                                                                                                                                  | Later       |
+| G5b | Traffic funnel              | Vercel Web Analytics (free on Hobby): page views of the signed-out steps only (landing, events list, event page, join), query strings dropped, members never tracked. Signups and registrations are counted in Supabase. See G5b.                                                                                                                                       | In review   |
 
 **Order:** G1 → G2 → G3 → G5 → G4. G2 needs G1, because a preview that opens
 to a sign-in wall wastes the tap. G5 ships before G4, so shares are counted
@@ -234,40 +235,55 @@ source.
   - A signup tag in metadata must never be able to fail GoTrue's
     confirmation: validate in one place, store null otherwise.
 
-### G5b: traffic funnel (later)
+### G5b: traffic funnel
 
-**Back in scope** (owner, 7 Nov), after G4b and G5. **First, look into
-Vercel's own tools:** Web Analytics (page views, and whether custom events
-like `share_tap` need a paid plan on Hobby) and Speed Insights (real-user load
-times, alongside the existing perf CI). Check each against the acceptance
-criteria below before choosing a vendor.
+**Question it answers:** do people who open a shared link become players, and
+if not, where do they drop off? Everyone before signup is signed out, and
+leaves no trace in the database. Signed-in activity (signups, registrations,
+who played) is already exact in Supabase, so it isn't tracked.
 
-**Why.** G5 (paused) would record sources only for people who convert. G5b counts the
-anonymous steps before that (link opened → page viewed → signup started), so
-a weak result can be traced to the preview, the page or the signup form.
-Before G1 there is almost no anonymous traffic, so it ships with G1, not
-earlier.
+**Choice (owner, 7 Nov): Vercel Web Analytics, signed-out visitors only.**
+Checked 7 Nov against Vercel's docs:
 
-**Sources of truth.** The analytics tool covers the top of the funnel only.
-Signups and registrations are counted from the database.
+- **Hobby (free):** 50,000 events a month, 1-month reporting window, page
+  views only. Over the limit, collection pauses; nothing is charged.
+- **Paid only:** custom events (Pro) and UTM reporting (Pro plus the $10/month
+  Web Analytics Plus add-on). So `share_tap` isn't measured.
+- **Privacy:** no cookies; visitors are a request hash discarded after 24
+  hours.
+- Umami Cloud's free plan (custom events, longer retention) was the
+  alternative; not chosen: another vendor for one extra number.
+- **Speed Insights** (real-user load times): free tier is one overall score
+  with a 10k events per 30 days cap. Later, with the perf work (owner).
 
-**Acceptance criteria**
+**The funnel is page views, because each step has a URL:**
 
-- **Cookieless, no consent banner.** No GA4 or other cookie-based tool.
-- **Small script** (≈1 KB), loaded without blocking first paint. Check it
-  against the bundle-size CI comment.
-- **No traffic writes to Supabase.** A row per page view adds disk-IO the
-  Micro instance can't spare.
-- **Query strings are dropped** before anything is sent. Only campaign tags
-  (UTM), if any are used, are kept. Sign-in deep links carry `?email=`
-  (`useSignInDeepLink.ts`) and the app only strips it after load.
-- **`/auth/*` is never tracked** (it carries confirmation tokens).
-- **No player IDs, names or emails** go to the vendor.
-- **SPA route changes** are counted as page views.
-- **Cost:** note which features need a paid tier (UTM reporting is paid in
-  Vercel Web Analytics; check custom events too).
-- **Reviewed monthly** against the owner's private baseline. No live
-  dashboards.
+| Step                               | Counted by                        |
+| ---------------------------------- | --------------------------------- |
+| Landing / events list              | page view `/`, `/home`, `/events` |
+| Opened a shared event              | page view `/events/:id(/info)`    |
+| Tapped "Join to play" or "Sign in" | page view `/events/:id/join`      |
+| Signed up, registered              | Supabase                          |
+
+**How it's built**
+
+- `GuestAnalytics` (`src/features/growth/`) renders Vercel's `<Analytics>`
+  in production builds only, lazy-loaded (≈1.5 KB gzip, its own chunk, not
+  in the entry bundle) and mounted once auth has settled.
+- `beforeSend` → `funnelPageView`: sends a page view only when signed out and
+  on a funnel path, as origin + path. The query string and hash are dropped
+  (they can carry `?email=` or tokens), `/auth/*` and every member page send
+  nothing. Unit tests; checked in a production build (the script loads, a
+  `?email=` join view goes out bare, member and auth pages are dropped).
+- No database writes, no player IDs, names or emails, no consent banner
+  needed.
+
+**After merge (owner):** Vercel project → Analytics → Enable Web Analytics.
+Until then the script 404s harmlessly.
+
+**Reviewing:** monthly, before the 1-month window rolls over. Copy the counts
+into the owner's private baseline; keep numbers out of the repo. Compare
+event-page views → join views → signups (Supabase) for the month.
 
 ## Phase 2: activation and referral (later)
 
@@ -349,3 +365,6 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
 - 7 Nov 2026: G5 built as share placement (#157), then paused by the owner and
   closed unmerged: more than needed now, and UTM reporting is paid in Vercel
   Web Analytics. Next is G5b's tool comparison.
+- 7 Nov 2026: G5b: Vercel Web Analytics on Hobby, signed-out funnel pages
+  only (owner). Custom events and UTM are paid, so the funnel is page views
+  plus Supabase counts. Speed Insights later.
