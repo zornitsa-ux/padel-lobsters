@@ -70,13 +70,16 @@ const COUNTRIES: ReadonlyArray<readonly [string, string]> = [
   ['VE', 'Venezuela'],
 ]
 
+export const FLAG_CODES: ReadonlySet<string> = new Set(COUNTRIES.slice(1).map(([code]) => code))
+
+// Self-hosted in public/flags (country-flag-icons, MIT): no third-party request.
 export function FlagImg({ code, className = '' }: { code?: string | null; className?: string }) {
-  if (!code || code.length !== 2) return null
+  if (!code || !FLAG_CODES.has(code.toUpperCase())) return null
   return (
     <img
-      src={`https://flagcdn.com/20x15/${code.toLowerCase()}.png`}
-      width="20"
-      height="15"
+      src={`/flags/${code.toLowerCase()}.svg`}
+      width="21"
+      height="14"
       alt={code}
       className={`inline-block flex-shrink-0 ${className}`}
     />

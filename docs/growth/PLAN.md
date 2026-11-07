@@ -380,3 +380,5 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
   only (owner). Custom events and UTM are paid, so the funnel is page views
   plus Supabase counts. Speed Insights later.
 - 7 Nov 2026: owner: research and create a privacy page (none exists yet).
+- 7 Nov 2026: country flags self-hosted in `public/flags/` (64 SVGs from
+  `country-flag-icons`, MIT), replacing flagcdn.com (#160, owner).
