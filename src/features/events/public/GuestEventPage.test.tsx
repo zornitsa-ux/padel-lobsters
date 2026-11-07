@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { normaliseTournaments } from '../../../lib/normalise'
 import type { PublicEvent } from './publicEventQueries'
@@ -94,5 +94,20 @@ describe('guest event page', () => {
     loaded([])
     renderAt('/events/nope/info')
     expect(screen.getByText('EVENTS LIST')).toBeTruthy()
+  })
+
+  it('lets a guest share an open event, with spots left and no player names', () => {
+    loaded([event({}, 17)])
+    renderAt('/events/evt-1/info')
+    fireEvent.click(screen.getByRole('button', { name: 'Share event' }))
+    const message = screen.getByTestId('share-message').textContent
+    expect(message).toContain('✅ 3 spots left')
+    expect(message).toContain(`Sign up: ${window.location.origin}/events/evt-1`)
+  })
+
+  it('offers no share once sign-ups close', () => {
+    loaded([event({ status: 'completed' }, 20)])
+    renderAt('/events/evt-1/info')
+    expect(screen.queryByRole('button', { name: 'Share event' })).toBeNull()
   })
 })

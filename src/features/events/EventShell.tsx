@@ -29,7 +29,8 @@ export default function EventShell({ tournament }: Props) {
   const { phase, oscarsPhase } = useEventPhase(tournament)
   const base = `/events/${tournament.id}`
   const openToJoin = isOpenToJoin({ event: tournament })
-  // Same query key as the tabs, so the spots-left count costs no extra fetch.
+  // Same query key as the tabs, so the spots-left count costs no extra fetch. ShareEventButton
+  // hides itself once sign-ups close; the gate here only skips the query.
   const { data: regs } = useRegistrations(openToJoin ? tournament.id : null)
   const registeredCount = regs && splitRegistrationsByStatus(regs).registered.length
 
@@ -54,9 +55,7 @@ export default function EventShell({ tournament }: Props) {
         title={tournament.name}
         backLink={{ to: '/events', label: 'Events' }}
         tabs={tabs}
-        rightAction={
-          openToJoin && <ShareEventButton event={tournament} registeredCount={registeredCount} />
-        }
+        rightAction={<ShareEventButton event={tournament} registeredCount={registeredCount} />}
       />
       <div className="px-4 pt-4">
         <Outlet />
