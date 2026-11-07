@@ -54,6 +54,7 @@ signed in gets logged out.
 | T15 | Phase 5a: client reads the role from token claims         | W     | T1              | #50      | [x]   |
 | T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]   |
 | T17 | Phase 5c: remove synthetic accounts + last auth writers   | W     | T15, T16        | 10       | [ ]   |
+| T18 | Invite emails: admin confirms the send; clearer copy      | W     | owner direction | 11       | [ ]   |
 
 C = coordinator · W = worker (worktree) · O = owner.
 States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
@@ -602,8 +603,10 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   (revoke `verify_player_pin_v2` from anon).
 - **Noted for later:**
   - an admin path that deletes the auth account (T16/T17);
-  - the dead `invalid_pin` text in `oscarsPhase.ts`, which goes in PR 6;
-  - `lib/deviceId.ts` has no caller left; PR 6 deletes it (DESIGN Phase 4).
+  - PR 6's additions from PR 4's review: the shared transfer error map, the
+    PIN-era transfer argument, `invalid_pin`, `lib/deviceId.ts` (§3.6);
+  - invite-email consent: T18, PR 11 (§3.6a). The owner decides the policy
+    first.
   - `AddEmailCard` goes with the explainer in PR 7, or with the synthetic
     accounts in PR 10, whichever is first.
 
@@ -789,8 +792,40 @@ verify-pin`.
 - **PR 5 (T10):** the migration revoking `verify_player_pin_v2` from anon, plus
   the grants file update.
 - **PR 6 (T11):** DESIGN §3 Phase 4 in full. Functions are deployed or deleted
-  first, then db push.
+  first, then db push. Also, from PR 4's review (2026-11-07):
+  - **One transfer error map.** The same status → message map (`wrong_pin`,
+    `not_found`, …) is copied in `Dashboard.tsx`, `Registration.tsx`,
+    `TransferSpotModal.tsx` and `TransferAccept.tsx`. Extract one shared map
+    first, then rename `wrong_pin` → `not_signed_in` once.
+  - **PIN-era transfer arguments.** `create_transfer` and `cancel_transfer`
+    no longer take a PIN, but `respond_to_transfer` still has an optional
+    `input_device_id`, and `AdminTransferPanel`'s header comment still says
+    cancelling needs the sender's PIN. Drop the argument if nothing reads it,
+    and correct the comment.
+  - **The dead `invalid_pin` status** in `oscarsPhase.ts` (its copy was
+    neutralised in PR 4) and `lib/deviceId.ts`, which has no caller left.
 - **PR 7 (T12):** removes the explainer.
+
+### 3.6a PR 11: invite emails (T18)
+
+Raised by the owner on 2026-11-07. Since R2, `admin_add_player` (with an email),
+`admin_invite_league_player` and `admin_resend_invite` email the player at
+once through `private.send_invite_email` → `send-invite-email`, with no step in
+between. That's a service email, not marketing, but the app can't tell whether
+the person asked to join. The "added" copy says only "An admin has set up your
+account".
+
+- **Confirm before sending:** the admin is asked "Send them an invite email?"
+  when saving a new player with an email, and can decline. Resend invite
+  already is an explicit action. The league invite is an admin action for a
+  player already in the league, so it keeps sending (confirm with the owner).
+- **Copy:** each email says why the player is getting it, with "Not you?
+  Ignore this email or reply and we'll remove you."
+- **Owner first:** whether this is enough, or whether the policy itself
+  changes (for example, admins only add people who asked to join). Not legal
+  advice; the owner decides.
+- No dependency on the PIN cutover. It can ship any time, but not within 3
+  days of an event if it touches the add-player flow.
 
 ### 3.7 PRs 0c and 0d: prod-data rehearsal kit (T13, T14)
 
