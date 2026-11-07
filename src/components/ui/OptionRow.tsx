@@ -77,7 +77,7 @@ export function OptionRow({
         ),
       })}
       {actions && (
-        <div className="flex items-center gap-1 flex-shrink-0 max-w-[40%] pr-2.5 caption">
+        <div className="flex items-center gap-1 flex-shrink-0 max-w-[40%] pr-2.5 text-xs text-lob-muted">
           {actions}
         </div>
       )}

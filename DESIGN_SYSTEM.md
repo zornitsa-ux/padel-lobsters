@@ -46,7 +46,7 @@ is the exception: `Greeting` acts as its header.
 | Eyebrow label          | `.eyebrow` (`.eyebrow-accent` on a white card) |
 | Body                   | `text-sm text-lob-dark`                        |
 | Secondary / supporting | `text-sm text-lob-muted`                       |
-| Caption / meta         | `text-xs text-lob-muted`                       |
+| Caption / meta         | `.caption` (12px, `lob-slate`)                 |
 
 `text-2xs` is the 10px token (11px folded into `text-xs`); `text-3xs` is 9px, the smallest.
 Overlines use `.eyebrow`.

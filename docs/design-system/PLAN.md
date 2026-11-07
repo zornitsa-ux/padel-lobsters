@@ -1841,3 +1841,14 @@ scrollable`, and so is the tips list. Open WhatsApp Community is a
     icon, and the Settings version line at 60% opacity. Gallery entry.
   - Inline `EmptyState`'s title moves from `lob-muted` to `lob-slate`, so its
     caption isn't darker than the title; size sets the hierarchy.
+  - Review: `design:check` gains `check-muted-captions.mjs`, which fails on
+    `text-xs` with `lob-muted` / `lob-muted-light` outside
+    `src/components/ui` (weighted, uppercase and monospace text left out;
+    the Lobster Way chevron glyph allowed). `OptionRow`'s actions wrapper
+    keeps `lob-muted`: it holds controls, not text. `DESIGN_SYSTEM.md`'s
+    "Caption / meta" row points at `.caption`.
+  - Open for the owner: weighted 12px labels (`OptionRow`'s trailing
+    level, form labels in `NewPartnerForm`, `ScoreEntryForm`, `Shop`) are
+    still `lob-muted`, about 3.7:1. A caption inside a `lob-slate` line
+    (Payments' per-player split, Tip of the Day's sign-off, the Settings
+    footer) now differs from it by size only.
