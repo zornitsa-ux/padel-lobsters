@@ -122,6 +122,9 @@ source.
 - **Check after deploy.** The functions read `VITE_SUPABASE_URL` and
   `VITE_SUPABASE_ANON_KEY` at runtime from the Vercel project env. Paste an
   event link into WhatsApp, or `curl -A WhatsApp/2 <event url>`.
+- **Region.** The functions run in `fra1` (Frankfurt), set by `regions` in
+  `vercel.json`: EU processing, and the nearest Vercel region to the Supabase
+  database in Zurich. Hobby allows one region.
 
 ### G3 notes
 
@@ -319,7 +322,7 @@ are the owner's calls, made from fill speed and waitlist data (CASE-STUDY §3).
 3. **Instagram:** reuse the G2 preview image as a "Download image" action
    (G4). No separate story design.
 4. **Full events:** offer "Join to get on the waitlist".
-   . **Link previews (G2), 6 Nov:** Vercel functions on the Node.js runtime,
+5. **Link previews (G2), 6 Nov:** Vercel functions on the Node.js runtime,
    not static pages built at deploy time.
 
 ## Log
