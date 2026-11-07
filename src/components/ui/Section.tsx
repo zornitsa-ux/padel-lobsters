@@ -45,7 +45,7 @@ export function Section({
           </Heading>
           {action}
         </div>
-        {description && <p className="text-xs text-lob-muted">{description}</p>}
+        {description && <p className="caption">{description}</p>}
       </div>
       {children}
     </section>

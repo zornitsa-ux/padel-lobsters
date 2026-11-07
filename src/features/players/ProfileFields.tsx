@@ -79,7 +79,7 @@ export function ProfileChoiceFields<T extends ChoiceValues>({
     <>
       <div>
         <label className="label">Gender</label>
-        <p className="text-xs text-lob-muted-light mb-2">For optimal pair matching</p>
+        <p className="caption mb-2">For optimal pair matching</p>
         <SegmentedControl
           ariaLabel="Gender"
           options={GENDERS}
@@ -176,9 +176,7 @@ export function PlaytomicLevelField({
           {...fieldProps}
         />
         <FormError id={errorId} message={error} />
-        <p className="text-xs text-lob-muted">
-          Check your Playtomic app — it shows your current level. {hint}
-        </p>
+        <p className="caption">Check your Playtomic app — it shows your current level. {hint}</p>
       </div>
     </Well>
   )
@@ -199,7 +197,7 @@ export function ProfileContactFields<T extends ProfileFieldValues>({
           value={form.phone}
           onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
         />
-        <p className="text-xs text-lob-muted-light mt-1">
+        <p className="caption mt-1">
           Start with + and your country code, e.g. +31 for the Netherlands. Visible to organizers
           only.
         </p>

@@ -29,7 +29,7 @@ export function LinkCardContent({ title, subtitle, leading, trailing }: LinkCard
       {leading}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-lob-dark truncate">{title}</p>
-        {subtitle && <div className="text-xs text-lob-muted mt-0.5">{subtitle}</div>}
+        {subtitle && <div className="caption mt-0.5">{subtitle}</div>}
       </div>
       {trailing && <div className="flex items-center gap-1 flex-shrink-0">{trailing}</div>}
       <ChevronRight size={16} className="text-lob-muted-light flex-shrink-0" aria-hidden="true" />

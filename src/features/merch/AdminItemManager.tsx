@@ -48,7 +48,7 @@ export default function AdminItemManager({
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-lob-dark truncate">{item.name}</p>
-              <p className="text-xs text-lob-muted">
+              <p className="caption">
                 €{item.price.toFixed(0)} · {orderCount(item.id)}{' '}
                 {orderCount(item.id) === 1 ? 'order' : 'orders'}
               </p>

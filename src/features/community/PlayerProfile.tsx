@@ -156,21 +156,21 @@ export default function PlayerProfile({
         {/* Day + month only, no year — this is public (players_public), not
             PII, so it renders with zero contact-details fetch. */}
         {p.birthday_month && p.birthday_day && (
-          <span className="text-xs text-lob-muted-light">
+          <span className="caption">
             🎂 {p.birthday_day} {MONTH_ABBR[p.birthday_month - 1]}
           </span>
         )}
       </div>
 
       {/* Level row — compact */}
-      <div className="flex items-center gap-1.5 text-xs text-lob-muted">
+      <div className="flex items-center gap-1.5 caption">
         <span>Playtomic</span>
         <LevelBadge level={p.playtomicLevel} size="sm" />
       </div>
 
       {/* Learned level — admin-only (mm_rating/mm_sigma, admin RPC) */}
       {isAdmin && learned && (
-        <div className="flex items-center gap-1.5 text-xs text-lob-muted">
+        <div className="flex items-center gap-1.5 caption">
           <span className="eyebrow-accent">Learned level</span>
           <span className="font-bold text-lob-slate">{learned.mu.toFixed(2)}</span>
           <span className={learnedDelta >= 0 ? 'text-lob-success' : 'text-lob-danger'}>
@@ -389,10 +389,10 @@ export default function PlayerProfile({
 
           {pii.revealed && !pii.isLoading && !pii.isError && pii.pii && (
             <>
-              {pii.pii.email && <p className="text-xs text-lob-muted">✉ {pii.pii.email}</p>}
-              {pii.pii.phone && <p className="text-xs text-lob-muted">📞 {pii.pii.phone}</p>}
+              {pii.pii.email && <p className="caption">✉ {pii.pii.email}</p>}
+              {pii.pii.phone && <p className="caption">📞 {pii.pii.phone}</p>}
               {!pii.pii.email && !pii.pii.phone && (
-                <p className="text-xs text-lob-muted italic">No contact details on file.</p>
+                <p className="caption italic">No contact details on file.</p>
               )}
             </>
           )}
@@ -412,7 +412,7 @@ export default function PlayerProfile({
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="eyebrow mb-0.5">Sign-in invite</p>
-            <p className="text-xs text-lob-muted leading-snug">
+            <p className="caption leading-snug">
               Emails the player how to sign in. Contains no password or code.
             </p>
           </div>

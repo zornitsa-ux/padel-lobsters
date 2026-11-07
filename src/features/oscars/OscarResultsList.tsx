@@ -29,7 +29,7 @@ export function OscarResultsList({
               </span>
             </p>
           ) : (
-            <p className="text-xs text-lob-muted-light">No votes</p>
+            <p className="caption">No votes</p>
           )}
           <div className="space-y-1">
             {cat.rows.map((r) => (
@@ -42,9 +42,7 @@ export function OscarResultsList({
                   size="lg"
                   className="flex-1"
                 />
-                <span className="text-xs text-lob-muted w-3 text-right">
-                  {Number(r.votes_count)}
-                </span>
+                <span className="caption w-3 text-right">{Number(r.votes_count)}</span>
               </div>
             ))}
           </div>

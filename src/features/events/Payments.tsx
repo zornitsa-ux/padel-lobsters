@@ -197,7 +197,7 @@ export default function Payments({
             Total: <span className="font-bold text-lob-dark">{fmtEur(tournament.totalPrice)}</span>{' '}
             · Per {unitLabel}:{' '}
             <span className="font-bold text-lob-teal">{fmtEur(costPerEntry)}</span>
-            <span className="text-xs text-lob-muted-light">
+            <span className="caption">
               {' '}
               (÷ {tournament.maxPlayers} players{teamMode ? ', 2 per team' : ''})
             </span>
@@ -208,9 +208,7 @@ export default function Payments({
             Pay via Tikkie
           </Button>
         ) : (
-          <p className="text-xs text-lob-muted">
-            No Tikkie link set — payment via Playtomic or cash
-          </p>
+          <p className="caption">No Tikkie link set — payment via Playtomic or cash</p>
         )}
       </Section>
 
@@ -355,7 +353,7 @@ export default function Payments({
                   <div className="flex items-center gap-2 flex-wrap">
                     <PaymentStatusBadge paymentStatus={ps} detail={detail || undefined} />
                     {costPerEntry > 0 && !isTransferred && (
-                      <span className="text-xs text-lob-muted">{fmtEur(costPerEntry)}</span>
+                      <span className="caption">{fmtEur(costPerEntry)}</span>
                     )}
                   </div>
                 </PlayerRow>

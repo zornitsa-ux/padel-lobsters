@@ -57,7 +57,7 @@ export default function AdminAlerts({
                   <span className="text-sm font-semibold text-lob-dark">
                     {p.name.split(' ')[0]}
                   </span>
-                  <span className="ml-auto text-xs text-lob-muted">{birthdayWhen(diff)}</span>
+                  <span className="ml-auto caption">{birthdayWhen(diff)}</span>
                 </div>
               </ListRow>
             ))}

@@ -28,7 +28,7 @@ describe('EmptyState', () => {
       EmptyState({ title: 't', description: 'more copy', action: 'ACTION' }),
     )
     expect(propsOf(description).children).toBe('more copy')
-    expect(propsOf(description).className).toBe('text-xs text-lob-muted')
+    expect(propsOf(description).className).toBe('caption')
     expect(propsOf(action).className).toBe('mt-2')
     expect(propsOf(action).children).toBe('ACTION')
   })
@@ -38,7 +38,7 @@ describe('EmptyState', () => {
     expect(propsOf(el).className).toBe('flex flex-col items-center py-4 text-center gap-1')
     const [icon, title, description] = childrenOf(el)
     expect(propsOf(icon).className).toBe('text-lob-muted opacity-40 [&>svg]:size-5')
-    expect(propsOf(title).className).toBe('text-sm text-lob-muted')
-    expect(propsOf(description).className).toBe('text-xs text-lob-muted-light')
+    expect(propsOf(title).className).toBe('text-sm text-lob-slate')
+    expect(propsOf(description).className).toBe('caption')
   })
 })

@@ -110,7 +110,7 @@ export default function VerificationGate({ children }: { children?: React.ReactN
             <span className="text-4xl">🦞</span>
           </div>
           <h1 className="text-xl font-extrabold text-lob-dark">Padel Lobsters</h1>
-          <p className="text-xs text-lob-muted mt-1">
+          <p className="caption mt-1">
             {mode === 'signin' && 'Sign in with your email to continue.'}
             {mode === 'signup' && 'New here? Set up your Lobster profile.'}
           </p>

@@ -95,6 +95,9 @@ onto tones. Each is a `-soft` fill (or a token tint) with the text shade:
 
 ## Type, brand, effects
 
+- `.caption`: 12px secondary text (hints, meta lines, footnotes), `text-xs`
+  in `lob-slate`. Use it rather than `text-xs` with `lob-muted` or
+  `lob-muted-light`, which fail WCAG AA at this size.
 - `text-2xs`: 10px eyebrows and micro labels. 11px folded into `text-xs`
   (12px).
 - `text-3xs`: 9px, the smallest size: bottom nav labels, the header

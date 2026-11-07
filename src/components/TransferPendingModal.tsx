@@ -123,7 +123,7 @@ export default function TransferPendingModal({
       title={`Awaiting ${(toPlayer?.name || 'their').split(/\s+/)[0]}'s response`}
     >
       <div className="space-y-4">
-        <p className="text-xs text-lob-muted leading-relaxed">
+        <p className="caption leading-relaxed">
           Your spot is held in <strong>pending transfer</strong> until{' '}
           {(toPlayer?.name || 'they').split(/\s+/)[0]} accepts. Send the link via WhatsApp so they
           know to open it.
@@ -157,13 +157,13 @@ export default function TransferPendingModal({
         )}
 
         {groupNote && (
-          <p className="text-xs text-lob-muted text-center">
+          <p className="caption text-center">
             Message copied to your clipboard — paste it in the group chat.
           </p>
         )}
 
         {phone === '' && groupLink && (
-          <p className="text-xs text-lob-muted-light text-center">
+          <p className="caption text-center">
             No WhatsApp number on file for {(toPlayer?.name || 'this player').split(/\s+/)[0]} — use
             the group instead.
           </p>

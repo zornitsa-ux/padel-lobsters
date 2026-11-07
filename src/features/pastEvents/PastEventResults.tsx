@@ -200,7 +200,7 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                     <span>{t.name}</span>
                     {tCategory && <Tag label={CATEGORY_LABEL[tCategory]} />}
                   </p>
-                  <p className="text-xs text-lob-muted">
+                  <p className="caption">
                     {t.date
                       ? parseLocalDate(t.date)?.toLocaleDateString('en-GB', {
                           day: 'numeric',

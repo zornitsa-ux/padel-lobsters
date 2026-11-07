@@ -111,7 +111,7 @@ function DetailsSection({ league, teams }: { league: League; teams: LeagueTeam[]
             </label>
           ))}
         </div>
-        <p className="text-xs text-lob-muted">
+        <p className="caption">
           {isDraft
             ? 'A division with teams can’t be removed.'
             : 'Divisions are fixed once the group stage starts.'}

@@ -69,7 +69,7 @@ export function NewSeasonForm() {
           </label>
         ))}
       </fieldset>
-      <p className="text-xs text-lob-muted">
+      <p className="caption">
         New seasons start hidden from players. Publish from the season&apos;s Manage page when
         it&apos;s ready.
       </p>

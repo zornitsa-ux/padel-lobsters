@@ -65,7 +65,7 @@ function CategoryHeader({ cat, hint }: { cat: OscarCategoryResult; hint: boolean
     <span className="flex-1 min-w-0 flex items-center gap-2">
       <span className="text-lg">{cat.icon}</span>
       <span className="flex-1 font-bold text-sm text-lob-dark">{cat.name}</span>
-      {hint && <span className="text-xs text-lob-muted-light italic">tap to reveal</span>}
+      {hint && <span className="caption italic">tap to reveal</span>}
     </span>
   )
 }
@@ -85,7 +85,7 @@ function CategoryBody({ cat }: { cat: OscarCategoryResult }) {
               <span className="text-xs font-semibold text-lob-muted ml-1">(tied)</span>
             )}
           </p>
-          <p className="text-xs text-lob-muted mt-0.5">
+          <p className="caption mt-0.5">
             {votesLabel(cat.topVotes)}
             {cat.winners.length > 1 ? ' each' : ''}
           </p>

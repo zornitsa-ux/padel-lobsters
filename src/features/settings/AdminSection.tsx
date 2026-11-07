@@ -75,7 +75,7 @@ export default function AdminSection({
             value={form.whatsappLink}
             onChange={(e) => setForm((f) => ({ ...f, whatsappLink: e.target.value }))}
           />
-          <p className="text-xs text-lob-muted-light mt-1.5">
+          <p className="caption mt-1.5">
             Opens in WhatsApp when tapped in the header. Find it in your WhatsApp group → Invite via
             link.
           </p>

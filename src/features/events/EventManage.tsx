@@ -148,7 +148,7 @@ function ScoringProgress({
       {sealed ? (
         <p className="text-xs font-semibold text-lob-teal">All matches scored</p>
       ) : (
-        <p className="text-xs text-lob-muted">
+        <p className="caption">
           {total === 0 ? 'No schedule yet' : `${scoredCount} of ${total} matches scored`}
         </p>
       )}

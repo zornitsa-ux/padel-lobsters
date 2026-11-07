@@ -79,7 +79,7 @@ export function PartnerPendingActions({ entry, tournamentId, otherName }: Action
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-lob-muted">{partnerAcceptNote({ captainName: otherName })}</p>
+      <p className="caption">{partnerAcceptNote({ captainName: otherName })}</p>
       <ActionRow>
         <Button onClick={() => void respond({ accept: false })} disabled={busy} variant="secondary">
           I&apos;m not playing

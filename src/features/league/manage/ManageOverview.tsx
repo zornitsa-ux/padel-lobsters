@@ -104,7 +104,7 @@ function StatusAction({
       >
         {isCompletion ? 'Complete Season' : `Advance → ${nextLabel}`}
       </Button>
-      {blocker && <p className="text-xs text-lob-muted text-center">{blocker}</p>}
+      {blocker && <p className="caption text-center">{blocker}</p>}
     </div>
   )
 }

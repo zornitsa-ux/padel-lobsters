@@ -74,7 +74,7 @@ export function PasswordForm({ requireCurrentPassword, submitLabel, onDone }: Pa
           onChange={setNewPassword}
           aria-describedby="password-rules"
         />
-        <p id="password-rules" className="text-xs text-lob-muted-light mt-1">
+        <p id="password-rules" className="caption mt-1">
           {PASSWORD_RULES_COPY}
         </p>
       </div>

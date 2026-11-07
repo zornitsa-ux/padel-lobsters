@@ -137,7 +137,7 @@ function CourtCard({
             />
           )}
         </div>
-        <span className="text-xs text-lob-muted-light">Spread {court.courtSpread.toFixed(2)}</span>
+        <span className="caption">Spread {court.courtSpread.toFixed(2)}</span>
       </div>
 
       <div className="flex items-center gap-2">
@@ -148,7 +148,7 @@ function CourtCard({
             showGender={showGender}
             onPickPlayer={pickPlayer}
           />
-          <p className="text-xs text-lob-muted-light mt-0.5">{sum1.toFixed(1)}</p>
+          <p className="caption mt-0.5">{sum1.toFixed(1)}</p>
         </div>
         <span className="text-xs text-lob-muted-light font-medium flex-shrink-0">vs</span>
         <div className="flex-1 min-w-0 text-right">
@@ -158,7 +158,7 @@ function CourtCard({
             showGender={showGender}
             onPickPlayer={pickPlayer}
           />
-          <p className="text-xs text-lob-muted-light mt-0.5">{sum2.toFixed(1)}</p>
+          <p className="caption mt-0.5">{sum2.toFixed(1)}</p>
         </div>
       </div>
 
@@ -220,7 +220,7 @@ function RoundSection({
         ))}
       </div>
       {round.sitters.length > 0 && (
-        <p className="text-xs text-lob-muted">
+        <p className="caption">
           Sitting out: {round.sitters.map((sitter) => sitter.name).join(', ')}
         </p>
       )}
@@ -237,7 +237,7 @@ function Legend({ rounds, showGender }: { rounds: ScheduleRun['rounds']; showGen
   if (!hasLefty && !hasProvisional && !showGender) return null
 
   return (
-    <div className="flex flex-col gap-x-4 gap-y-1 text-xs text-lob-muted">
+    <div className="flex flex-col gap-x-4 gap-y-1 caption">
       <span className="font-medium text-lob-muted-light">Key:</span>
       {showGender && <GenderLegendEntries />}
       {hasLefty && (

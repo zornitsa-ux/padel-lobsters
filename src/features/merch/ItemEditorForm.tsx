@@ -110,7 +110,7 @@ export default function ItemEditorForm({
             value={form.external_orders ?? 0}
             onChange={(e) => setForm((f) => ({ ...f, external_orders: e.target.value }))}
           />
-          <p className="text-xs text-lob-muted-light mt-1">
+          <p className="caption mt-1">
             Counts toward the "X lobsters already ordered" badge players see in the shop.
           </p>
         </div>
@@ -146,9 +146,7 @@ export default function ItemEditorForm({
                 </Chip>
               ))}
             </ChipGroup>
-            {form.sizes.length === 0 && (
-              <p className="text-xs text-lob-muted-light">No sizes = one-size item</p>
-            )}
+            {form.sizes.length === 0 && <p className="caption">No sizes = one-size item</p>}
           </div>
         </div>
 

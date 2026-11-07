@@ -105,9 +105,7 @@ export default function ReviewBreakdownModal({
         </Button>
       }
     >
-      <p className="text-xs text-lob-muted-light -mt-2 mb-3">
-        Who's getting which Lobster Review, grouped by scenario
-      </p>
+      <p className="caption -mt-2 mb-3">Who's getting which Lobster Review, grouped by scenario</p>
 
       {/* Performance summary banner */}
       <div className="-mx-5 px-5 py-3 bg-lob-warning-light border-y border-lob-warning-border mb-3">

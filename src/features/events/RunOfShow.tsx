@@ -161,13 +161,13 @@ function StepRow({
             {done && <Badge tone="success" icon={<CheckCircle2 />} label="Done" />}
             {step.optional && !done && <Badge tone="neutral" label="Optional" />}
           </div>
-          <p className="text-xs text-lob-muted">{step.detail}</p>
+          <p className="caption">{step.detail}</p>
           <p className="text-xs text-lob-teal-dark bg-lob-teal-light inline-flex items-center gap-1 px-2 py-0.5 rounded-full">
             <Eye size={11} /> Players see: {step.playersSee}
           </p>
 
           {locked && step.lockedReason && (
-            <p className="flex items-center gap-1.5 text-xs text-lob-muted-light">
+            <p className="flex items-center gap-1.5 caption">
               <Lock size={12} /> {step.lockedReason}
             </p>
           )}

@@ -107,7 +107,7 @@ export default function ScoresRankingTab({
                       <td className="text-center py-2.5 text-lob-slate">{s.played}</td>
                       <td className="text-center py-2.5 text-lob-success font-semibold">{s.won}</td>
                       <td className="text-center py-2.5 text-lob-danger">{s.lost}</td>
-                      <td className="text-center py-2.5 text-lob-muted text-xs">
+                      <td className="text-center py-2.5 caption">
                         {s.pointsFor}-{s.pointsAgainst}
                       </td>
                       <td className="text-center py-2.5 font-bold text-lob-teal">{s.points}</td>
@@ -116,9 +116,7 @@ export default function ScoresRankingTab({
                 </tbody>
               </table>
             </div>
-            <p className="text-xs text-lob-muted-light mt-2">
-              Total game points · Tiebreak: matches won → head-to-head
-            </p>
+            <p className="caption mt-2">Total game points · Tiebreak: matches won → head-to-head</p>
           </div>
         </>
       )}

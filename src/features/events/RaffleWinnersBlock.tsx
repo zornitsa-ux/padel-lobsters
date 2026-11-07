@@ -36,7 +36,7 @@ export default function RaffleWinnersBlock({
         {winners.map((winner) => (
           <li key={winner.id} className="flex items-baseline justify-between gap-2 text-sm">
             <span className="font-semibold text-lob-dark">{nameOf(winner.playerId)}</span>
-            {winner.prize && <span className="text-xs text-lob-muted">{winner.prize}</span>}
+            {winner.prize && <span className="caption">{winner.prize}</span>}
           </li>
         ))}
       </ul>

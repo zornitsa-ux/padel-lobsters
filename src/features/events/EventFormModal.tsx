@@ -131,9 +131,7 @@ export default function EventFormModal({
             value={form.format}
             onChange={(format) => setForm((f) => ({ ...f, ...formatOption({ format }) }))}
           />
-          {formatLocked && (
-            <p className="text-xs text-lob-muted-light mt-1">{FORMAT_LOCKED_NOTE}</p>
-          )}
+          {formatLocked && <p className="caption mt-1">{FORMAT_LOCKED_NOTE}</p>}
         </div>
 
         {kotc ? (
@@ -191,7 +189,7 @@ export default function EventFormModal({
             onChange={(val) => setForm((f) => ({ ...f, genderMode: val }))}
           />
           {form.genderMode === 'mixed' && (
-            <p className="text-xs text-lob-muted-light mt-1">
+            <p className="caption mt-1">
               Schedule will balance gender per court and keep left-handed players on opposite teams
             </p>
           )}
@@ -206,7 +204,7 @@ export default function EventFormModal({
             </TextButton>
           </div>
           {kotc && (
-            <p className="text-xs text-lob-muted-light mb-2">
+            <p className="caption mb-2">
               Court order is the ladder: the first court is the King court.
             </p>
           )}
@@ -249,7 +247,7 @@ export default function EventFormModal({
         {/* Pricing */}
         <div>
           <label className="label">Price per Person (€)</label>
-          <p className="text-xs text-lob-muted mb-2">
+          <p className="caption mb-2">
             All-in amount per player covering courts, food, drinks and prizes.
           </p>
           <input
@@ -273,7 +271,7 @@ export default function EventFormModal({
                 (parseFloat(String(form.pricePerPerson)) || 0) *
                   (parseInt(String(form.maxPlayers)) || 0),
               )}
-              <span className="text-xs font-normal text-lob-muted-light"> total</span>
+              <span className="caption font-normal"> total</span>
             </p>
           )}
         </div>
@@ -281,7 +279,7 @@ export default function EventFormModal({
         {/* Tikkie link */}
         <div>
           <label className="label">Tikkie Link (optional)</label>
-          <p className="text-xs text-lob-muted mb-2">
+          <p className="caption mb-2">
             Paste your Tikkie link here so players can pay directly from the registration page.
           </p>
           <input
@@ -295,7 +293,7 @@ export default function EventFormModal({
         {/* Description */}
         <div>
           <label className="label">Description</label>
-          <p className="text-xs text-lob-muted mb-2">
+          <p className="caption mb-2">
             Shown to players on the home screen and event page. Feel free to edit — the default
             covers check-in, what's included, and pairings.
           </p>

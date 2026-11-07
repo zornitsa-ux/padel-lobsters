@@ -67,7 +67,7 @@ export default function TeamRankingList({
 function MoveLine({ move, courts }: { move: CourtMove; courts: Court[] }) {
   const { journey, change } = courtMoveText({ move, courts })
   return (
-    <span className="block text-xs font-normal text-lob-muted">
+    <span className="block caption font-normal">
       {journey}{' '}
       <span className={`font-semibold ${move.gained > 0 ? 'text-lob-teal' : ''}`}>{change}</span>
     </span>

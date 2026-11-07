@@ -47,7 +47,7 @@ function SwapRow({
           Swap <span className="font-semibold">{copy.outName}</span> for{' '}
           <span className="font-semibold">{copy.inName}</span> — {copy.effects}
         </p>
-        {copy.missesTarget && <p className="text-xs text-lob-muted">{copy.missesTarget}</p>}
+        {copy.missesTarget && <p className="caption">{copy.missesTarget}</p>}
         {copy.ruleBreaks.map((line) => (
           <p key={line} className="text-xs font-semibold text-lob-danger">
             {line}
@@ -95,7 +95,7 @@ export default function SwapPanel({
         </p>
         {error && <AlertBox variant="error">{error}</AlertBox>}
         {suggestions.length === 0 ? (
-          <p className="text-xs text-lob-muted">{emptyCopy({ target, showAll: showingAll })}</p>
+          <p className="caption">{emptyCopy({ target, showAll: showingAll })}</p>
         ) : (
           <ul className="space-y-3">
             {suggestions.map((suggestion) => (
@@ -112,9 +112,7 @@ export default function SwapPanel({
           </ul>
         )}
         {showingAll ? (
-          <p className="text-xs text-lob-muted">
-            Showing every swap, including ones that break a rule.
-          </p>
+          <p className="caption">Showing every swap, including ones that break a rule.</p>
         ) : (
           <TextButton tone="neutral" onClick={onShowAll} disabled={applying}>
             Show all swaps
