@@ -48,6 +48,9 @@ export function GroupStandings({
             />
           </div>
         ))}
+        <p className="text-xs text-lob-muted-light">
+          Ties on points: head-to-head → set +/− → game +/−
+        </p>
       </div>
     </Section>
   )
