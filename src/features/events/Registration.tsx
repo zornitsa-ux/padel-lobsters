@@ -67,6 +67,7 @@ import type {
   TransferShareTarget,
 } from './registration/utils'
 import { Button } from '../../components/ui/Button'
+import { isStaleTransferStatus } from './transferStatus'
 
 export default function Registration({
   tournament,
@@ -419,7 +420,11 @@ export default function Registration({
     const r = await adminCancelTransfer(transferId)
     setRespondingTo(null)
     if (!r.ok) {
-      alert('Could not cancel the offer. Please try again.')
+      alert(
+        isStaleTransferStatus(r.status)
+          ? 'This offer was already responded to.'
+          : 'Could not cancel the offer. Please try again.',
+      )
     }
   }
   const handleIncomingResponse = async (xfer: NormalisedTransfer, accept: boolean) => {

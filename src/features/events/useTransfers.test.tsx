@@ -106,7 +106,7 @@ describe('useTransferActions', () => {
     expect(client.invalidateQueries).not.toHaveBeenCalled()
   })
 
-  it.each(['not_pending', 'not_found'])(
+  it.each(['not_pending', 'not_found', 'transfers_closed', 'from_not_registered'])(
     'refreshes the list when an admin action comes back %s',
     async (status) => {
       ;(q.forceAcceptTransfer as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: false, status })
@@ -128,6 +128,7 @@ describe('useTransferActions', () => {
         await result.current.adminCancelTransfer('xfer-1')
       })
       expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey: transferKeys.all() })
+      expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey: registrationKeys.all() })
     },
   )
 

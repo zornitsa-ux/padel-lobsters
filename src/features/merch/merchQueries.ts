@@ -141,9 +141,6 @@ export async function uploadMerchImages({ files }: { files: File[] }): Promise<s
 }
 
 // ── Order writes ─────────────────────────────────────────────────────────
-// merch_interests has a unique (player_id, merch_item_id) constraint, so a
-// repeat order is an edit of the existing row. Only size and custom_name are
-// touched on that path — re-ordering must not reset a paid order to 'ordered'.
 interface MerchOrderInput {
   playerId: string
   itemId: number
@@ -153,7 +150,8 @@ interface MerchOrderInput {
 
 const UNIQUE_VIOLATION = '23505'
 
-// Size and name only: re-ordering must not reset a paid order's status.
+// merch_interests is unique on (player_id, merch_item_id), so a repeat order is
+// an edit. Size and name only: re-ordering must not reset a paid order's status.
 async function editMerchOrder({ playerId, itemId, size, customName }: MerchOrderInput) {
   const { error } = await supabase
     .from('merch_interests')

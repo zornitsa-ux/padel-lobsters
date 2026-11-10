@@ -32,6 +32,7 @@ const FORCE_ACCEPT_ERRORS: Record<string, string> = {
   not_found: 'Transfer no longer exists.',
   not_pending: 'Transfer was already responded to.',
   tournament_started: 'Too late — the event has already started.',
+  transfers_closed: 'Transfers for this event have closed.',
   to_already_registered: 'The recipient is already registered for this event.',
   from_not_registered: 'The sender is no longer registered — the transfer can’t be completed.',
 }

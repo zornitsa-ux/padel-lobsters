@@ -27,7 +27,7 @@ import { Section } from '../../components/ui/Section'
 import { plural } from '../../lib/plural'
 import AuthReadinessPanel from './AuthReadinessPanel'
 import type { EventNavigate } from '../events/eventHelpers'
-import { isEventUpcoming } from '../events/eventPhase'
+import { upcomingEvents } from '../home/homeHelpers'
 import { GROUP_SETTINGS_PATH } from '../settings/settingsHelpers'
 import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
 import { owesPayment } from '../events/paymentStatus'
@@ -61,13 +61,7 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
     [players],
   )
 
-  const nextEvent = useMemo(
-    () =>
-      tournaments
-        .filter((t) => isEventUpcoming({ tournament: t }))
-        .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))[0],
-    [tournaments],
-  )
+  const nextEvent = useMemo(() => upcomingEvents({ events: tournaments })[0], [tournaments])
 
   const unpaidForNextEvent = useMemo(() => {
     if (!nextEvent) return 0

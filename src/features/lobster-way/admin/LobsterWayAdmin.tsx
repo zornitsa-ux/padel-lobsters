@@ -62,11 +62,7 @@ export default function LobsterWayAdmin() {
     if (!content) return
     setSaving(true)
     try {
-      await saveSettingsMutation.mutateAsync({
-        whatsappLink: settings?.whatsappLink,
-        groupName: settings?.groupName,
-        lobsterWayContent: content,
-      })
+      await saveSettingsMutation.mutateAsync({ lobsterWayContent: content })
       dirty.current = false
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)

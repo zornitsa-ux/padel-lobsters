@@ -37,6 +37,7 @@ import {
   PAYMENT_STATUSES,
   PAYMENT_STATUS_INFO,
   isSettled,
+  cameByTransfer,
   isUnpaid,
   paymentStatusInfo,
   toPaymentStatus,
@@ -183,8 +184,11 @@ export default function Payments({
       reg.id,
       {
         paymentStatus: status,
-        paymentMethod:
-          status === 'unpaid' ? '' : reg.paymentMethod || (status === 'tikkied' ? 'tikkie' : ''),
+        paymentMethod: cameByTransfer(reg)
+          ? reg.paymentMethod
+          : status === 'unpaid'
+            ? ''
+            : reg.paymentMethod || (status === 'tikkied' ? 'tikkie' : ''),
       },
       tournament.id,
     )
@@ -318,7 +322,7 @@ export default function Payments({
                   <ActionRow layout="end">
                     {/* Primary action — varies by status, keeps the most common
                       next step one tap away for the admin. */}
-                    {isTransferred ? null : isConfirmed ? (
+                    {isConfirmed && cameByTransfer(reg) ? null : isConfirmed ? (
                       <Button variant="neutral" size="sm" onClick={() => handleMarkUnpaid(reg)}>
                         Undo
                       </Button>

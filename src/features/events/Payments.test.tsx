@@ -142,6 +142,31 @@ describe('Payments, team events', () => {
     expect(screen.getAllByRole('button', { name: 'Undo' })).toHaveLength(1)
   })
 
+  const transferredRegs = (paymentStatus: string) => [
+    mkRegistration({
+      id: 'r1',
+      playerId: 'p1',
+      teamId: 'team1',
+      paymentStatus,
+      paymentMethod: 'transferred_from:p9',
+    }),
+    mkRegistration({ id: 'r2', playerId: 'p2', teamId: 'team1', paymentStatus: 'covered' }),
+  ]
+
+  it('offers no Undo when a transfer carried over the paid status', () => {
+    registrations = transferredRegs('paid')
+    teams = [team('team1', 'p1')]
+    renderPayments(tournament({ entryMode: 'team' }))
+    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull()
+  })
+
+  it('still lets an admin mark an unpaid transfer recipient as paid', () => {
+    registrations = transferredRegs('unpaid')
+    teams = [team('team1', 'p1')]
+    renderPayments(tournament({ entryMode: 'team' }))
+    expect(screen.getByRole('button', { name: /Mark Paid/ })).toBeTruthy()
+  })
+
   it('sends the reminder for the captain registration', async () => {
     renderPayments(tournament({ entryMode: 'team' }))
     fireEvent.click(screen.getAllByRole('button', { name: /Remind/ })[0]!)

@@ -79,10 +79,15 @@ export function useTransferActions({
   const adminCancelTransfer = useCallback(
     async (transferId: string) => {
       const result = await q.adminCancelTransfer(transferId)
-      if (result.ok || isStaleTransferStatus(result.status)) await invalidateTransfers()
+      if (result.ok) await invalidateTransfers()
+      // Stale can mean the recipient accepted, which moved the spot.
+      if (isStaleTransferStatus(result.status)) {
+        await invalidateTransfers()
+        invalidateRegistrations()
+      }
       return result
     },
-    [invalidateTransfers],
+    [invalidateTransfers, invalidateRegistrations],
   )
 
   const forceAcceptTransfer = useCallback(

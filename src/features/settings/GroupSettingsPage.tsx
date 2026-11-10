@@ -14,23 +14,31 @@ const formFromSettings = (
   groupName: settings?.groupName || 'Padel Lobsters',
 })
 
+const changedFields = ({ base, next }: { base: SettingsForm; next: SettingsForm }) => {
+  const keys = Object.keys(next) as (keyof SettingsForm)[]
+  return Object.fromEntries(
+    keys.filter((key) => next[key] !== base[key]).map((key) => [key, next[key]]),
+  ) as Partial<SettingsForm>
+}
+
 /** Admin-only app config: group name, WhatsApp link, security log and daily tips. */
 export default function GroupSettingsPage() {
   const { data: settings } = useSettings()
   const saveSettingsMutation = useSaveSettings()
-  // Null until the admin types, so a refetch can't overwrite an edit in progress.
-  const [draft, setDraft] = useState<SettingsForm | null>(null)
+  // Only the fields the admin changed: the rest keep following the saved settings.
+  const [draft, setDraft] = useState<Partial<SettingsForm> | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [newTip, setNewTip] = useState('')
   const [editingTip, setEditingTip] = useState<EditingTip | null>(null)
   const [tipsExpanded, setTipsExpanded] = useState(false)
 
-  const form = draft ?? formFromSettings(settings)
+  const form = { ...formFromSettings(settings), ...draft }
   const setForm: Dispatch<SetStateAction<SettingsForm>> = (update) =>
     setDraft((current) => {
-      const base = current ?? formFromSettings(settings)
-      return typeof update === 'function' ? update(base) : update
+      const base = { ...formFromSettings(settings), ...current }
+      const next = typeof update === 'function' ? update(base) : update
+      return { ...current, ...changedFields({ base, next }) }
     })
 
   const { tips, change: changeTips } = useTipsEditor({
@@ -45,8 +53,8 @@ export default function GroupSettingsPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      await saveSettingsMutation.mutateAsync(form)
-      setDraft((current) => (current === form ? null : current))
+      if (draft) await saveSettingsMutation.mutateAsync(draft)
+      setDraft((current) => (current === draft ? null : current))
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     } catch (err) {

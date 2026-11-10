@@ -63,6 +63,18 @@ describe('GroupSettingsPage', () => {
     expect(section.form.whatsappLink).toBe('https://half-typed')
   })
 
+  it('fills untouched fields once settings load after typing started', () => {
+    const loaded = mockSettings
+    mockSettings = undefined as unknown as typeof loaded
+    const { rerender } = render(page())
+    act(() => section.setForm((form) => ({ ...form, groupName: 'Typed early' })))
+
+    mockSettings = loaded
+    rerender(page())
+
+    expect(section.form).toEqual({ whatsappLink: 'https://saved', groupName: 'Typed early' })
+  })
+
   it('follows the saved settings while untouched', () => {
     const { rerender } = render(page())
 
@@ -78,8 +90,6 @@ describe('GroupSettingsPage', () => {
 
     await act(async () => section.handleSave({ preventDefault: () => {} }))
 
-    expect(mockSave.mock.calls).toEqual([
-      [{ whatsappLink: 'https://half-typed', groupName: 'Saved' }],
-    ])
+    expect(mockSave.mock.calls).toEqual([[{ whatsappLink: 'https://half-typed' }]])
   })
 })
