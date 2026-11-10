@@ -20,6 +20,7 @@ import { Spinner } from '../../components/ui/Spinner'
 import { IconButton } from '../../components/ui/IconButton'
 import { Menu, MenuItem } from '../../components/ui/Menu'
 import { PlayerRow } from '../../components/ui/PlayerRow'
+import { ActionRow } from '../../components/ui/ActionRow'
 import { ListCard, ListRow } from '../../components/ui/ListCard'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { StatTile } from '../../components/ui/StatTile'
@@ -305,50 +306,6 @@ export default function Payments({
                   avatarSize="lg"
                   avatarTone={BADGE_TONE_CLASSES[tone]}
                   name={rowName(reg, player.name)}
-                  trailing={
-                    isAdmin && (
-                      <div className="flex items-center gap-1">
-                        {/* Primary action — varies by status, keeps the most common
-                          next step one tap away for the admin. */}
-                        {isConfirmed ? (
-                          <Button variant="neutral" size="sm" onClick={() => handleMarkUnpaid(reg)}>
-                            Undo
-                          </Button>
-                        ) : isSelfPaid || isTikkied ? (
-                          <Button
-                            size="sm"
-                            onClick={() => handleMarkPaid(reg, reg.paymentMethod || 'tikkie')}
-                          >
-                            Confirm ✓
-                          </Button>
-                        ) : (
-                          <PaymentMethodPicker onSelect={(method) => handleMarkPaid(reg, method)} />
-                        )}
-                        {!!tournament.tikkieLink && !isConfirmed && !isSelfPaid && (
-                          <Button
-                            variant="neutral"
-                            size="sm"
-                            onClick={() =>
-                              setReminderTarget({
-                                regId: reg.id,
-                                name: player.name || 'this player',
-                              })
-                            }
-                            title="Send a WhatsApp payment reminder"
-                            icon={<MessageCircle />}
-                          >
-                            Remind
-                          </Button>
-                        )}
-                        {/* Manual override — lets the admin set any status directly,
-                          e.g. correcting a misclick or manually marking Tikkied. */}
-                        <StatusOverrideMenu
-                          currentStatus={ps}
-                          onSelect={(s) => handleSetStatus(reg, s)}
-                        />
-                      </div>
-                    )
-                  }
                 >
                   <div className="flex items-center gap-2 flex-wrap">
                     <PaymentStatusBadge paymentStatus={ps} detail={detail || undefined} />
@@ -357,6 +314,48 @@ export default function Payments({
                     )}
                   </div>
                 </PlayerRow>
+                {isAdmin && (
+                  <ActionRow layout="end">
+                    {/* Primary action — varies by status, keeps the most common
+                      next step one tap away for the admin. */}
+                    {isConfirmed ? (
+                      <Button variant="neutral" size="sm" onClick={() => handleMarkUnpaid(reg)}>
+                        Undo
+                      </Button>
+                    ) : isSelfPaid || isTikkied ? (
+                      <Button
+                        size="sm"
+                        onClick={() => handleMarkPaid(reg, reg.paymentMethod || 'tikkie')}
+                      >
+                        Confirm ✓
+                      </Button>
+                    ) : (
+                      <PaymentMethodPicker onSelect={(method) => handleMarkPaid(reg, method)} />
+                    )}
+                    {!!tournament.tikkieLink && !isConfirmed && !isSelfPaid && (
+                      <Button
+                        variant="neutral"
+                        size="sm"
+                        onClick={() =>
+                          setReminderTarget({
+                            regId: reg.id,
+                            name: player.name || 'this player',
+                          })
+                        }
+                        title="Send a WhatsApp payment reminder"
+                        icon={<MessageCircle />}
+                      >
+                        Remind
+                      </Button>
+                    )}
+                    {/* Manual override — lets the admin set any status directly,
+                      e.g. correcting a misclick or manually marking Tikkied. */}
+                    <StatusOverrideMenu
+                      currentStatus={ps}
+                      onSelect={(s) => handleSetStatus(reg, s)}
+                    />
+                  </ActionRow>
+                )}
               </ListRow>
             )
           })}

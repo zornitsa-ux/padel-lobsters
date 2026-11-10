@@ -41,6 +41,22 @@ describe('useConfirmOnBehalf', () => {
     expect(mockConfirm).toHaveBeenCalledTimes(1)
   })
 
+  it('passes the button options through', async () => {
+    mockConfirm.mockResolvedValue(true)
+    const { result } = renderHook(() => useConfirmOnBehalf())
+
+    await result.current({ ...args, cancelLabel: 'Keep', destructive: true })
+
+    expect(mockConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'T',
+        confirmLabel: 'Go',
+        cancelLabel: 'Keep',
+        destructive: true,
+      }),
+    )
+  })
+
   it('opens again once the dialog has closed', async () => {
     mockConfirm.mockResolvedValue(true)
     const { result } = renderHook(() => useConfirmOnBehalf())

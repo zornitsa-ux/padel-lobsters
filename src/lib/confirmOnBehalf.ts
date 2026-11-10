@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react'
-import { useConfirm } from './confirmBus'
+import { useConfirm, type ConfirmOptions } from './confirmBus'
 
 const DEFAULT_FOOTER = 'Check this is the right person before you continue.'
 
@@ -20,11 +20,10 @@ export function useConfirmOnBehalf() {
   const open = useRef(false)
   return useCallback(
     ({
-      title,
       lines,
-      confirmLabel,
       footer,
-    }: {
+      ...options
+    }: Omit<ConfirmOptions, 'message'> & {
       title: string
       lines: string[]
       confirmLabel: string
@@ -32,11 +31,9 @@ export function useConfirmOnBehalf() {
     }) => {
       if (open.current) return Promise.resolve(false)
       open.current = true
-      return confirm({ title, message: onBehalfMessage({ lines, footer }), confirmLabel }).finally(
-        () => {
-          open.current = false
-        },
-      )
+      return confirm({ ...options, message: onBehalfMessage({ lines, footer }) }).finally(() => {
+        open.current = false
+      })
     },
     [confirm],
   )

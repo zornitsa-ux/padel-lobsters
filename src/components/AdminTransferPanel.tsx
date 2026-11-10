@@ -6,7 +6,7 @@ import { useTransfers, useTransferActions } from '../features/events/useTransfer
 import type { NormalisedTransfer } from '../features/events/transferQueries'
 import Avatar from './ui/Avatar'
 import { Modal } from './ui/Modal'
-import { useConfirm } from '../lib/confirmBus'
+import { useConfirmOnBehalf } from '../lib/confirmOnBehalf'
 import { Button } from './ui/Button'
 import { TextButton } from './ui/TextButton'
 import { AlertBox } from './ui/AlertBox'
@@ -18,10 +18,8 @@ import { ListCard, ListRow } from './ui/ListCard'
 //   - Force accept (admin_force_accept_transfer): finalises the offer
 //     without the recipient tapping accept. Used when the recipient can't
 //     reach the app in time but has confirmed by other means.
-//   - Cancel: closes the offer using the same cancel_transfer RPC the
-//     from-player uses (admin's PIN doesn't apply here — this RPC needs
-//     the from-player's PIN, so the action shows up disabled with a hint
-//     when the admin isn't the from-player).
+//   - Cancel (admin_cancel_transfer): closes the offer; the spot stays with
+//     the from-player.
 //
 // Props:
 //   tournament: tournament object whose pending transfers are listed
@@ -42,20 +40,145 @@ const CANCEL_ERRORS: Record<string, string> = {
   not_pending: 'Transfer was already responded to.',
 }
 
+type TransferResult = { ok: boolean; status: string }
+type ConfirmOnBehalf = ReturnType<typeof useConfirmOnBehalf>
+
+const formatElapsed = (createdAt?: string | null) => {
+  if (!createdAt) return ''
+  const ms = Date.now() - new Date(createdAt).getTime()
+  if (ms < 0) return 'just now'
+  const m = Math.floor(ms / 60000)
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  const d = Math.floor(h / 24)
+  return `${d}d ago`
+}
+
+interface PendingTransferRowProps {
+  xfer: NormalisedTransfer
+  fromName?: string
+  toName?: string
+  eventName: string
+  confirmOnBehalf: ConfirmOnBehalf
+  forceAccept: (transferId: string) => Promise<TransferResult>
+  cancelOffer: (transferId: string) => Promise<TransferResult>
+}
+
+function PendingTransferRow({
+  xfer,
+  fromName,
+  toName,
+  eventName,
+  confirmOnBehalf,
+  forceAccept,
+  cancelOffer,
+}: PendingTransferRowProps) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Never confirm an on-behalf write without naming both players.
+  const namesKnown = !!fromName && !!toName
+  const who = [`From: ${fromName}`, `To: ${toName}`, `Event: ${eventName}`]
+
+  const run = async ({
+    action,
+    errors,
+    fallback,
+  }: {
+    action: (transferId: string) => Promise<TransferResult>
+    errors: Record<string, string>
+    fallback: string
+  }) => {
+    setBusy(true)
+    setError(null)
+    const r = await action(xfer.id)
+    setBusy(false)
+    if (!r.ok) setError(errors[r.status] || fallback)
+  }
+
+  const handleForceAccept = async () => {
+    const ok = await confirmOnBehalf({
+      title: 'Force-accept this transfer?',
+      lines: [...who, `The spot moves to ${toName}.`],
+      confirmLabel: 'Force accept',
+    })
+    if (!ok) return
+    await run({
+      action: forceAccept,
+      errors: FORCE_ACCEPT_ERRORS,
+      fallback: 'Could not force-accept the transfer.',
+    })
+  }
+
+  const handleCancel = async () => {
+    const ok = await confirmOnBehalf({
+      title: 'Cancel this transfer offer?',
+      lines: [...who, `The spot stays with ${fromName}.`],
+      confirmLabel: 'Cancel offer',
+      cancelLabel: 'Keep offer',
+      destructive: true,
+    })
+    if (!ok) return
+    await run({
+      action: cancelOffer,
+      errors: CANCEL_ERRORS,
+      fallback: 'Could not cancel the transfer.',
+    })
+  }
+
+  return (
+    <ListRow>
+      <div className="flex items-center gap-3">
+        <Avatar player={{ name: fromName || '?' }} size="sm" />
+        <div className="flex-1 min-w-0 text-sm font-semibold text-lob-dark truncate">
+          {fromName || '—'}
+        </div>
+        <ArrowRightLeft size={14} className="text-lob-muted" />
+        <Avatar player={{ name: toName || '?' }} size="sm" />
+        <div className="flex-1 min-w-0 text-sm font-semibold text-lob-dark truncate">
+          {toName || '—'}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1.5 text-xs text-lob-warning">
+        <Clock size={11} /> Sent {formatElapsed(xfer.createdAt)} · awaiting acceptance
+      </div>
+
+      {error && (
+        <AlertBox variant="error" size="sm" icon={<AlertTriangle />}>
+          {error}
+        </AlertBox>
+      )}
+
+      <div className="flex items-center justify-between gap-3">
+        <Button
+          variant="neutral"
+          size="sm"
+          onClick={handleForceAccept}
+          disabled={busy || !namesKnown}
+        >
+          {busy ? 'Working…' : 'Force accept'}
+        </Button>
+        <TextButton tone="destructive" onClick={handleCancel} disabled={busy || !namesKnown}>
+          {busy ? '…' : 'Cancel offer'}
+        </TextButton>
+      </div>
+    </ListRow>
+  )
+}
+
 interface AdminTransferPanelProps {
   tournament?: { id?: string | number | null; name?: string | null } | null
   onClose: () => void
 }
 
 export default function AdminTransferPanel({ tournament, onClose }: AdminTransferPanelProps) {
-  const confirm = useConfirm()
+  const confirmOnBehalf = useConfirmOnBehalf()
   const { session, isAdmin } = useApp()
   const { data: transfers = [] } = useTransfers()
   const { forceAcceptTransfer, adminCancelTransfer } = useTransferActions({ session })
   const { data: players = [] } = usePlayers()
-
-  const [busyId, setBusyId] = useState<string | null>(null)
-  const [errorById, setErrorById] = useState<Record<string, string | null>>({})
 
   if (!isAdmin) return null
 
@@ -64,53 +187,6 @@ export default function AdminTransferPanel({ tournament, onClose }: AdminTransfe
   )
 
   const getPlayer = (id?: string | null) => players.find((p) => String(p.id) === String(id))
-
-  const formatElapsed = (createdAt?: string | null) => {
-    if (!createdAt) return ''
-    const ms = Date.now() - new Date(createdAt).getTime()
-    if (ms < 0) return 'just now'
-    const m = Math.floor(ms / 60000)
-    if (m < 60) return `${m}m ago`
-    const h = Math.floor(m / 60)
-    if (h < 24) return `${h}h ago`
-    const d = Math.floor(h / 24)
-    return `${d}d ago`
-  }
-
-  const handleForceAccept = async (xfer: NormalisedTransfer) => {
-    if (
-      !(await confirm({
-        message: `Force-accept this transfer? The spot moves to ${getPlayer(xfer.toPlayerId)?.name || 'the recipient'}.`,
-      }))
-    )
-      return
-    setBusyId(xfer.id)
-    setErrorById((e) => ({ ...e, [xfer.id]: null }))
-    const r = await forceAcceptTransfer(xfer.id)
-    setBusyId(null)
-    if (!r.ok) {
-      const msg = FORCE_ACCEPT_ERRORS[r.status] || 'Could not force-accept the transfer.'
-      setErrorById((e) => ({ ...e, [xfer.id]: msg }))
-    }
-  }
-
-  const handleCancel = async (xfer: NormalisedTransfer) => {
-    if (
-      !(await confirm({
-        message: 'Cancel this transfer offer? The spot stays with the from-player.',
-        destructive: true,
-      }))
-    )
-      return
-    setBusyId(xfer.id)
-    setErrorById((e) => ({ ...e, [xfer.id]: null }))
-    const r = await adminCancelTransfer(xfer.id)
-    setBusyId(null)
-    if (!r.ok) {
-      const msg = CANCEL_ERRORS[r.status] || 'Could not cancel the transfer.'
-      setErrorById((e) => ({ ...e, [xfer.id]: msg }))
-    }
-  }
 
   return (
     <Modal open onClose={onClose} title="Pending transfers">
@@ -122,49 +198,18 @@ export default function AdminTransferPanel({ tournament, onClose }: AdminTransfe
         )}
 
         <ListCard inset label="Pending transfers">
-          {pending.map((xfer) => {
-            const fromP = getPlayer(xfer.fromPlayerId)
-            const toP = getPlayer(xfer.toPlayerId)
-            const busy = busyId === xfer.id
-            const err = errorById[xfer.id]
-            return (
-              <ListRow key={xfer.id}>
-                <div className="flex items-center gap-3">
-                  <Avatar player={{ name: fromP?.name || '?' }} size="sm" />
-                  <div className="text-sm font-semibold text-lob-dark">{fromP?.name || '—'}</div>
-                  <ArrowRightLeft size={14} className="text-lob-muted" />
-                  <Avatar player={{ name: toP?.name || '?' }} size="sm" />
-                  <div className="flex-1 text-sm font-semibold text-lob-dark truncate">
-                    {toP?.name || '—'}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 text-xs text-lob-warning">
-                  <Clock size={11} /> Sent {formatElapsed(xfer.createdAt)} · awaiting acceptance
-                </div>
-
-                {err && (
-                  <AlertBox variant="error" size="sm" icon={<AlertTriangle />}>
-                    {err}
-                  </AlertBox>
-                )}
-
-                <div className="flex items-center justify-between gap-3">
-                  <Button
-                    variant="neutral"
-                    size="sm"
-                    onClick={() => handleForceAccept(xfer)}
-                    disabled={busy}
-                  >
-                    {busy ? 'Working…' : 'Force accept'}
-                  </Button>
-                  <TextButton tone="destructive" onClick={() => handleCancel(xfer)} disabled={busy}>
-                    {busy ? '…' : 'Cancel offer'}
-                  </TextButton>
-                </div>
-              </ListRow>
-            )
-          })}
+          {pending.map((xfer) => (
+            <PendingTransferRow
+              key={xfer.id}
+              xfer={xfer}
+              fromName={getPlayer(xfer.fromPlayerId)?.name}
+              toName={getPlayer(xfer.toPlayerId)?.name}
+              eventName={tournament?.name || 'this event'}
+              confirmOnBehalf={confirmOnBehalf}
+              forceAccept={forceAcceptTransfer}
+              cancelOffer={adminCancelTransfer}
+            />
+          ))}
         </ListCard>
 
         <p className="caption text-center pt-1">
