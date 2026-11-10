@@ -605,9 +605,10 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
 
 - **Owner, PR 5 release:** merge → `npx supabase db push` from `main` →
   `npm run db:grants:prod`. By Thu 12 Nov, or after the 15 Nov event.
-- **Still open from the cutover go/no-go (§5), owner:** the 3 no-email players
-  (a real email, or an admin accepts the risk for each by name), the §4.3
-  device checks, confirming the 3 admins were told about invite emails, and
+- **3 no-email players:** the owner accepted the risk on 2026-11-10. An admin
+  fixes each account by hand if the player comes back.
+- **Still open from the cutover go/no-go (§5), owner:** the §4.3 device checks,
+  confirming the 3 admins were told about invite emails, and
   confirming that the T₀ announcement, the 2 Nov reminder and the WhatsApp
   "PINs retired" post went out.
 - **Next:** PR 6 (T11), at least 14 days after cutover, once stub hits are ~0,
