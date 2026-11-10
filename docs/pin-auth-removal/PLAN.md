@@ -47,8 +47,8 @@ signed in gets logged out.
 | T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [~]   |
 | T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [x]   |
 | T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [~]   |
-| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | C     | T8              | 4        | [~]   |
-| T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [ ]   |
+| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | C     | T8              | 4        | [x]   |
+| T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [~]   |
 | T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]   |
 | T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]   |
 | T15 | Phase 5a: client reads the role from token claims         | W     | T1              | #50      | [x]   |
@@ -586,21 +586,30 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
     no `db:test` or `db:types`. **The §4.5 rehearsal didn't run:** this PR
     touches no SQL and no auth config, so parity can't change.
 
-**Resume here (as of 2026-11-07, PR 4 open):**
+- 2026-11-07: **Cutover released.** #153 merged, Vercel deployed, and the owner
+  deployed the `verify-pin` stub. Production returned 410, and the integrity
+  check had no errors.
+- 2026-11-10: **Watch closed by the owner:** no player reported a problem. The
+  closure rests on reports, because the §4.4 log checks weren't rerun for it.
+- 2026-11-10: **PR 5 built** (T10, `pin-auth-5-revoke`). One migration revokes
+  `verify_player_pin_v2` from anon, and the grants file loses that line.
+  - **Rehearsal (§4.5) on a fresh production copy:** the migration applied
+    cleanly. Every account with a real email signed in before and after, with
+    0 failures. The parity diff is empty: no reads added, removed or changed.
+    Mailpit codes passed. Integrity counts are 0, except the 3 active no-email
+    players, and synthetic accounts equal no-email players.
+  - **Gates:** format, lint (0 errors), typecheck, unit tests, build,
+    `db:types:check`, `db:grants:check`, `db:reset` and `db:test`.
 
-- **Owner, cutover go/no-go (§5):**
-  - **The 3 no-email players:** each gets a real email, or an admin accepts
-    the risk for each by name.
-  - **§4.3 devices:** these were never confirmed done. Run them, or accept
-    them as covered by the 24 real sign-ins since T₀.
-  - Confirm the 3 admins were told that invites send an email (open since
-    R2), and that the T₀ announcement and the 2 Nov reminder went out.
-- **Cutover, by Thu 12 Nov:** merge PR 4 → Vercel deploys →
-  `npx supabase functions deploy verify-pin` from `main` → WhatsApp "PINs
-  retired" (Appendix) → C runs §4.4's cutover checks.
-- **48h watch (C, read-only):** `[verify-pin] pin_retired` hits, auth logs
-  (`otp_disabled`, 429s, SMTP errors), new signups with player rows. Then PR 5
-  (revoke `verify_player_pin_v2` from anon).
+**Resume here (as of 2026-11-10, PR 5 open):**
+
+- **Owner, PR 5 release:** merge → `npx supabase db push` from `main` →
+  `npm run db:grants:prod`. By Thu 12 Nov, or after the 15 Nov event.
+- **Still open from the cutover go/no-go (§5):** the 3 no-email players, the
+  §4.3 device checks, and confirming the 3 admins were told about invite
+  emails.
+- **Next:** PR 6 (T11), at least 14 days after cutover, once stub hits are ~0,
+  and not within 3 days of an event.
 - **Noted for later:**
   - an admin path that deletes the auth account (T16/T17);
   - PR 6's additions from PR 4's review: the shared transfer error map, the
