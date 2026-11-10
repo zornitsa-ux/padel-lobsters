@@ -131,6 +131,17 @@ describe('Payments, team events', () => {
     expect(screen.getByRole('button', { name: /^All\s*2$/ })).toBeTruthy()
   })
 
+  it('offers no Undo on a spot that came by transfer', () => {
+    registrations = [
+      mkRegistration({ id: 'r1', playerId: 'p1', teamId: 'team1', paymentStatus: 'transferred' }),
+      mkRegistration({ id: 'r2', playerId: 'p2', teamId: 'team1', paymentStatus: 'covered' }),
+      mkRegistration({ id: 'r3', playerId: 'p3', teamId: 'team2', paymentStatus: 'paid' }),
+      mkRegistration({ id: 'r4', playerId: 'p4', teamId: 'team2', paymentStatus: 'covered' }),
+    ]
+    renderPayments(tournament({ entryMode: 'team' }))
+    expect(screen.getAllByRole('button', { name: 'Undo' })).toHaveLength(1)
+  })
+
   it('sends the reminder for the captain registration', async () => {
     renderPayments(tournament({ entryMode: 'team' }))
     fireEvent.click(screen.getAllByRole('button', { name: /Remind/ })[0]!)

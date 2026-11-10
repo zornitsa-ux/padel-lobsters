@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { screen, waitFor, cleanup } from '@testing-library/react'
+import { fireEvent, screen, waitFor, cleanup } from '@testing-library/react'
 import { renderWithClient } from '../../test/renderWithClient'
 import { mockSupabase } from '../../test/mockSupabase'
 import type { MerchInterest } from '../merch/merchSchemas'
 
 const h = vi.hoisted(() => ({ fetchMerchInterests: vi.fn(), fetchMerchItems: vi.fn() }))
+
+let mockTournaments: unknown[] = []
+let mockRegistrations: unknown[] = []
 
 vi.mock('../merch/merchQueries', () => h)
 vi.mock('../../supabase', () => mockSupabase())
@@ -16,19 +19,21 @@ vi.mock('../../context/useApp', () => ({
     isAdmin: true,
   }),
 }))
-vi.mock('../events/useTournaments', () => ({ useTournaments: () => ({ data: [] }) }))
+vi.mock('../events/useTournaments', () => ({ useTournaments: () => ({ data: mockTournaments }) }))
 vi.mock('../players/usePlayers', () => ({ usePlayers: () => ({ data: [] }) }))
-vi.mock('../events/useRegistrations', () => ({ useAllRegistrations: () => ({ data: [] }) }))
+vi.mock('../events/useRegistrations', () => ({
+  useAllRegistrations: () => ({ data: mockRegistrations }),
+}))
 vi.mock('../events/useMatches', () => ({ useAllMatches: () => ({ data: [] }) }))
 
 import { MemoryRouter } from 'react-router-dom'
 import AdminTools from './AdminTools'
 
 // PageHeader calls useLocation().
-const renderAdminTools = () =>
+const renderAdminTools = (onNavigate?: (destination: string, target?: unknown) => void) =>
   renderWithClient(
     <MemoryRouter>
-      <AdminTools />
+      <AdminTools onNavigate={onNavigate} />
     </MemoryRouter>,
   )
 
@@ -46,6 +51,8 @@ const order = (id: number, createdAt: string): MerchInterest =>
 beforeEach(() => {
   vi.clearAllMocks()
   localStorage.clear()
+  mockTournaments = []
+  mockRegistrations = []
   h.fetchMerchItems.mockResolvedValue([])
 })
 
@@ -96,5 +103,20 @@ describe('AdminTools new-orders badge', () => {
 
     await waitFor(() => expect(h.fetchMerchInterests).toHaveBeenCalled())
     expect(screen.queryByText(/new merch order/)).toBeNull()
+  })
+})
+
+describe('AdminTools unpaid registrations row', () => {
+  it("opens the next event's payments", async () => {
+    const event = { id: 't1', date: '2099-01-01', status: 'upcoming' }
+    mockTournaments = [event]
+    mockRegistrations = [{ tournamentId: 't1', status: 'registered', paymentStatus: 'unpaid' }]
+    h.fetchMerchInterests.mockResolvedValue([])
+    const onNavigate = vi.fn()
+
+    renderAdminTools(onNavigate)
+    fireEvent.click(await screen.findByRole('button', { name: /unpaid registration/ }))
+
+    expect(onNavigate).toHaveBeenCalledWith('payments', event)
   })
 })

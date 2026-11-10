@@ -72,6 +72,7 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
   const [sizeError, setSizeError] = useState<ByItem<boolean>>({})
   const [customName, setCustomName] = useState<ByItem<string>>({})
   const [ordered, setOrdered] = useState<ByItem<boolean>>({})
+  const [placing, setPlacing] = useState<ByItem<boolean>>({})
   const [lightbox, setLightbox] = useState<LightboxState | null>(null)
 
   // ── Image upload (up to 3) ───────────────────────────────────────────────────
@@ -205,6 +206,7 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
     }
     setSizeError((e) => ({ ...e, [itemId]: false }))
 
+    setPlacing((p) => ({ ...p, [itemId]: true }))
     try {
       await placeOrder.mutateAsync({
         // Stored as text to handle both UUID and integer ids
@@ -216,6 +218,8 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
     } catch (err) {
       alert('Order failed: ' + errorMessage(err))
       return
+    } finally {
+      setPlacing((p) => ({ ...p, [itemId]: false }))
     }
     setOrdered((o) => ({ ...o, [itemId]: true }))
   }
@@ -284,6 +288,7 @@ export default function Merch({ initialTab, onNavigate }: MerchProps) {
           customName={customName}
           setCustomName={setCustomName}
           ordered={ordered}
+          placing={placing}
           placeOrder={submitOrder}
           orderCount={orderCount}
           websiteOrderCount={websiteOrderCount}

@@ -4,6 +4,8 @@ import { useApp } from '../context/useApp'
 import { usePlayers } from '../features/players/usePlayers'
 import { useTransfers, useTransferActions } from '../features/events/useTransfers'
 import type { NormalisedTransfer } from '../features/events/transferQueries'
+import { isStaleTransferStatus } from '../features/events/transferStatus'
+import { useToast } from '../lib/toastBus'
 import Avatar from './ui/Avatar'
 import { Modal } from './ui/Modal'
 import { useConfirmOnBehalf } from '../lib/confirmOnBehalf'
@@ -74,6 +76,7 @@ function PendingTransferRow({
   forceAccept,
   cancelOffer,
 }: PendingTransferRowProps) {
+  const { showToast } = useToast()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -94,7 +97,11 @@ function PendingTransferRow({
     setError(null)
     const r = await action(xfer.id)
     setBusy(false)
-    if (!r.ok) setError(errors[r.status] || fallback)
+    if (r.ok) return
+    const message = errors[r.status] || fallback
+    // The refreshed list drops a stale row, and its inline error with it.
+    if (isStaleTransferStatus(r.status)) showToast({ variant: 'error', message })
+    else setError(message)
   }
 
   const handleForceAccept = async () => {

@@ -5,6 +5,7 @@ import { act, render, screen, cleanup, fireEvent, waitFor, within } from '@testi
 const mockConfirm = vi.fn()
 const mockForceAccept = vi.fn()
 const mockAdminCancel = vi.fn()
+const mockShowToast = vi.fn()
 
 const allPlayers = [
   { id: 'p1', name: 'Alma Reyes' },
@@ -17,6 +18,7 @@ vi.mock('../context/useApp', () => ({
   useApp: () => ({ session: { user: { id: 'admin' } }, isAdmin: true }),
 }))
 vi.mock('../lib/confirmBus', () => ({ useConfirm: () => mockConfirm }))
+vi.mock('../lib/toastBus', () => ({ useToast: () => ({ showToast: mockShowToast }) }))
 vi.mock('../features/players/usePlayers', () => ({
   usePlayers: () => ({ data: mockPlayers }),
 }))
@@ -59,7 +61,7 @@ describe('AdminTransferPanel', () => {
   })
 
   it('shows a failed force-accept in its own row', async () => {
-    mockForceAccept.mockResolvedValue({ ok: false, status: 'not_pending' })
+    mockForceAccept.mockResolvedValue({ ok: false, status: 'tournament_started' })
     renderPanel()
 
     const rows = screen.getAllByRole('listitem')
@@ -67,10 +69,26 @@ describe('AdminTransferPanel', () => {
 
     await waitFor(() =>
       expect(within(rows[1]).getByRole('alert').textContent).toBe(
-        'Transfer was already responded to.',
+        'Too late — the event has already started.',
       ),
     )
     expect(within(rows[0]).queryByRole('alert')).toBeNull()
+  })
+
+  it('reports an already-resolved transfer in a toast, since its row is about to go', async () => {
+    mockForceAccept.mockResolvedValue({ ok: false, status: 'not_pending' })
+    renderPanel()
+
+    const row = screen.getAllByRole('listitem')[0]!
+    fireEvent.click(within(row).getByRole('button', { name: 'Force accept' }))
+
+    await waitFor(() =>
+      expect(mockShowToast).toHaveBeenCalledWith({
+        variant: 'error',
+        message: 'Transfer was already responded to.',
+      }),
+    )
+    expect(within(row).queryByRole('alert')).toBeNull()
   })
 
   it('restates both players and the event before a force-accept', async () => {

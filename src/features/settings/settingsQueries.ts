@@ -43,11 +43,10 @@ export async function saveSettings({
   padelTips?: string[] | null
   lobsterWayContent?: LobsterWayCategory[] | null
 }): Promise<void> {
-  const payload: Record<string, unknown> = {
-    id: 1,
-    whatsapp_link: whatsappLink ?? '',
-    group_name: groupName ?? 'Padel Lobsters',
-  }
+  // Only the columns passed are written, so saving one field can't reset another.
+  const payload: Record<string, unknown> = { id: 1 }
+  if (whatsappLink !== undefined) payload.whatsapp_link = whatsappLink
+  if (groupName !== undefined) payload.group_name = groupName
   if (padelTips !== undefined) payload.padel_tips = padelTips
   if (lobsterWayContent !== undefined) payload.lobster_way_content = lobsterWayContent
   const { error } = await supabase.from('settings').upsert(payload)

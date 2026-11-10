@@ -339,6 +339,12 @@ describe('placeMerchOrder', () => {
     expect(h.calls.some((c) => c.method === 'insert')).toBe(false)
   })
 
+  it('turns a lost insert race into an edit of the saved order', async () => {
+    h.queue.push({ data: [], error: null }, { error: { code: '23505' } }, { error: null })
+    await placeMerchOrder(order)
+    expect(argsFor('update')[0]).toEqual({ size: 'M', custom_name: 'Alex' })
+  })
+
   it('throws when the lookup fails instead of double-inserting', async () => {
     const err = { message: 'lookup failed' }
     h.queue.push({ data: null, error: err })

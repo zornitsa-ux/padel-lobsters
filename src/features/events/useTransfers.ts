@@ -4,6 +4,7 @@ import { transferKeys } from './transferKeys'
 import { registrationKeys } from './registrationKeys'
 import { teamKeys } from './teams/teamKeys'
 import * as q from './transferQueries'
+import { isStaleTransferStatus } from './transferStatus'
 
 export function useTransfers() {
   return useQuery({
@@ -78,7 +79,7 @@ export function useTransferActions({
   const adminCancelTransfer = useCallback(
     async (transferId: string) => {
       const result = await q.adminCancelTransfer(transferId)
-      if (result.ok) await invalidateTransfers()
+      if (result.ok || isStaleTransferStatus(result.status)) await invalidateTransfers()
       return result
     },
     [invalidateTransfers],
@@ -87,7 +88,7 @@ export function useTransferActions({
   const forceAcceptTransfer = useCallback(
     async (transferId: string) => {
       const result = await q.forceAcceptTransfer(transferId)
-      if (result.ok) {
+      if (result.ok || isStaleTransferStatus(result.status)) {
         await invalidateTransfers()
         invalidateRegistrations()
       }

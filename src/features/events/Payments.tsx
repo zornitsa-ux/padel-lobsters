@@ -318,7 +318,7 @@ export default function Payments({
                   <ActionRow layout="end">
                     {/* Primary action — varies by status, keeps the most common
                       next step one tap away for the admin. */}
-                    {isConfirmed ? (
+                    {isTransferred ? null : isConfirmed ? (
                       <Button variant="neutral" size="sm" onClick={() => handleMarkUnpaid(reg)}>
                         Undo
                       </Button>
