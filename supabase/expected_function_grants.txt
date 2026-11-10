@@ -72,4 +72,3 @@ public.signup_name_match(input_name text) anon
 public.signup_name_match(input_name text) authenticated
 public.sync_my_role() authenticated
 public.update_my_profile(input_payload jsonb) authenticated
-public.verify_player_pin_v2(input_pin text, input_device_id text, input_user_agent text) anon
