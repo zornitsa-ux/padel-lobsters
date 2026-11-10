@@ -49,7 +49,7 @@ signed in gets logged out.
 | T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [~]   |
 | T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | C     | T8              | 4        | [x]   |
 | T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [~]   |
-| T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]   |
+| T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10, T9 + ≥2 wk | 6        | [ ]   |
 | T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]   |
 | T15 | Phase 5a: client reads the role from token claims         | W     | T1              | #50      | [x]   |
 | T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]   |
@@ -605,9 +605,11 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
 
 - **Owner, PR 5 release:** merge → `npx supabase db push` from `main` →
   `npm run db:grants:prod`. By Thu 12 Nov, or after the 15 Nov event.
-- **Still open from the cutover go/no-go (§5):** the 3 no-email players, the
-  §4.3 device checks, and confirming the 3 admins were told about invite
-  emails.
+- **Still open from the cutover go/no-go (§5), owner:** the 3 no-email players
+  (a real email, or an admin accepts the risk for each by name), the §4.3
+  device checks, confirming the 3 admins were told about invite emails, and
+  confirming that the T₀ announcement, the 2 Nov reminder and the WhatsApp
+  "PINs retired" post went out.
 - **Next:** PR 6 (T11), at least 14 days after cutover, once stub hits are ~0,
   and not within 3 days of an event.
 - **Noted for later:**
@@ -633,7 +635,7 @@ on or after Sun 8 Nov** (cutover ≥ 3 days before it).
 | R2: dark backend (PR 1/3)        | **Done 2026-10-21**                        | The hook and invite emails run in production before players see the new UI |
 | **T₀**: PRs 2/3 + 3/3 + announce | **Done 2026-10-21** (owner)                | T₀ ≤ #13 − 17 days                                                         |
 | WhatsApp reminder                | **Mon 2 Nov** (cutover − 3 days)           |                                                                            |
-| **Cutover** (PR 4)               | **By Thu 12 Nov** (was 5 Nov; slipped)     | ≥ 3 days before the 15 Nov event; go/no-go in §5                           |
+| **Cutover** (PR 4)               | **Done 2026-11-07** (#153; was 5 Nov)      | ≥ 3 days before the 15 Nov event; go/no-go in §5                           |
 | Revoke (PR 5)                    | Cutover + 2 days                           | After the 48h watch is clean                                               |
 | Phase 4 cleanup (PR 6)           | ≥ Cutover + 14 days, once stub hits are ~0 | Not within 3 days of an event                                              |
 | Explainer removal (PR 7)         | Cutover + ~2 months                        |                                                                            |
@@ -1141,17 +1143,17 @@ in its PR description → C runs the integrity check against production.
 
 ### Rollback
 
-| Stage     | Symptom                                                                      | Rollback                                                                                                                                                                                          |
-| --------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| R0/R1     | Migration error                                                              | No edits to applied files; write a forward-fix migration (CONTRIBUTING.md)                                                                                                                        |
-| R1        | Template or setting wrong                                                    | Fix it in the dashboard, then match `config.toml` in a follow-up PR                                                                                                                               |
-| R2        | Hook or trigger blocks or misfires                                           | Disable the hook in the dashboard. The old `self_signup_player` signup still serves the live client. Forward-fix the trigger                                                                      |
-| T₀        | Sign-in UI broken                                                            | Vercel instant rollback to the pre-T₀ deployment, then re-paste `main`'s link-only `magic_link` template (D-14). PIN sign-in is untouched, so players get the old flow back. The backend can stay |
-| Cutover   | Players locked out at scale                                                  | Vercel rollback, plus redeploy the previous `verify-pin` from its last commit. No migration is involved (D-12), so it takes minutes                                                               |
-| PR 5/6    | Problem found after the revoke or the drops                                  | Forward-fix only, through review. That's why each one waits for a clean watch                                                                                                                     |
-| T₀ (C-12) | Role missing or wrong in the UI, or many "account isn't fully set up" panels | The T₀ Vercel rollback above. The server side (RLS, token hook) is unchanged                                                                                                                      |
-| PR 9      | Admin email edit or invite fails                                             | Vercel rollback to the version that writes `players.email`, plus a forward-fix migration that restores the dropped sync trigger                                                                   |
-| PR 10     | A deleted synthetic account is needed                                        | An admin adds the player's email, and PR 9's function creates a fresh account with the same id                                                                                                    |
+| Stage     | Symptom                                                                      | Rollback                                                                                                                                                                                                                                                        |
+| --------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R0/R1     | Migration error                                                              | No edits to applied files; write a forward-fix migration (CONTRIBUTING.md)                                                                                                                                                                                      |
+| R1        | Template or setting wrong                                                    | Fix it in the dashboard, then match `config.toml` in a follow-up PR                                                                                                                                                                                             |
+| R2        | Hook or trigger blocks or misfires                                           | Disable the hook in the dashboard. The old `self_signup_player` signup still serves the live client. Forward-fix the trigger                                                                                                                                    |
+| T₀        | Sign-in UI broken                                                            | Vercel instant rollback to the pre-T₀ deployment, then re-paste `main`'s link-only `magic_link` template (D-14). PIN sign-in is untouched, so players get the old flow back. The backend can stay                                                               |
+| Cutover   | Players locked out at scale                                                  | Vercel rollback, plus redeploy the previous `verify-pin` from its last commit. Until PR 5 ships no migration is involved (D-12), so it takes minutes. After PR 5, the old function also needs a reviewed migration granting `verify_player_pin_v2` back to anon |
+| PR 5/6    | Problem found after the revoke or the drops                                  | Forward-fix only, through review. That's why each one waits for a clean watch                                                                                                                                                                                   |
+| T₀ (C-12) | Role missing or wrong in the UI, or many "account isn't fully set up" panels | The T₀ Vercel rollback above. The server side (RLS, token hook) is unchanged                                                                                                                                                                                    |
+| PR 9      | Admin email edit or invite fails                                             | Vercel rollback to the version that writes `players.email`, plus a forward-fix migration that restores the dropped sync trigger                                                                                                                                 |
+| PR 10     | A deleted synthetic account is needed                                        | An admin adds the player's email, and PR 9's function creates a fresh account with the same id                                                                                                                                                                  |
 
 ---
 
