@@ -118,6 +118,21 @@ describe('ConfirmDialog', () => {
     expect(screen.getByText('Confirm').className).toContain('bg-lob-danger-solid')
   })
 
+  it('keeps the line breaks in a multi-line message', () => {
+    function MultiLine() {
+      const confirm = useConfirm()
+      return <button onClick={() => confirm({ message: 'Player: A\nEvent: B' })}>trigger</button>
+    }
+    render(
+      <ConfirmProvider>
+        <MultiLine />
+      </ConfirmProvider>,
+    )
+
+    fireEvent.click(screen.getByText('trigger'))
+    expect(screen.getByRole('alertdialog').querySelector('p.whitespace-pre-line')).toBeTruthy()
+  })
+
   it('uses default labels when none are provided', () => {
     render(
       <ConfirmProvider>

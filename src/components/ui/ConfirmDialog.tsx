@@ -70,7 +70,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
         title={pending?.title}
         footer={footer}
       >
-        <p id={messageId} className="text-sm text-lob-dark">
+        <p id={messageId} className="text-sm text-lob-dark whitespace-pre-line">
           {pending?.message}
         </p>
       </Modal>
