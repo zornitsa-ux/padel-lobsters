@@ -6,18 +6,19 @@ const mockConfirm = vi.fn()
 const mockForceAccept = vi.fn()
 const mockAdminCancel = vi.fn()
 
+const allPlayers = [
+  { id: 'p1', name: 'Alma Reyes' },
+  { id: 'p2', name: 'Bob Stone' },
+  { id: 'p3', name: 'Cleo Park' },
+]
+let mockPlayers = allPlayers
+
 vi.mock('../context/useApp', () => ({
   useApp: () => ({ session: { user: { id: 'admin' } }, isAdmin: true }),
 }))
 vi.mock('../lib/confirmBus', () => ({ useConfirm: () => mockConfirm }))
 vi.mock('../features/players/usePlayers', () => ({
-  usePlayers: () => ({
-    data: [
-      { id: 'p1', name: 'Alma Reyes' },
-      { id: 'p2', name: 'Bob Stone' },
-      { id: 'p3', name: 'Cleo Park' },
-    ],
-  }),
+  usePlayers: () => ({ data: mockPlayers }),
 }))
 vi.mock('../features/events/useTransfers', () => ({
   useTransfers: () => ({
@@ -40,6 +41,7 @@ const renderPanel = () =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockPlayers = allPlayers
   mockConfirm.mockResolvedValue(true)
 })
 afterEach(cleanup)
@@ -101,6 +103,18 @@ describe('AdminTransferPanel', () => {
     expect(options.message).toContain('From: Cleo Park')
     expect(options.message).toContain('The spot stays with Cleo Park.')
     expect(mockAdminCancel).not.toHaveBeenCalled()
+  })
+
+  it('blocks both actions until the players are known', () => {
+    mockPlayers = allPlayers.filter((p) => p.id !== 'p2')
+    renderPanel()
+
+    const [unknownRecipient, known] = screen.getAllByRole('listitem')
+    for (const name of ['Force accept', 'Cancel offer']) {
+      const button = within(unknownRecipient!).getByRole('button', { name })
+      expect(button.hasAttribute('disabled')).toBe(true)
+      expect(within(known!).getByRole('button', { name }).hasAttribute('disabled')).toBe(false)
+    }
   })
 
   it('keeps a row busy until its own request finishes', async () => {

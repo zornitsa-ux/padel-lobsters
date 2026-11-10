@@ -8,4 +8,9 @@ describe('ActionRow', () => {
     expect(propsOf(el).className).toBe('flex gap-2 [&>*]:flex-1')
     expect(propsOf(el).children).toBe('BUTTONS')
   })
+
+  it('keeps natural widths at the end of the row', () => {
+    const el = ActionRow({ children: 'BUTTONS', layout: 'end' })
+    expect(propsOf(el).className).toBe('flex items-center justify-end gap-2')
+  })
 })

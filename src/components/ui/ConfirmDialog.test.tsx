@@ -130,7 +130,8 @@ describe('ConfirmDialog', () => {
     )
 
     fireEvent.click(screen.getByText('trigger'))
-    expect(screen.getByRole('alertdialog').querySelector('p.whitespace-pre-line')).toBeTruthy()
+    const message = screen.getByRole('alertdialog').querySelector('p.whitespace-pre-line')
+    expect(message?.textContent).toBe('Player: A\nEvent: B')
   })
 
   it('uses default labels when none are provided', () => {

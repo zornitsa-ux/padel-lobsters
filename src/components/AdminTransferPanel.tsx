@@ -18,10 +18,8 @@ import { ListCard, ListRow } from './ui/ListCard'
 //   - Force accept (admin_force_accept_transfer): finalises the offer
 //     without the recipient tapping accept. Used when the recipient can't
 //     reach the app in time but has confirmed by other means.
-//   - Cancel: closes the offer using the same cancel_transfer RPC the
-//     from-player uses (admin's PIN doesn't apply here — this RPC needs
-//     the from-player's PIN, so the action shows up disabled with a hint
-//     when the admin isn't the from-player).
+//   - Cancel (admin_cancel_transfer): closes the offer; the spot stays with
+//     the from-player.
 //
 // Props:
 //   tournament: tournament object whose pending transfers are listed
@@ -79,9 +77,9 @@ function PendingTransferRow({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const from = fromName || 'Unknown player'
-  const to = toName || 'Unknown player'
-  const who = [`From: ${from}`, `To: ${to}`, `Event: ${eventName}`]
+  // Never confirm an on-behalf write without naming both players.
+  const namesKnown = !!fromName && !!toName
+  const who = [`From: ${fromName}`, `To: ${toName}`, `Event: ${eventName}`]
 
   const run = async ({
     action,
@@ -102,7 +100,7 @@ function PendingTransferRow({
   const handleForceAccept = async () => {
     const ok = await confirmOnBehalf({
       title: 'Force-accept this transfer?',
-      lines: [...who, `The spot moves to ${to}.`],
+      lines: [...who, `The spot moves to ${toName}.`],
       confirmLabel: 'Force accept',
     })
     if (!ok) return
@@ -116,7 +114,7 @@ function PendingTransferRow({
   const handleCancel = async () => {
     const ok = await confirmOnBehalf({
       title: 'Cancel this transfer offer?',
-      lines: [...who, `The spot stays with ${from}.`],
+      lines: [...who, `The spot stays with ${fromName}.`],
       confirmLabel: 'Cancel offer',
       cancelLabel: 'Keep offer',
       destructive: true,
@@ -133,10 +131,14 @@ function PendingTransferRow({
     <ListRow>
       <div className="flex items-center gap-3">
         <Avatar player={{ name: fromName || '?' }} size="sm" />
-        <div className="text-sm font-semibold text-lob-dark">{fromName || '—'}</div>
+        <div className="flex-1 min-w-0 text-sm font-semibold text-lob-dark truncate">
+          {fromName || '—'}
+        </div>
         <ArrowRightLeft size={14} className="text-lob-muted" />
         <Avatar player={{ name: toName || '?' }} size="sm" />
-        <div className="flex-1 text-sm font-semibold text-lob-dark truncate">{toName || '—'}</div>
+        <div className="flex-1 min-w-0 text-sm font-semibold text-lob-dark truncate">
+          {toName || '—'}
+        </div>
       </div>
 
       <div className="flex items-center gap-1.5 text-xs text-lob-warning">
@@ -150,10 +152,15 @@ function PendingTransferRow({
       )}
 
       <div className="flex items-center justify-between gap-3">
-        <Button variant="neutral" size="sm" onClick={handleForceAccept} disabled={busy}>
+        <Button
+          variant="neutral"
+          size="sm"
+          onClick={handleForceAccept}
+          disabled={busy || !namesKnown}
+        >
           {busy ? 'Working…' : 'Force accept'}
         </Button>
-        <TextButton tone="destructive" onClick={handleCancel} disabled={busy}>
+        <TextButton tone="destructive" onClick={handleCancel} disabled={busy || !namesKnown}>
           {busy ? '…' : 'Cancel offer'}
         </TextButton>
       </div>

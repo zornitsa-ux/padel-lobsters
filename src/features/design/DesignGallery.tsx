@@ -202,6 +202,12 @@ function ButtonSection() {
           <Button variant="secondary">Cancel</Button>
           <Button>Save</Button>
         </ActionRow>
+        <ActionRow layout="end">
+          <Button variant="neutral" size="sm">
+            Remind
+          </Button>
+          <Button size="sm">Confirm</Button>
+        </ActionRow>
       </Row>
     </GallerySection>
   )
