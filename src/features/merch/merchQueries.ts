@@ -141,20 +141,28 @@ export async function uploadMerchImages({ files }: { files: File[] }): Promise<s
 }
 
 // ── Order writes ─────────────────────────────────────────────────────────
-// merch_interests has a unique (player_id, merch_item_id) constraint, so a
-// repeat order is an edit of the existing row. Only size and custom_name are
-// touched on that path — re-ordering must not reset a paid order to 'ordered'.
-export async function placeMerchOrder({
-  playerId,
-  itemId,
-  size,
-  customName,
-}: {
+interface MerchOrderInput {
   playerId: string
   itemId: number
   size: string
   customName: string
-}): Promise<void> {
+}
+
+const UNIQUE_VIOLATION = '23505'
+
+// merch_interests is unique on (player_id, merch_item_id), so a repeat order is
+// an edit. Size and name only: re-ordering must not reset a paid order's status.
+async function editMerchOrder({ playerId, itemId, size, customName }: MerchOrderInput) {
+  const { error } = await supabase
+    .from('merch_interests')
+    .update({ size, custom_name: customName })
+    .eq('player_id', playerId)
+    .eq('merch_item_id', itemId)
+  if (error) throw error
+}
+
+export async function placeMerchOrder(order: MerchOrderInput): Promise<void> {
+  const { playerId, itemId, size, customName } = order
   const { data: existing, error: lookupError } = await supabase
     .from('merch_interests')
     .select('id')
@@ -163,15 +171,7 @@ export async function placeMerchOrder({
     .limit(1)
   if (lookupError) throw lookupError
 
-  const row = existing?.[0]
-  if (row) {
-    const { error } = await supabase
-      .from('merch_interests')
-      .update({ size, custom_name: customName })
-      .eq('id', row.id)
-    if (error) throw error
-    return
-  }
+  if (existing?.[0]) return editMerchOrder(order)
 
   const { error } = await supabase.from('merch_interests').insert({
     merch_item_id: itemId,
@@ -180,6 +180,8 @@ export async function placeMerchOrder({
     status: 'ordered',
     custom_name: customName,
   })
+  // A second tap or tab inserted first: this one is an edit of that order.
+  if (error?.code === UNIQUE_VIOLATION) return editMerchOrder(order)
   if (error) throw error
 }
 

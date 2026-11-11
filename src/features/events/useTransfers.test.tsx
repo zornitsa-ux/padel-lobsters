@@ -105,4 +105,48 @@ describe('useTransferActions', () => {
 
     expect(client.invalidateQueries).not.toHaveBeenCalled()
   })
+
+  it.each(['not_pending', 'not_found', 'transfers_closed', 'from_not_registered'])(
+    'refreshes the list when an admin action comes back %s',
+    async (status) => {
+      ;(q.forceAcceptTransfer as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: false, status })
+      ;(q.adminCancelTransfer as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: false, status })
+      const client = makeTestQueryClient()
+      vi.spyOn(client, 'invalidateQueries')
+      const { result } = renderHookWithClient(
+        () => useTransferActions({ session: authedSession }),
+        client,
+      )
+
+      await act(async () => {
+        await result.current.forceAcceptTransfer('xfer-1')
+      })
+      expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey: registrationKeys.all() })
+
+      vi.mocked(client.invalidateQueries).mockClear()
+      await act(async () => {
+        await result.current.adminCancelTransfer('xfer-1')
+      })
+      expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey: transferKeys.all() })
+      expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey: registrationKeys.all() })
+    },
+  )
+
+  it('leaves the list alone when a force-accept fails for another reason', async () => {
+    ;(q.forceAcceptTransfer as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      status: 'tournament_started',
+    })
+    const client = makeTestQueryClient()
+    vi.spyOn(client, 'invalidateQueries')
+    const { result } = renderHookWithClient(
+      () => useTransferActions({ session: authedSession }),
+      client,
+    )
+
+    await act(async () => {
+      await result.current.forceAcceptTransfer('xfer-1')
+    })
+    expect(client.invalidateQueries).not.toHaveBeenCalled()
+  })
 })

@@ -4,6 +4,8 @@ import { useApp } from '../context/useApp'
 import { usePlayers } from '../features/players/usePlayers'
 import { useTransfers, useTransferActions } from '../features/events/useTransfers'
 import type { NormalisedTransfer } from '../features/events/transferQueries'
+import { isStaleTransferStatus } from '../features/events/transferStatus'
+import { useToast } from '../lib/toastBus'
 import Avatar from './ui/Avatar'
 import { Modal } from './ui/Modal'
 import { useConfirmOnBehalf } from '../lib/confirmOnBehalf'
@@ -30,6 +32,7 @@ const FORCE_ACCEPT_ERRORS: Record<string, string> = {
   not_found: 'Transfer no longer exists.',
   not_pending: 'Transfer was already responded to.',
   tournament_started: 'Too late — the event has already started.',
+  transfers_closed: 'Transfers for this event have closed.',
   to_already_registered: 'The recipient is already registered for this event.',
   from_not_registered: 'The sender is no longer registered — the transfer can’t be completed.',
 }
@@ -74,6 +77,7 @@ function PendingTransferRow({
   forceAccept,
   cancelOffer,
 }: PendingTransferRowProps) {
+  const { showToast } = useToast()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -94,7 +98,11 @@ function PendingTransferRow({
     setError(null)
     const r = await action(xfer.id)
     setBusy(false)
-    if (!r.ok) setError(errors[r.status] || fallback)
+    if (r.ok) return
+    const message = errors[r.status] || fallback
+    // The refreshed list drops a stale row, and its inline error with it.
+    if (isStaleTransferStatus(r.status)) showToast({ variant: 'error', message })
+    else setError(message)
   }
 
   const handleForceAccept = async () => {

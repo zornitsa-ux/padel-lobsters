@@ -54,3 +54,12 @@ export const isSettled = (raw: string | null | undefined): boolean => {
 // Still owed on this row. A covered partner owes nothing; the captain's row does.
 export const owesPayment = (raw: string | null | undefined): boolean =>
   !isSettled(raw) && toPaymentStatus(raw) !== 'covered'
+
+/** Transfers keep the sender's paid state and record the sender in the method. */
+export const cameByTransfer = ({
+  paymentStatus,
+  paymentMethod,
+}: {
+  paymentStatus?: string | null
+  paymentMethod?: string | null
+}): boolean => paymentStatus === 'transferred' || !!paymentMethod?.startsWith('transferred_from:')

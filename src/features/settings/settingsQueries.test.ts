@@ -103,6 +103,12 @@ describe('saveSettings', () => {
     expect(payload.padel_tips).toEqual(['tip1', 'tip2'])
   })
 
+  it('writes only the tips when only the tips are passed', async () => {
+    await saveSettings({ padelTips: ['tip1'] })
+
+    expect(mockUpsert.mock.calls[0][0]).toEqual({ id: 1, padel_tips: ['tip1'] })
+  })
+
   it('includes padel_tips: null when padelTips is explicitly null', async () => {
     await saveSettings({ padelTips: null })
 

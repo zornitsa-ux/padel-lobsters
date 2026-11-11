@@ -27,7 +27,7 @@ import { Section } from '../../components/ui/Section'
 import { plural } from '../../lib/plural'
 import AuthReadinessPanel from './AuthReadinessPanel'
 import type { EventNavigate } from '../events/eventHelpers'
-import { isEventUpcoming } from '../events/eventPhase'
+import { upcomingEvents } from '../home/homeHelpers'
 import { GROUP_SETTINGS_PATH } from '../settings/settingsHelpers'
 import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
 import { owesPayment } from '../events/paymentStatus'
@@ -61,16 +61,17 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
     [players],
   )
 
+  const nextEvent = useMemo(() => upcomingEvents({ events: tournaments })[0], [tournaments])
+
   const unpaidForNextEvent = useMemo(() => {
-    const next = tournaments
-      .filter((t) => isEventUpcoming({ tournament: t }))
-      .sort((a, b) => ((a.date || '') < (b.date || '') ? -1 : 1))[0]
-    if (!next) return 0
+    if (!nextEvent) return 0
     return allRegs.filter(
       (r) =>
-        r.tournamentId === next.id && r.status === 'registered' && owesPayment(r.paymentStatus),
+        r.tournamentId === nextEvent.id &&
+        r.status === 'registered' &&
+        owesPayment(r.paymentStatus),
     ).length
-  }, [tournaments, allRegs])
+  }, [nextEvent, allRegs])
 
   // Counted off the merch slice's cached rows. The previous head:true count
   // query returned no rows, so reading `data.length` always yielded 0 and the
@@ -86,7 +87,8 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
       count: unpaidForNextEvent,
       title: `${plural({ count: unpaidForNextEvent, one: 'unpaid registration' })} for next event`,
       icon: Wallet,
-      target: 'merch-orders',
+      target: 'payments',
+      event: nextEvent,
     },
     {
       id: 'signups',
@@ -200,10 +202,10 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
         {attention.length > 0 && (
           <Section title="Needs attention" icon={<AlertCircle />}>
             <ListCard>
-              {attention.map(({ id, title, icon: Icon, target }) => (
+              {attention.map(({ id, title, icon: Icon, target, event }) => (
                 <LinkRow
                   key={id}
-                  onClick={() => onNavigate?.(target)}
+                  onClick={() => onNavigate?.(target, event)}
                   leading={
                     <LinkCardIcon className="bg-lob-warning-light text-lob-warning">
                       <Icon size={16} />

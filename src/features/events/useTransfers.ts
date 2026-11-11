@@ -4,6 +4,7 @@ import { transferKeys } from './transferKeys'
 import { registrationKeys } from './registrationKeys'
 import { teamKeys } from './teams/teamKeys'
 import * as q from './transferQueries'
+import { isStaleTransferStatus } from './transferStatus'
 
 export function useTransfers() {
   return useQuery({
@@ -79,15 +80,20 @@ export function useTransferActions({
     async (transferId: string) => {
       const result = await q.adminCancelTransfer(transferId)
       if (result.ok) await invalidateTransfers()
+      // Stale can mean the recipient accepted, which moved the spot.
+      if (isStaleTransferStatus(result.status)) {
+        await invalidateTransfers()
+        invalidateRegistrations()
+      }
       return result
     },
-    [invalidateTransfers],
+    [invalidateTransfers, invalidateRegistrations],
   )
 
   const forceAcceptTransfer = useCallback(
     async (transferId: string) => {
       const result = await q.forceAcceptTransfer(transferId)
-      if (result.ok) {
+      if (result.ok || isStaleTransferStatus(result.status)) {
         await invalidateTransfers()
         invalidateRegistrations()
       }

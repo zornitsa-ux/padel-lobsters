@@ -1,36 +1,51 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type Dispatch, type FormEvent, type SetStateAction } from 'react'
 import { useSettings, useSaveSettings } from './useSettings'
+import { useTipsEditor } from './useTipsEditor'
 import { errorMessage } from '../../lib/errors'
 import DEFAULT_TIPS from '../../data/padelTips'
 import type { EditingTip, SettingsForm } from './settingsHelpers'
 import AdminSection from './AdminSection'
 import { PageHeader } from '../../components/ui/PageHeader'
 
+const formFromSettings = (
+  settings?: { whatsappLink?: string | null; groupName?: string | null } | null,
+): SettingsForm => ({
+  whatsappLink: settings?.whatsappLink || '',
+  groupName: settings?.groupName || 'Padel Lobsters',
+})
+
+const changedFields = ({ base, next }: { base: SettingsForm; next: SettingsForm }) => {
+  const keys = Object.keys(next) as (keyof SettingsForm)[]
+  return Object.fromEntries(
+    keys.filter((key) => next[key] !== base[key]).map((key) => [key, next[key]]),
+  ) as Partial<SettingsForm>
+}
+
 /** Admin-only app config: group name, WhatsApp link, security log and daily tips. */
 export default function GroupSettingsPage() {
   const { data: settings } = useSettings()
   const saveSettingsMutation = useSaveSettings()
-  const [form, setForm] = useState<SettingsForm>({
-    whatsappLink: '',
-    groupName: 'Padel Lobsters',
-  })
+  // Only the fields the admin changed: the rest keep following the saved settings.
+  const [draft, setDraft] = useState<Partial<SettingsForm> | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [tips, setTips] = useState<string[] | null>(null) // null = use defaults
   const [newTip, setNewTip] = useState('')
   const [editingTip, setEditingTip] = useState<EditingTip | null>(null)
   const [tipsExpanded, setTipsExpanded] = useState(false)
 
-  useEffect(() => {
-    if (settings) {
-      setForm({
-        whatsappLink: settings.whatsappLink || '',
-        groupName: settings.groupName || 'Padel Lobsters',
-      })
-      setTips(settings.padelTips && settings.padelTips.length > 0 ? settings.padelTips : null)
-    }
-  }, [settings])
+  const form = { ...formFromSettings(settings), ...draft }
+  const setForm: Dispatch<SetStateAction<SettingsForm>> = (update) =>
+    setDraft((current) => {
+      const base = { ...formFromSettings(settings), ...current }
+      const next = typeof update === 'function' ? update(base) : update
+      return { ...current, ...changedFields({ base, next }) }
+    })
 
+  const { tips, change: changeTips } = useTipsEditor({
+    saved: settings?.padelTips,
+    save: (padelTips) => saveSettingsMutation.mutateAsync({ padelTips }),
+    onError: (err) => alert('Could not save tip change: ' + errorMessage(err, 'unknown error')),
+  })
   const activeTips = tips || DEFAULT_TIPS
   const isCustom = tips !== null
 
@@ -38,7 +53,8 @@ export default function GroupSettingsPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      await saveSettingsMutation.mutateAsync({ ...form, padelTips: tips })
+      if (draft) await saveSettingsMutation.mutateAsync(draft)
+      setDraft((current) => (current === draft ? null : current))
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     } catch (err) {
@@ -48,31 +64,18 @@ export default function GroupSettingsPage() {
     }
   }
 
-  // Each tip change saves straight away and rolls the UI back if the write fails.
-  const persistTips = async (nextTips: string[] | null, prevTipsForRollback: string[] | null) => {
-    try {
-      await saveSettingsMutation.mutateAsync({ ...form, padelTips: nextTips })
-    } catch (err) {
-      setTips(prevTipsForRollback)
-      alert('Could not save tip change: ' + errorMessage(err, 'unknown error'))
-    }
-  }
-
   const handleAddTip = () => {
-    if (!newTip.trim()) return
-    const prev = tips
-    const updated = [...activeTips, newTip.trim()]
-    setTips(updated)
+    const tip = newTip.trim()
+    if (!tip) return
     setNewTip('')
-    persistTips(updated, prev)
+    changeTips((current) => [...current, tip])
   }
 
   const handleDeleteTip = (idx: number) => {
-    const prev = tips
-    const updated = activeTips.filter((_, i) => i !== idx)
-    const next = updated.length > 0 ? updated : null
-    setTips(next)
-    persistTips(next, prev)
+    changeTips((current) => {
+      const remaining = current.filter((_, i) => i !== idx)
+      return remaining.length > 0 ? remaining : null
+    })
   }
 
   const handleEditTip = (idx: number) => {
@@ -80,20 +83,14 @@ export default function GroupSettingsPage() {
   }
 
   const handleSaveEdit = () => {
-    if (!editingTip || !editingTip.text.trim()) return
-    const prev = tips
-    const updated = [...activeTips]
-    updated[editingTip.index] = editingTip.text.trim()
-    setTips(updated)
+    const text = editingTip?.text.trim()
+    if (!editingTip || !text) return
+    const { index } = editingTip
     setEditingTip(null)
-    persistTips(updated, prev)
+    changeTips((current) => current.map((tip, i) => (i === index ? text : tip)))
   }
 
-  const handleResetTips = () => {
-    const prev = tips
-    setTips(null)
-    persistTips(null, prev)
-  }
+  const handleResetTips = () => changeTips(() => null)
 
   return (
     <div className="-mx-4">

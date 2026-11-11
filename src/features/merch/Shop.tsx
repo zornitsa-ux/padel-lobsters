@@ -24,6 +24,7 @@ type ShopProps = {
   customName: ByItem<string>
   setCustomName: Dispatch<SetStateAction<ByItem<string>>>
   ordered: ByItem<boolean>
+  placing: ByItem<boolean>
   placeOrder: (itemId: number) => void
   orderCount: (itemId: number) => number
   websiteOrderCount: (itemId: number) => number
@@ -44,6 +45,7 @@ export default function Shop({
   setCustomName,
   ordered,
   placeOrder,
+  placing,
   orderCount,
   websiteOrderCount,
   setLightbox,
@@ -173,7 +175,12 @@ export default function Shop({
                   <Check size={16} /> Ordered!
                 </p>
               ) : (
-                <Button grow icon={<ShoppingCart />} onClick={() => placeOrder(item.id)}>
+                <Button
+                  grow
+                  icon={<ShoppingCart />}
+                  disabled={placing[item.id]}
+                  onClick={() => placeOrder(item.id)}
+                >
                   Order
                 </Button>
               )}
