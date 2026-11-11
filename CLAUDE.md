@@ -9,6 +9,11 @@
 - Refactor as you work. If you spot repeated code, create a task to de-duplicate it with a clean extraction rather than leaving it.
 - Older bugs found while working or in review, outside the PR's scope: open a GitHub issue (labels `bug`, `found-in-review`) and link it from the PR, rather than noting it only in the PR or a PLAN log. Issues are public: no player names, emails or IDs.
 
+## Plans in docs/
+
+- `docs/<project>/` holds how the work is designed and broken down: PLAN (tasks, how to do them), DESIGN, CONTRACTS, DECISIONS.
+- Project status is tracked outside the repo. Don't add state columns, "Resume here" sections or progress log entries to a plan. A PR updates a plan only when the design, the task breakdown or a decision changes.
+
 ## UI and Design System
 
 See `docs/design-system/` (TOKENS.md for tokens, PLAN.md for what's being built).

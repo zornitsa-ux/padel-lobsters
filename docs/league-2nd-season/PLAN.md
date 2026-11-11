@@ -1,17 +1,17 @@
 # League 2nd Season — Implementation Plan
 
 Living document for the work needed to finish Summer 2026 cleanly and run the
-next season from inside the league area. Update the status table as phases land.
+next season from inside the league area. Status is tracked outside the repo; this plan holds the work breakdown and how to do it.
 
 ---
 
-## 1. Status
+## 1. Phases
 
-| Phase               | Goal                                                | Gate to next                                         | State                                                      |
-| ------------------- | --------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------- |
-| 1 Finals & champion | Score Summer 2026 finals, crown champions           | Summer 2026 completed in production, champions shown | built on `league-2nd-season-phase1`; migration not applied |
-| 2 Manage in league  | Admin tools move to `/league/:id/manage`            | `/admin` no longer hosts league management           | built on `league-2nd-season-phase1`, verified locally      |
-| 3 Season lifecycle  | Hidden next-season draft, guarded phase transitions | Next season drafted while Summer 2026 still visible  | built on `league-2nd-season-phase1`, verified locally      |
+| Phase               | Goal                                                | Gate to next                                         |
+| ------------------- | --------------------------------------------------- | ---------------------------------------------------- |
+| 1 Finals & champion | Score Summer 2026 finals, crown champions           | Summer 2026 completed in production, champions shown |
+| 2 Manage in league  | Admin tools move to `/league/:id/manage`            | `/admin` no longer hosts league management           |
+| 3 Season lifecycle  | Hidden next-season draft, guarded phase transitions | Next season drafted while Summer 2026 still visible  |
 
 Phase 1 ships first, into the existing `LeagueAdminSection`, so the current
 season can finish without waiting on the relocation.
