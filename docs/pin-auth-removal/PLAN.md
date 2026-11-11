@@ -789,8 +789,9 @@ verify-pin`.
 
 ### 3.6 PRs 5–7
 
-- **PR 5 (T10):** the migration revoking `verify_player_pin_v2` from anon, plus
-  the grants file update.
+- **PR 5 (T10):** migrations revoking `verify_player_pin_v2` and
+  `self_signup_player` from anon, plus the grants file update. Nothing calls
+  either since the cutover; PR 6 drops both.
 - **PR 6 (T11):** DESIGN §3 Phase 4 in full. Functions are deployed or deleted
   first, then db push. Also, from PR 4's review (2026-11-07):
   - **One transfer error map.** The same status → message map (`wrong_pin`,
@@ -1132,17 +1133,17 @@ in its PR description → C runs the integrity check against production.
 
 ### Rollback
 
-| Stage     | Symptom                                                                      | Rollback                                                                                                                                                                                          |
-| --------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| R0/R1     | Migration error                                                              | No edits to applied files; write a forward-fix migration (CONTRIBUTING.md)                                                                                                                        |
-| R1        | Template or setting wrong                                                    | Fix it in the dashboard, then match `config.toml` in a follow-up PR                                                                                                                               |
-| R2        | Hook or trigger blocks or misfires                                           | Disable the hook in the dashboard. The old `self_signup_player` signup still serves the live client. Forward-fix the trigger                                                                      |
-| T₀        | Sign-in UI broken                                                            | Vercel instant rollback to the pre-T₀ deployment, then re-paste `main`'s link-only `magic_link` template (D-14). PIN sign-in is untouched, so players get the old flow back. The backend can stay |
-| Cutover   | Players locked out at scale                                                  | Vercel rollback, plus redeploy the previous `verify-pin` from its last commit. No migration is involved (D-12), so it takes minutes                                                               |
-| PR 5/6    | Problem found after the revoke or the drops                                  | Forward-fix only, through review. That's why each one waits for a clean watch                                                                                                                     |
-| T₀ (C-12) | Role missing or wrong in the UI, or many "account isn't fully set up" panels | The T₀ Vercel rollback above. The server side (RLS, token hook) is unchanged                                                                                                                      |
-| PR 9      | Admin email edit or invite fails                                             | Vercel rollback to the version that writes `players.email`, plus a forward-fix migration that restores the dropped sync trigger                                                                   |
-| PR 10     | A deleted synthetic account is needed                                        | An admin adds the player's email, and PR 9's function creates a fresh account with the same id                                                                                                    |
+| Stage     | Symptom                                                                      | Rollback                                                                                                                                                                                                                                                        |
+| --------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R0/R1     | Migration error                                                              | No edits to applied files; write a forward-fix migration (CONTRIBUTING.md)                                                                                                                                                                                      |
+| R1        | Template or setting wrong                                                    | Fix it in the dashboard, then match `config.toml` in a follow-up PR                                                                                                                                                                                             |
+| R2        | Hook or trigger blocks or misfires                                           | Disable the hook in the dashboard. The old `self_signup_player` signup still serves the live client. Forward-fix the trigger                                                                                                                                    |
+| T₀        | Sign-in UI broken                                                            | Vercel instant rollback to the pre-T₀ deployment, then re-paste `main`'s link-only `magic_link` template (D-14). PIN sign-in is untouched, so players get the old flow back. The backend can stay                                                               |
+| Cutover   | Players locked out at scale                                                  | Vercel rollback, plus redeploy the previous `verify-pin` from its last commit. Until PR 5 ships no migration is involved (D-12), so it takes minutes. After PR 5, the old function also needs a reviewed migration granting `verify_player_pin_v2` back to anon |
+| PR 5/6    | Problem found after the revoke or the drops                                  | Forward-fix only, through review. That's why each one waits for a clean watch                                                                                                                                                                                   |
+| T₀ (C-12) | Role missing or wrong in the UI, or many "account isn't fully set up" panels | The T₀ Vercel rollback above. The server side (RLS, token hook) is unchanged                                                                                                                                                                                    |
+| PR 9      | Admin email edit or invite fails                                             | Vercel rollback to the version that writes `players.email`, plus a forward-fix migration that restores the dropped sync trigger                                                                                                                                 |
+| PR 10     | A deleted synthetic account is needed                                        | An admin adds the player's email, and PR 9's function creates a fresh account with the same id                                                                                                                                                                  |
 
 ---
 
