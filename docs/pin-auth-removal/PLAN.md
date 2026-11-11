@@ -47,9 +47,9 @@ signed in gets logged out.
 | T6  | Verification: local matrix, local devices, rehearsal      | C + O | T2–T5, T14      | —        | [~]   |
 | T7  | Dark backend release (R2)                                 | O     | T2 merged, T0c  | —        | [x]   |
 | T8  | T₀ release and announcement (R3)                          | O     | T6, T7          | —        | [~]   |
-| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | C     | T8              | 4        | [x]   |
-| T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [~]   |
-| T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10, T9 + ≥2 wk | 6        | [ ]   |
+| T9  | Cutover PR: remove PIN client path, `verify-pin` 410 stub | C     | T8              | 4        | [~]   |
+| T10 | Revoke `verify_player_pin_v2` from anon (D-12)            | C     | T9 + 48h watch  | 5        | [ ]   |
+| T11 | Phase 4 cleanup (DESIGN §3 Phase 4)                       | W     | T10 + ≥2 weeks  | 6        | [ ]   |
 | T12 | Remove the "Used a PIN before?" explainer                 | W     | cutover + ~2 mo | 7        | [ ]   |
 | T15 | Phase 5a: client reads the role from token claims         | W     | T1              | #50      | [x]   |
 | T16 | Phase 5b: `auth.users` owns the email; Admin API writes   | W     | T11             | 9        | [ ]   |
@@ -586,33 +586,21 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
     no `db:test` or `db:types`. **The §4.5 rehearsal didn't run:** this PR
     touches no SQL and no auth config, so parity can't change.
 
-- 2026-11-07: **Cutover released.** #153 merged, Vercel deployed, and the owner
-  deployed the `verify-pin` stub. Production returned 410, and the integrity
-  check had no errors.
-- 2026-11-10: **Watch closed by the owner:** no player reported a problem. The
-  closure rests on reports, because the §4.4 log checks weren't rerun for it.
-- 2026-11-10: **PR 5 built** (T10, `pin-auth-5-revoke`). One migration revokes
-  `verify_player_pin_v2` from anon, and the grants file loses that line.
-  - **Rehearsal (§4.5) on a fresh production copy:** the migration applied
-    cleanly. Every account with a real email signed in before and after, with
-    0 failures. The parity diff is empty: no reads added, removed or changed.
-    Mailpit codes passed. Integrity counts are 0, except the 3 active no-email
-    players, and synthetic accounts equal no-email players.
-  - **Gates:** format, lint (0 errors), typecheck, unit tests, build,
-    `db:types:check`, `db:grants:check`, `db:reset` and `db:test`.
+**Resume here (as of 2026-11-07, PR 4 open):**
 
-**Resume here (as of 2026-11-10, PR 5 open):**
-
-- **Owner, PR 5 release:** merge → `npx supabase db push` from `main` →
-  `npm run db:grants:prod`. By Thu 12 Nov, or after the 15 Nov event.
-- **3 no-email players:** the owner accepted the risk on 2026-11-10. An admin
-  fixes each account by hand if the player comes back.
-- **Still open from the cutover go/no-go (§5), owner:** the §4.3 device checks,
-  confirming the 3 admins were told about invite emails, and
-  confirming that the T₀ announcement, the 2 Nov reminder and the WhatsApp
-  "PINs retired" post went out.
-- **Next:** PR 6 (T11), at least 14 days after cutover, once stub hits are ~0,
-  and not within 3 days of an event.
+- **Owner, cutover go/no-go (§5):**
+  - **The 3 no-email players:** each gets a real email, or an admin accepts
+    the risk for each by name.
+  - **§4.3 devices:** these were never confirmed done. Run them, or accept
+    them as covered by the 24 real sign-ins since T₀.
+  - Confirm the 3 admins were told that invites send an email (open since
+    R2), and that the T₀ announcement and the 2 Nov reminder went out.
+- **Cutover, by Thu 12 Nov:** merge PR 4 → Vercel deploys →
+  `npx supabase functions deploy verify-pin` from `main` → WhatsApp "PINs
+  retired" (Appendix) → C runs §4.4's cutover checks.
+- **48h watch (C, read-only):** `[verify-pin] pin_retired` hits, auth logs
+  (`otp_disabled`, 429s, SMTP errors), new signups with player rows. Then PR 5
+  (revoke `verify_player_pin_v2` from anon).
 - **Noted for later:**
   - an admin path that deletes the auth account (T16/T17);
   - PR 6's additions from PR 4's review: the shared transfer error map, the
@@ -636,7 +624,7 @@ on or after Sun 8 Nov** (cutover ≥ 3 days before it).
 | R2: dark backend (PR 1/3)        | **Done 2026-10-21**                        | The hook and invite emails run in production before players see the new UI |
 | **T₀**: PRs 2/3 + 3/3 + announce | **Done 2026-10-21** (owner)                | T₀ ≤ #13 − 17 days                                                         |
 | WhatsApp reminder                | **Mon 2 Nov** (cutover − 3 days)           |                                                                            |
-| **Cutover** (PR 4)               | **Done 2026-11-07** (#153; was 5 Nov)      | ≥ 3 days before the 15 Nov event; go/no-go in §5                           |
+| **Cutover** (PR 4)               | **By Thu 12 Nov** (was 5 Nov; slipped)     | ≥ 3 days before the 15 Nov event; go/no-go in §5                           |
 | Revoke (PR 5)                    | Cutover + 2 days                           | After the 48h watch is clean                                               |
 | Phase 4 cleanup (PR 6)           | ≥ Cutover + 14 days, once stub hits are ~0 | Not within 3 days of an event                                              |
 | Explainer removal (PR 7)         | Cutover + ~2 months                        |                                                                            |
@@ -801,8 +789,9 @@ verify-pin`.
 
 ### 3.6 PRs 5–7
 
-- **PR 5 (T10):** the migration revoking `verify_player_pin_v2` from anon, plus
-  the grants file update.
+- **PR 5 (T10):** migrations revoking `verify_player_pin_v2` and
+  `self_signup_player` from anon, plus the grants file update. Nothing calls
+  either since the cutover; PR 6 drops both.
 - **PR 6 (T11):** DESIGN §3 Phase 4 in full. Functions are deployed or deleted
   first, then db push. Also, from PR 4's review (2026-11-07):
   - **One transfer error map.** The same status → message map (`wrong_pin`,

@@ -121,8 +121,8 @@ begin
   if v_err is distinct from 'invalid level' then raise exception 'CHECK 7 FAILED: got %', v_err; end if;
   raise notice 'CHECK 7 ok: invalid level';
 
-  -- CHECK 9: grants — anon only on self_signup_player; helper private
-  if not has_function_privilege('anon', 'public.self_signup_player(jsonb,text,text)', 'execute')
+  -- CHECK 9: grants — no browser role on self_signup_player (PR 5); helper private
+  if has_function_privilege('anon', 'public.self_signup_player(jsonb,text,text)', 'execute')
      or has_function_privilege('authenticated', 'public.self_signup_player(jsonb,text,text)', 'execute')
      or has_function_privilege('anon', 'private.generate_unique_pin()', 'execute')
      or has_function_privilege('authenticated', 'private.generate_unique_pin()', 'execute') then
