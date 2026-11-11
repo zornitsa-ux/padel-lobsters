@@ -577,6 +577,12 @@ change. D-8 to D-13 come from the 2026-10-15 interview.
   `config.toml` and the templates follow in a PR after #44, because #44
   shipped 1800 s, no composition rules and "30 minutes".
 
+- **D-18. PR 5 also revokes `self_signup_player` from anon** (owner,
+  2026-11-11), instead of leaving it for Phase 4. No client calls it after the
+  cutover, and its 5-per-24h cap keys on a device id the caller supplies. So
+  the D-13 fallback is gone: if the signup hook misfires, signup stays down
+  until the hook is fixed or a reviewed migration grants the function back.
+
 ## Owner answers (2026-10-15)
 
 1. Phase 2 length: **~2 weeks**, cutting over before #13. #13 isn't scheduled
