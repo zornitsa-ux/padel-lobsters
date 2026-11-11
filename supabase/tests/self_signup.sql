@@ -68,7 +68,7 @@ begin
   end if;
   raise notice 'CHECK 3 ok: active namesake can sign up';
 
-  -- CHECK 5: an email on an active row returns was_existing and no PIN
+  -- CHECK 4: an email on an active row returns was_existing and no PIN
   select * into v_row from public.self_signup_player(
     jsonb_build_object('name', 'Dup Email', 'email', 'CLAIMER@test.invalid'));
   if not v_row.was_existing or v_row.pin is not null then
@@ -76,7 +76,7 @@ begin
   end if;
   raise notice 'CHECK 4 ok: active email';
 
-  -- CHECK 6: an email held by a non-active row or only by auth.users is a
+  -- CHECK 5: an email held by a non-active row or only by auth.users is a
   -- clear error, not a unique violation
   insert into public.players (name, status, email) values ('Old Inactive', 'inactive', 'old@test.invalid');
   v_err := null;
@@ -97,7 +97,7 @@ begin
   if v_err is distinct from 'email in use' then raise exception 'CHECK 5 FAILED (auth): got %', v_err; end if;
   raise notice 'CHECK 5 ok: non-active email conflicts';
 
-  -- CHECK 7: a PIN held only as a hash is never reissued. setseed makes the
+  -- CHECK 6: a PIN held only as a hash is never reissued. setseed makes the
   -- first candidate predictable; give it to a hash-only player and re-roll.
   perform setseed(0.42);
   v_pin := lpad(((floor(random() * 9000) + 1000))::int::text, 4, '0');
@@ -111,7 +111,7 @@ begin
   end if;
   raise notice 'CHECK 6 ok: hash-only PIN not reissued';
 
-  -- CHECK 8: invalid level is rejected
+  -- CHECK 7: invalid level is rejected
   v_err := null;
   begin
     perform public.self_signup_player(
@@ -121,7 +121,7 @@ begin
   if v_err is distinct from 'invalid level' then raise exception 'CHECK 7 FAILED: got %', v_err; end if;
   raise notice 'CHECK 7 ok: invalid level';
 
-  -- CHECK 9: grants — no browser role on self_signup_player (PR 5); helper private
+  -- CHECK 8: grants — no browser role on self_signup_player (PR 5); helper private
   if has_function_privilege('anon', 'public.self_signup_player(jsonb,text,text)', 'execute')
      or has_function_privilege('authenticated', 'public.self_signup_player(jsonb,text,text)', 'execute')
      or has_function_privilege('anon', 'private.generate_unique_pin()', 'execute')

@@ -86,7 +86,7 @@ functions="$(query "$functions_sql")"
 tables="$(query "$tables_sql")"
 
 # Empty output means the query or the extraction broke, never a real state:
-# signup_name_match is permanently anon-granted and members read tournaments.
+# signed-in members always execute some functions and read tournaments.
 # Failing here keeps a broken run from being written down as the new baseline.
 if [[ -z "$functions" || -z "$tables" ]]; then
   echo "error: no grants extracted — is the local stack running (\`npm run db:start\`), or the project linked?" >&2

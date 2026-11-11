@@ -3,10 +3,9 @@
 //
 // Generates a random UUID once per browser/profile, persists it in
 // localStorage, and reuses it forever (until the user clears storage or
-// switches browsers). Sent on every PIN auth call so the backend can key
-// its per-device rate limits: verify_player_pin_v2's 10-failed-PINs/24h
-// cap and self_signup_player's 5-signups/24h cap, and so the admin audit
-// trail can tell attempts from the same browser apart.
+// switches browsers). It keyed the per-device caps of verify_player_pin_v2
+// and self_signup_player, which no browser role can call since PIN removal
+// PR 5; PR 6 removes it with them.
 //
 // The device_id is opaque to the backend — it has no PII, no fingerprint,
 // no identifying info.
