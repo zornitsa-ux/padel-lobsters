@@ -1,6 +1,6 @@
 # Gender rebalance — implementation plan
 
-Coordinator brief and **single source of truth for status**. Read with
+Coordinator brief. Read with
 [`OPTIONS.md`](./OPTIONS.md) (evidence, options, and owner answers in §6). This
 work extends Matchmaking V2, so its protocol and ground rules apply:
 [`../matchmaking-v2/PLAN.md`](../matchmaking-v2/PLAN.md) §2–3 (roles, contract
@@ -22,19 +22,17 @@ path. Code review before merge still is.
 
 ---
 
-## 1. Status
+## 1. Tasks
 
-| ID  | Task                                           | Owner                     | Depends on | State |
-| --- | ---------------------------------------------- | ------------------------- | ---------- | ----- |
-| T0  | Contracts, shared helper, DECISIONS entries    | C                         | —          | [x]   |
-| T1  | Engine terms (uneven court + rotation)         | W, C reviews line by line | T0         | [x]   |
-| T2  | Calibration + owner sign-off                   | C (runs W for sweeps)     | T1         | [x]   |
-| T3  | Gender visibility in preview + saved view      | W                         | T0         | [x]   |
-| T4  | Generalized swap engine                        | W, C reviews line by line | T0         | [x]   |
-| T5  | Swap UI: Fix on uneven courts + tap-any-player | W                         | T3, T4     | [x]   |
-| T6  | Verification + PRs                             | C                         | all        | [~]   |
-
-Status markers: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
+| ID  | Task                                           | Owner                     | Depends on |
+| --- | ---------------------------------------------- | ------------------------- | ---------- |
+| T0  | Contracts, shared helper, DECISIONS entries    | C                         | —          |
+| T1  | Engine terms (uneven court + rotation)         | W, C reviews line by line | T0         |
+| T2  | Calibration + owner sign-off                   | C (runs W for sweeps)     | T1         |
+| T3  | Gender visibility in preview + saved view      | W                         | T0         |
+| T4  | Generalized swap engine                        | W, C reviews line by line | T0         |
+| T5  | Swap UI: Fix on uneven courts + tap-any-player | W                         | T3, T4     |
+| T6  | Verification + PRs                             | C                         | all        |
 
 **Log.**
 

@@ -1,6 +1,6 @@
 # Team events and King of the Court: plan
 
-**Single source of truth for status.** Read it with [`DESIGN.md`](./DESIGN.md)
+Status is tracked outside the repo; this plan holds the work breakdown and how to do it. Read it with [`DESIGN.md`](./DESIGN.md)
 (findings F-1 to F-7, the target design, rules),
 [`CONTRACTS.md`](./CONTRACTS.md) (exact RPC, schema and client contracts) and
 [`DECISIONS.md`](./DECISIONS.md) (D-001 onwards, append-only).
@@ -26,42 +26,28 @@
   fixes (such as merging a duplicate partner) are Jon-run SQL.
 - **No sign-in-facing release within 3 days of a tournament.** The PIN cutover
   is Thu 5 Nov, so the event must be **on or after Sun 8 Nov**.
-- One task = one branch off `main` in the main checkout. Each PR updates this
-  file's status table and log in its own diff.
+- One task = one branch off `main` in the main checkout.
 
 ---
 
-## 0. Timeline
+## 1. Tasks
 
-| Milestone                         | Target           | Notes                                                   |
-| --------------------------------- | ---------------- | ------------------------------------------------------- |
-| Docs agreed                       | Wed 21 Oct       | #55                                                     |
-| **R1: team signup live**          | Tue 27 Oct       | **Shipped Sat 24 Oct** (#56, #58–#61, migration pushed) |
-| Partner invites live              | After R2 (D-023) | T2 (edge function + RPC); deprioritised behind Phase 2  |
-| PIN cutover                       | Thu 5 Nov        | Other initiative; no event 2–8 Nov                      |
-| **R2: seeding + final standings** | By Thu 12 Nov    | Phase 2, client-only                                    |
-| Event                             | Sun 15 Nov       | 5 courts, 10 teams (OQ-1, D-017)                        |
-
----
-
-## 1. Status
-
-| ID  | Task                                                                                                                                                                                                                     | Phase | Depends on  | PR       | State |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- | ----------- | -------- | ----- |
-| T0  | Research, owner interview, docs                                                                                                                                                                                          | 0     | —           |          | [x]   |
-| T1  | Migration: `entry_mode`, `starting_courts_published_at`, `event_teams` (seed, final_rank), `registrations.team_id`, `covered`, `partner_invites`; team RPCs; guards on individual/transfer RPCs; `supabase/tests` script | 1     | T0          | #56      | [x]   |
-| T2  | Partner invites: `admin_send_event_invite`, `event_invite` email kind + template, admin Partner invites list (not invited / invited / signed in)                                                                         | 1     | T1          |          | [ ]   |
-| T3  | Event form: Format picker, Max teams, team price                                                                                                                                                                         | 1     | T1          | #58      | [x]   |
-| T4  | Join flow: partner search (active members), new-partner form, confirm + pay (captain)                                                                                                                                    | 1     | T1          | #60      | [x]   |
-| T5  | Team card + registration list (teams, waitlist, change partner, transfers hidden)                                                                                                                                        | 1     | T1          | #60      | [x]   |
-| T6  | Admin: add/cancel/promote team, change partner, team Payments view + reminder                                                                                                                                            | 1     | T1          | #59, #60 | [x]   |
-| T7  | Verify Phase 1 locally (rehearsal data) → **R1**                                                                                                                                                                         | 1     | T1, T3–T6   | #60      | [x]   |
-| T8  | King of the Court domain (pure, tests first): `teamStrength`, `seedTeams`, `startingCourts`, `rankFromFinalCourts`                                                                                                       | 2     | T0          | #57      | [x]   |
-| T9  | Lifecycle: King of the Court phase (over by the clock, standings public once saved, D-026), run of show without Finish/Reveal, matcher guard                                                                             | 2     | T1          | #63      | [x]   |
-| T10 | Admin: seed reorder + Show starting court assignments (D-024); Final standings entry; court-removal warning (D-027)                                                                                                      | 2     | T8          | #64      | [x]   |
-| T11 | Player views: starting court on Schedule / You / upcoming card; Results ranking; History + recently-completed banner; Lobster Review rank                                                                                | 2     | T8, T9, T10 | #66      | [x]   |
-| T12 | Verify Phase 2 locally (16-team event end to end) → **R2**                                                                                                                                                               | 2     | T9–T11      | #68      | [~]   |
-| T13 | Results: courts moved per team and a Biggest climber on Results, the recently-completed banner and History (D-028)                                                                                                       | 2     | T11         | #67      | [x]   |
+| ID  | Task                                                                                                                                                                                                                     | Phase | Depends on  | PR       |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- | ----------- | -------- |
+| T0  | Research, owner interview, docs                                                                                                                                                                                          | 0     | —           |          |
+| T1  | Migration: `entry_mode`, `starting_courts_published_at`, `event_teams` (seed, final_rank), `registrations.team_id`, `covered`, `partner_invites`; team RPCs; guards on individual/transfer RPCs; `supabase/tests` script | 1     | T0          | #56      |
+| T2  | Partner invites: `admin_send_event_invite`, `event_invite` email kind + template, admin Partner invites list (not invited / invited / signed in)                                                                         | 1     | T1          |          |
+| T3  | Event form: Format picker, Max teams, team price                                                                                                                                                                         | 1     | T1          | #58      |
+| T4  | Join flow: partner search (active members), new-partner form, confirm + pay (captain)                                                                                                                                    | 1     | T1          | #60      |
+| T5  | Team card + registration list (teams, waitlist, change partner, transfers hidden)                                                                                                                                        | 1     | T1          | #60      |
+| T6  | Admin: add/cancel/promote team, change partner, team Payments view + reminder                                                                                                                                            | 1     | T1          | #59, #60 |
+| T7  | Verify Phase 1 locally (rehearsal data) → **R1**                                                                                                                                                                         | 1     | T1, T3–T6   | #60      |
+| T8  | King of the Court domain (pure, tests first): `teamStrength`, `seedTeams`, `startingCourts`, `rankFromFinalCourts`                                                                                                       | 2     | T0          | #57      |
+| T9  | Lifecycle: King of the Court phase (over by the clock, standings public once saved, D-026), run of show without Finish/Reveal, matcher guard                                                                             | 2     | T1          | #63      |
+| T10 | Admin: seed reorder + Show starting court assignments (D-024); Final standings entry; court-removal warning (D-027)                                                                                                      | 2     | T8          | #64      |
+| T11 | Player views: starting court on Schedule / You / upcoming card; Results ranking; History + recently-completed banner; Lobster Review rank                                                                                | 2     | T8, T9, T10 | #66      |
+| T12 | Verify Phase 2 locally (16-team event end to end) → **R2**                                                                                                                                                               | 2     | T9–T11      | #68      |
+| T13 | Results: courts moved per team and a Biggest climber on Results, the recently-completed banner and History (D-028)                                                                                                       | 2     | T11         | #67      |
 
 States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
 
@@ -73,57 +59,14 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
   merge and push the RPC migration.
 - **R2** is client-only.
 
-### Resume here (2026-10-24: T12 in review)
-
-**Where we are.** R1 is live. **T9 to T11 and T13 are merged** (#63, #64,
-#66, #67). **T12, the local walk-through, passed** on a 16-team event at
-phone width, and its fixes are in review in **#68** (client-only, no
-migration). The owner reshaped King of the Court during review (**D-024 to
-D-030**); DESIGN §3.3–3.4 describe what was built. In short:
-
-- **Admin flow** (Schedule tab, admins only): seeds sorted by average
-  Playtomic level (D-025, D-030), up/down reorder, **Show starting court
-  assignments to players** on the event day (D-024; it saves the order
-  first), optional **Final standings** from the event day, starting empty
-  and **public as soon as saved** (D-026).
-- **No Finish or Reveal** on King of the Court (D-026). The event is over at
-  start + duration (`isEventOver`); the run of show keeps only Oscars and the
-  raffle. Phase: `open` → `set` (shown) → `live` (event day) → `social` (after
-  the end) → `revealed` (standings saved).
-- **Removing courts** is allowed; the event form warns when registered teams
-  no longer fit (D-027). Capacity matches the courts and extras wait, so odd
-  counts aren't designed for (D-029).
-- **Player views**: starting court on Schedule, You and Home's next-event
-  card; the team ranking with courts moved and the Biggest climber on
-  Results, the Past results cards and the recently-completed banner; the team's rank in
-  Lobster Review (T11, T13).
-
-**Next, in order:**
-
-1. **T12: merge #68**, then **R2**: Vercel deploys. No migration. Live by
-   Thu 12 Nov.
-2. **Design system** (owner, 2026-10-24): a review of the team-event UI
-   proposed status-colour tokens and shared components in 11 small PRs
-   (see the T12 log). Owner calls made: "danger" is its own red, not
-   `lob-coral`, and "warning" replaces `lob-amber` for status. PR 1
-   (`design-tokens`) adds the tokens and migrates raw status colours
-   app-wide. The design-system work now runs from
-   `docs/design-system/PLAN.md`.
-3. **T2: partner invites** (unchanged, D-023). It's sign-in-facing, so not
-   from Thu 12 Nov until after the event on Sun 15 Nov.
-
-**Release windows.** No sign-in-facing release within 3 days of a tournament.
-The PIN cutover is Thu 5 Nov (other initiative). The event is Sun 15 Nov, so
-nothing sign-in-facing ships from Thu 12 Nov.
-
-**Working notes.**
+### Working notes
 
 - **No stacked PRs.** Branch each task off `main`; if one task needs another,
   start it after that one merges. When `main` moves under an open PR, merge
   `origin/main` into the branch rather than rebasing, so a normal push is
   enough.
-- **Docs go in the same PR.** Each PR updates this file (status, resume
-  point, log) and DESIGN as it goes. A standalone checkpoint PR is fine now
+- **Docs go in the same PR.** Each PR updates DESIGN, CONTRACTS and
+  DECISIONS as it goes. A standalone checkpoint PR is fine now
   and then, not the default.
 - **Formatting.** Run `npm run format:check` before pushing: commits made in a
   worktree can skip the pre-commit formatter, and CI fails on it.

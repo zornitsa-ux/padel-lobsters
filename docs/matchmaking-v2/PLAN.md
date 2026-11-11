@@ -1,23 +1,23 @@
 # Matchmaking V2 — Implementation Plan
 
-Living document and the **single source of truth for status**.
+Status is tracked outside the repo; this plan holds the work breakdown and how to do it.
 [`DESIGN.md`](./DESIGN.md) is the what/why; [`DECISIONS.md`](./DECISIONS.md) is
 the append-only log of every material call and its reasoning.
 
 Completed-session narration is not kept here — `git log -p docs/matchmaking-v2/`
-holds it. This file carries current state, remaining work, and the protocol.
+holds it. This file carries the remaining work and the protocol.
 
 ---
 
-## 1. Status
+## 1. Phases
 
-| Phase           | Goal                         | Gate to next                           | State                                   |
-| --------------- | ---------------------------- | -------------------------------------- | --------------------------------------- |
-| 0 Discovery     | Audit data + wiring          | findings recorded                      | done                                    |
-| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity             | done (gate met, D-010)                  |
-| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on real rosters | done (gate met, D-015)                  |
-| 3 Integration   | Schema, services, admin UI   | V2 generates a real event              | done                                    |
-| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                 | in progress (M4.1 live; M4.2 observing) |
+| Phase           | Goal                         | Gate to next                           |
+| --------------- | ---------------------------- | -------------------------------------- |
+| 0 Discovery     | Audit data + wiring          | findings recorded                      |
+| 1 Rating engine | Pure domain + calibration    | backtest ≥ Glicko-2 parity             |
+| 2 Matcher       | Pure domain + shadow mode    | shadow report reviewed on real rosters |
+| 3 Integration   | Schema, services, admin UI   | V2 generates a real event              |
+| 4 Cutover       | Ratings live, legacy deleted | two clean events on V2                 |
 
 **What exists.** V2 is the unconditional generator for every event an admin
 opens (D-028, D-030) — `format` no longer gates anything. The pure engine lives
@@ -171,7 +171,7 @@ leaned on, previously unasserted) and `court.players` must equal the flattened
 ## 2. Session protocol
 
 Work spans many sessions and two model tiers. The repo, not the conversation,
-carries the state.
+carries the design and the decisions.
 
 - **Coordinator** (Fable/Opus): owns contracts (`types.ts`, signatures, Zod
   schemas, test specs), all numerics (`update.ts`, `calibrate.ts`), search
@@ -181,15 +181,13 @@ carries the state.
   acceptance tests. Workers never edit contracts, this plan's task definitions,
   or files outside their task's "files owned" list.
 
-**Every session starts by reading** §1 here, the DECISIONS.md tail, and the
-DESIGN.md sections the current task cites. **Every session ends by** updating §1,
-appending any DECISIONS entries, and noting anything left mid-flight.
+**Every session starts by reading** the current status, the DECISIONS.md tail,
+and the DESIGN.md sections the current task cites. **Every session ends by**
+appending any DECISIONS entries.
 
 **Contract freeze rule.** Changing a frozen type or signature requires a
 DECISIONS entry made by the coordinator — a worker who hits a contract problem
 stops and reports instead of adapting the contract.
-
-Status markers: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
 
 **Worker brief template** (coordinator fills per task, in the task prompt):
 
@@ -272,7 +270,7 @@ and in the code each task produced.
 
 ### Phase 4 — Cutover & cleanup
 
-- `[x]` **M4.1 — Seed ratings** (C, S) — **live in production 2026-07-25.** The
+- **M4.1 — Seed ratings** (C, S) — **live in production 2026-07-25.** The
   pure replay is `domain/rating/seed.ts` (15 acceptance tests);
   `seed.harness.test.ts` (env-gated on `MM_SEED_FIXTURE`, writes to no DB)
   generates both the dry run `seed-ratings.md` and the migration. Result:
@@ -290,7 +288,7 @@ and in the code each task produced.
   drawer's learned-level row renders for them — **the one item not yet
   confirmed**, it needs eyes on a real device and is folded into M4.2's
   walkthrough below rather than left dangling here.
-- `[~]` **M4.2 — Live** (C, —) — two-event observation window, and **LOBS #9
+- **M4.2 — Live** (C, —) — two-event observation window, and **LOBS #9
   (2026-07-26) is the first event generated from seeded ratings**. There is no
   flag to enable (D-028); this is watching two real events and capturing owner
   feedback. Watch specifically:
@@ -308,7 +306,7 @@ and in the code each task produced.
     mis-banded — they are the roster's genuine unknowns, and the sit-out/banding
     behaviour around them is untested with a mixed-confidence field.
   - The Compare/Fix overlays on a phone.
-- `[~]` **M4.3 — Delete legacy** (W, M) — the UI half is done (D-028): no
+- **M4.3 — Delete legacy** (W, M) — the UI half is done (D-028): no
   user-facing surface reaches a V1 concept. What remains is code + schema
   deletion.
   - **Code — generators: done (2026-07-26).** Deleted `src/lib/lobsterMatcher.js`,
