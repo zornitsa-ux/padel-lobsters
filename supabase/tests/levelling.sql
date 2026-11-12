@@ -248,6 +248,17 @@ begin
   perform pg_temp.check(
     (select mm_rating = 2.4 from public.players where id = v_p[9]),
     '9d: played night resets');
+  -- A null level and no mm_rating: the prior falls back to 0 (prior_mu is NOT NULL).
+  update public.players set playtomic_level = null where id = v_p[7];
+  perform pg_temp.act_as(v_p[7]);
+  perform public.update_my_profile('{"playtomic_level": 2.0}');
+  perform pg_temp.check(
+    (select prior_mu = 0 from public.rating_events where player_id = v_p[7] and kind = 'self_reset'),
+    '9e: null prior');
+
+  perform pg_temp.check(private.levelling_start_stands(v_p[8]), '9f: levelled, no night');
+  perform pg_temp.check(not private.levelling_start_stands(v_p[9]), '9g: levelled, played since');
+  perform pg_temp.check(not private.levelling_start_stands(v_p[1]), '9h: not levelled');
   raise notice 'CHECK 9 ok: reset guard';
 
   -- ── 10. RLS: members read no levelling row, not even their own ───────────

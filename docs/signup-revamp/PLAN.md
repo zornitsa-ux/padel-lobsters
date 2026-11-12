@@ -70,6 +70,8 @@ and is finished last.
 - Answer codes ↔ wording in one module next to the flow.
 - `useMyLevelling()` query over `get_my_levelling`; invalidate on finish, on
   sign-in and in `useRefreshOnFocus`.
+  Parse it with a schema: `playtomic_level` can be null, though the generated
+  type says `number`.
 - `JoinEventCard`: a `needsLevelling` prop decides between the card and the
   register action. Waitlist ("event full") gets the same card.
 - Home: card above `NextEventCard`, shown only when `needsLevelling`.

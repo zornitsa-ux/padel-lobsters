@@ -151,7 +151,7 @@ In `update_my_profile`, `record_mm_reset` is skipped when:
 - the new level is 0 (the RPC `coalesce`s a null level to the old one, so
   clearing the field sends 0), or
 - the player has a `player_levelling` row and no played night
-  (`private.has_played_night`).
+  (`private.levelling_start_stands`).
 
 `admin_update_player` has called no reset since `20260815160000` (#182), so
 there is nothing to guard there yet. The fix for #182 restores the reset with

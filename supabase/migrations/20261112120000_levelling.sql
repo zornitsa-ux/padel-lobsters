@@ -68,8 +68,20 @@ as $function$
      and not private.has_played_night(input_player_id);
 $function$;
 
+-- A levelled player's start stands until their first played night (D-6).
+create or replace function private.levelling_start_stands(input_player_id uuid)
+returns boolean
+language sql
+stable
+set search_path to 'pg_catalog', 'public'
+as $function$
+  select exists (select 1 from public.player_levelling l where l.player_id = input_player_id)
+     and not private.has_played_night(input_player_id);
+$function$;
+
 revoke all on function private.has_played_night(uuid) from public, anon, authenticated;
 revoke all on function private.needs_levelling(uuid) from public, anon, authenticated;
+revoke all on function private.levelling_start_stands(uuid) from public, anon, authenticated;
 
 -- ── 3. complete_levelling (C-3, DESIGN §2.3) ────────────────────────────────
 -- The answer codes are checked by the table's CHECK constraints: an unknown or
@@ -118,8 +130,8 @@ begin
     return query select 'not_needed'::text; return;
   end if;
 
-  -- Walls start (C-1): 1.0 / 1.5 / 2.0 / 2.5, capped at LEVELLING_CAP 3.0.
-  -- A Playtomic level is taken as entered (D-4).
+  -- Walls start (C-1): 1.0 / 1.5 / 2.0 / 2.5. LEVELLING_CAP 3.0 only bites if
+  -- an answer-based start ever goes higher; Playtomic is taken as entered (D-4).
   if v_level is not null then
     v_source := 'playtomic';
     v_start_mu := v_level;
@@ -210,8 +222,8 @@ grant execute on function public.complete_levelling(jsonb) to authenticated;
 grant execute on function public.get_my_levelling() to authenticated;
 
 -- ── 5. Reset guard in update_my_profile (C-7, D-6) ──────────────────────────
--- Re-created from 20260816140000_remove_device_trust.sql; only the condition
--- around record_mm_reset changes. A levelled player's start stands until
+-- Re-created from 20260816140000_remove_device_trust.sql; only the
+-- record_mm_reset call changes (its condition, and a 0 fallback for the prior). A levelled player's start stands until
 -- their first played night, and clearing the level never resets to 0.
 CREATE OR REPLACE FUNCTION public.update_my_profile(input_payload jsonb)
  RETURNS boolean
@@ -261,13 +273,13 @@ BEGIN
     playtomic_updated_at = CASE WHEN (input_payload ? 'playtomic_level') THEN now() ELSE p.playtomic_updated_at END
   WHERE p.id = v_player_id;
 
+  -- coalesce to 0: rating_events.prior_mu is NOT NULL and playtomic_level is nullable.
   IF v_level_changed
      AND v_new_level > 0
-     AND (private.has_played_night(v_player_id)
-          OR NOT EXISTS (SELECT 1 FROM public.player_levelling l WHERE l.player_id = v_player_id)) THEN
+     AND NOT private.levelling_start_stands(v_player_id) THEN
     PERFORM public.record_mm_reset(
       v_player_id, v_new_level,
-      coalesce(v_old_mm, v_old_level), coalesce(v_old_sigma, 0.7), 'self_reset'
+      coalesce(v_old_mm, v_old_level, 0), coalesce(v_old_sigma, 0.7), 'self_reset'
     );
   END IF;
 
