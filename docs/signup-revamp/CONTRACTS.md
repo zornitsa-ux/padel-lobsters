@@ -46,8 +46,14 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
 - `SECURITY DEFINER`, caller = `auth.uid()`; `authenticated` only.
 - `input_answers`: the five C-1 keys, plus `playtomic_level` (number or null)
   and `prefilled` (boolean).
-- Statuses: `ok`, `already_levelled`, `invalid_answers` (unknown code, missing
-  key, or a level outside (0, 7]), `not_authenticated` (raised, P0001).
+- Statuses: `ok`, `already_levelled`, `not_needed` (the caller has a played
+  night, so their learned rating is never replaced), `invalid_answers`
+  (unknown code, missing key, or a level outside (0, 7]),
+  `not_authenticated` (raised, P0001).
+- Locks the caller's `players` row `FOR UPDATE` first (as
+  `update_my_profile` does), then checks `already_levelled` and
+  `not_needed`. A double tap gets `ok` then `already_levelled`, never a
+  unique violation or two audit rows.
 - Effects on `ok` (one transaction): insert `player_levelling`; set
   `mm_rating`, `mm_sigma`, `mm_rating_updated_at`; when a level is given, set
   `playtomic_level`, `adjusted_level`, `playtomic_updated_at`; insert one
@@ -63,15 +69,17 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
 
 ### `private.needs_levelling(input_player_id uuid) returns boolean`
 
-- No `player_levelling` row and no `rating_events` row of kind `tournament` or
-  `seed` for the player. Revoked from all client roles.
+- No `player_levelling` row, no `rating_events` row of kind `tournament` or
+  `seed`, and no `registered` row in a `completed` tournament for the player.
+  Revoked from all client roles.
 
 ### `public.register_for_tournament` (changed)
 
 - New status `needs_level`, returned with a null id when
   `input_player_id = auth.uid()` and `needs_levelling` holds. Checked after
-  `not_found` / `team_event` and the `already_*` check, before the insert. The
-  client's status schema (`registrationQueries.ts`) adds it.
+  `not_found` / `team_event` and the `already_*` check, before the insert.
+  The status is an untyped string on the client: `useSelfRegister.ts`
+  (which today reads only `regId`) and `Registration.tsx` add the case.
 
 ### `public.register_team_for_tournament` and `public.respond_to_team_invite` (changed)
 
@@ -127,14 +135,18 @@ BEFORE INSERT OR UPDATE on `public.registrations`, function
   - a team row is accepted: `TG_OP = 'UPDATE'`, `old.accepted_at is null` and
     `new.accepted_at is not null`.
 
-The client maps `needs_level` from any registration RPC error to the
-levelling card.
+Client: the RPC wrappers pass the raised `needs_level` through instead of
+collapsing it to `error` (`registerPlayer` in `registrationQueries.ts` drops
+the error today; the transfer and team wrappers likewise). The transfer
+accept screen and the team invite screen show the levelling card on it, with
+the current page as the return path; a pending transfer stays pending.
 
 ## C-7. Reset guards
 
 In `update_my_profile` and `admin_update_player`, `record_mm_reset` is skipped
 when:
 
-- the new level is null or 0, or
-- the player has a `player_levelling` row and no rated night
-  (`rating_events` kind `tournament` or `seed`).
+- the new level is 0 (both RPCs `coalesce` a null level to the old one, so
+  clearing the field sends 0), or
+- the player has a `player_levelling` row and no played night (as in
+  `needs_levelling`).

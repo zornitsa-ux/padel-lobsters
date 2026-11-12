@@ -5,7 +5,7 @@ to do it. Design in [`DESIGN.md`](./DESIGN.md), interfaces in
 [`CONTRACTS.md`](./CONTRACTS.md), choices in [`DECISIONS.md`](./DECISIONS.md).
 
 **Goal.** Signup is fast, and every player has a considered starting rating
-before their first rated night.
+before their first played night.
 
 **Constraints**
 
@@ -22,21 +22,22 @@ before their first rated night.
 
 ## Tasks
 
-| #   | Task                       | What ships                                                                                                                                                                                                                                                                                                                                        |
-| --- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| S0  | Plan                       | These docs. No code.                                                                                                                                                                                                                                                                                                                              |
-| S1  | Levelling storage and RPCs | Migration: `player_levelling` (C-2), `complete_levelling` and `get_my_levelling` (C-3), `private.needs_levelling`, kind `levelling` (C-4), the reset guards (C-7). Grants files updated. Nothing calls the RPCs yet, so this changes no behaviour except C-7.                                                                                     |
-| S2  | Levelling flow             | The six-step flow (DESIGN §2.2), the event-page card in `JoinEventCard`, the Home card, return path and toast. Client-side only: shown when `get_my_levelling` says so. Handles the `needs_level` status already, so S3 can follow without a client change. Gallery entries for any new ui variant.                                               |
-| S3  | Registration gate          | Migration: `register_for_tournament` returns `needs_level` (C-3); trigger `registrations_require_levelling` (C-6). Team events: `register_team_for_tournament` and `respond_to_team_invite` return `needs_level` too.                                                                                                                             |
-| S4  | Faster signup              | Playtomic level optional in `profileProblem` and the `ProfileFields` hint (all four callers). Level 0 shown as no level (`RegisteredSection`, community lists); King of the Court seed fallback (DESIGN §3.1). "How did you find us" on the signup form; migration: `player_signup_source` (C-5), hook validation, confirmed-user trigger insert. |
-| S5  | End-to-end tests           | Playwright: newcomer from a share link → signup without a level → levelling card → six steps → toast → Register; existing player without a rated night from Home with the prefill; gate refusal on a stale page. Tag the writing tests `@seed-write`.                                                                                             |
+| #   | Task                       | What ships                                                                                                                                                                                                                                                                                                                                                                                          |
+| --- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S0  | Plan                       | These docs. No code.                                                                                                                                                                                                                                                                                                                                                                                |
+| S1  | Levelling storage and RPCs | Migration: `player_levelling` (C-2), `complete_levelling` and `get_my_levelling` (C-3), `private.needs_levelling`, kind `levelling` (C-4), the reset guards (C-7). Grants files updated. Nothing calls the RPCs yet, so this changes no behaviour except C-7.                                                                                                                                       |
+| S2  | Levelling flow             | The six-step flow (DESIGN §2.2), the event-page card in `JoinEventCard`, the Home card, return path and toast. Client-side only: shown when `get_my_levelling` says so. Handles `needs_level` already, as a status and as a raised error, in the self-register, transfer-accept and team-invite paths (C-3, C-6), so S3 can follow without a client change. Gallery entries for any new ui variant. |
+| S3  | Registration gate          | Migration: `register_for_tournament` returns `needs_level` (C-3); trigger `registrations_require_levelling` (C-6). Team events: `register_team_for_tournament` and `respond_to_team_invite` return `needs_level` too.                                                                                                                                                                               |
+| S4  | Faster signup              | Playtomic level optional in `profileProblem` and the `ProfileFields` hint (all four callers). Level 0 shown as no level (`RegisteredSection`, community lists); `NO_LEVEL_START` in King of the Court seeding and `initialRating` (DESIGN §3.1). "How did you find us" on the signup form; migration: `player_signup_source` (C-5), hook validation, confirmed-user trigger insert.                 |
+| S5  | End-to-end tests           | Playwright: newcomer from a share link → signup without a level → levelling card → six steps → toast → Register; existing player without a played night from Home with the prefill; gate refusal on a stale page. Tag the writing tests `@seed-write`.                                                                                                                                              |
 
 **Order:** S1 → S2 → S3 → S4. S5 grows with S2–S4 (each PR adds its own cases)
 and is finished last.
 
 - **S4 after S3, not before.** Once the level is optional, a player with no
-  level and no levelling would enter the matcher at 0. The gate makes sure
-  everyone who registers themselves has a start first.
+  level who registers themselves must have a levelling start first. Players
+  registered by an admin can still have neither; S4's `NO_LEVEL_START`
+  fallback covers them.
 - **S2 and S3 ship in the same window.** Deploy order for S3: S2's client is
   live → merge S3 → `db push`. A player between the two sees the card but
   could still register by a stale path; that's harmless for a day.
@@ -53,9 +54,9 @@ and is finished last.
   (`20260816140000_remove_device_trust.sql`) and `admin_update_player` from
   `20260815160000_guard_email_clear.sql`; change only the reset condition.
 - `supabase/tests/levelling.sql`: each status of `complete_levelling`; both
-  start sources and σ; cap; `already_levelled`; audit row; `needs_levelling`
+  start sources and σ; cap; `already_levelled`; `not_needed` for a player with history; two calls in parallel; audit row; `needs_levelling`
   for a player with a `seed` row, a `tournament` row, a `self_reset` row only,
-  and none; C-7 both guards; RLS (a member can't read another's row, or their
+  a completed team-event registration only, and none; C-7 both guards; RLS (a member can't read another's row, or their
   own).
 - `npm run db:types` and commit the generated types.
 
@@ -86,7 +87,9 @@ and is finished last.
   captain and invite acceptance for a partner who needs levelling, waitlist promotion unaffected, rows
   active before the migration untouched.
 - Rehearse on a fresh production copy (`rehearsal:sync`): count players who
-  would be gated, confirm no existing registration changes.
+  would be gated, and how many of them have any past registration (a regular
+  wrongly gated would show up there); confirm no existing registration
+  changes. Report counts only in the PR.
 
 ### S4
 

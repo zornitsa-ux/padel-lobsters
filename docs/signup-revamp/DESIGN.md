@@ -47,10 +47,13 @@ into these docs. Answers are stored as codes (CONTRACTS C-1).
 A player **needs levelling** when both hold:
 
 - no `player_levelling` row, and
-- no **rated night**: no `rating_events` row of kind `tournament` or `seed`.
+- no **played night**: no `rating_events` row of kind `tournament` or `seed`,
+  and no `registered` row in a tournament with status `completed`. The second
+  part covers formats that don't write rating events (team events, King of
+  the Court).
 
-Players with a rated night are never asked. This covers newcomers, existing
-players who haven't played a rated night, and admin-added or invited players.
+Players with a played night are never asked. This covers newcomers, existing
+players who haven't played a played night, and admin-added or invited players.
 `private.needs_levelling(input_player_id)` is the single definition, and the
 client reads it through `get_my_levelling` (C-3).
 
@@ -94,20 +97,22 @@ client reads it through `get_my_levelling` (C-3).
   `prior_sigma` from the current `mm_*` (or the Playtomic prior, as
   `update_my_profile` does), `breakdown` = `{ "source": "playtomic" | "walls" }`.
 - **Overwrites** an `mm_rating` left by an earlier `self_reset` (a player with
-  no rated night who edited their level). The audit row keeps the prior.
-- Levelling runs once. A second call returns `already_levelled`.
+  no played night who edited their level). The audit row keeps the prior.
+- Levelling runs once. A second call returns `already_levelled`. A player
+  with a played night gets `not_needed`, so the RPC can't replace a learned
+  rating with a self-chosen start.
 
 ### 2.4 The Playtomic-edit reset after levelling
 
 `update_my_profile` and `admin_update_player` keep their D-002 reset, with two
 guards:
 
-- **No reset before the first rated night of a levelled player.** The
+- **No reset before the first played night of a levelled player.** The
   levelling start stands; the Playtomic level on the profile still updates.
 - **No reset to 0.** Clearing the level (now allowed) never sets
   `mm_rating` := 0.
 
-Players with a rated night keep today's behaviour.
+Players with a played night keep today's behaviour.
 
 ### 2.5 The registration gate
 
@@ -142,8 +147,17 @@ Players with a rated night keep today's behaviour.
 - The hook already accepts an empty level; the trigger stores `0`.
 - **Readers of `playtomic_level = 0`** show no level instead of "Level 0.0"
   (`RegisteredSection`, community lists). The levelling start stays admin-only
-  (owner). King of the Court seeds a player with level 0 from `mm_rating`,
-  read through `admin_get_mm_ratings` as the matcher does, else as today.
+  (owner).
+- **One fallback for "no level", the same on every screen.** King of the Court
+  seeds on every viewer's device from `playtomic_level`
+  (`useKingOfCourtTeams`), and members can't read `mm_rating`. So a level of 0
+  counts as `NO_LEVEL_START` = 1.0 (the lowest walls start) in KotC seeding,
+  for admins and members alike.
+- **The matcher** uses the same constant: `initialRating` returns
+  (1.0, σ 1.0) for a level of 0. This only matters for a player with neither
+  a level nor a levelling start, which the gate leaves to admin-registered
+  players (D-8) and players already registered at release (D-9). Today such a
+  player enters at μ 0.
 
 ### 3.2 How did you find us
 
@@ -153,8 +167,10 @@ Players with a rated night keep today's behaviour.
 - Sent as `user_metadata` keys (C-5). `before_user_created_hook` validates
   them (unknown code → rejection; text trimmed, ≤ 100 characters).
 - `create_player_for_confirmed_user` inserts a `player_signup_source` row
-  after the `players` row, inside the same exception block, so a bad value
-  never aborts confirmation.
+  after the `players` row, in its own nested block with
+  `exception when others then null`. The existing block only catches
+  `unique_violation`; a value that fails a CHECK must never abort the email
+  confirmation. Losing the answer is acceptable; losing the account isn't.
 - Not asked on the invite "finish your account" page: an admin brought those
   players in.
 - The typed name is not matched to a member. Matching happens when needed

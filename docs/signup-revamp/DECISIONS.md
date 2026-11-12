@@ -6,9 +6,11 @@ this file records how the code carries them out.
 - **D-1. Levelling is stored in its own admin-only table** (`player_levelling`),
   not as `players` columns. `players` is read widely through `players_public`;
   answers are for analysis only. "Has levelled" is the row's existence.
-- **D-2. "Needs levelling" = no levelling row and no rated night**
-  (`rating_events` kind `tournament` or `seed`). It uses data the rating system
-  already keeps, and treats a `self_reset`-only player as not yet placed.
+- **D-2. "Needs levelling" = no levelling row and no played night**: no
+  `rating_events` row of kind `tournament` or `seed`, and no registration in a
+  completed tournament. Rating events alone would gate regulars who have only
+  played team or King of the Court nights. A `self_reset`-only player counts as
+  not yet placed.
 - **D-3. The start is written to `mm_rating`/`mm_sigma`**, the columns the
   matcher already prefers over the Playtomic prior. No new matcher input.
 - **D-4. Playtomic level given at levelling: σ 0.7; walls answer: σ 1.0.**
@@ -17,7 +19,7 @@ this file records how the code carries them out.
 - **D-5. Playtomic must be > 0.** `0` already means "not given" in
   `players.playtomic_level` and the forms.
 - **D-6. A levelled player's Playtomic edit doesn't reset the start before
-  their first rated night; nothing resets to 0.** Otherwise a Settings save
+  their first played night; nothing resets to 0.** Otherwise a Settings save
   could undo levelling.
 - **D-7. The gate is an RPC status plus a trigger.** The status gives the
   client a clean answer; the trigger covers every other path into
@@ -39,5 +41,10 @@ this file records how the code carries them out.
 - **D-14. Players without a Playtomic level show no level to members**
   (owner, 12 Nov). The levelling start stays admin-only in `mm_rating`; it is
   not written into `playtomic_level`, which would show a number the player
-  never gave as their Playtomic level. King of the Court seeding reads
-  `mm_rating` for them.
+  never gave as their Playtomic level.
+- **D-15. A level of 0 counts as 1.0 (`NO_LEVEL_START`, σ 1.0) in King of the
+  Court seeding and the matcher's prior.** KotC seeds are computed on every
+  viewer's device, and members can't read `mm_rating`, so reading it there
+  (first proposed with D-14) would give admins and members different seeds.
+  One public constant keeps them the same, errs low as the walls starts do,
+  and replaces today's μ 0 for players an admin registers without a level.
