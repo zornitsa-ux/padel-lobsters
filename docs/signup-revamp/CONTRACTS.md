@@ -47,7 +47,8 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
 - `input_answers`: the five C-1 keys, plus `playtomic_level` (number or null)
   and `prefilled` (boolean).
 - Statuses: `ok`, `already_levelled`, `not_needed` (the caller has a played
-  night, so their learned rating is never replaced), `invalid_answers`
+  night, so their learned rating is never replaced; also a caller with no
+  player row), `invalid_answers`
   (unknown code, missing key, or a level outside (0, 7]),
   `not_authenticated` (raised, P0001).
 - Locks the caller's `players` row `FOR UPDATE` first (as
@@ -62,16 +63,18 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
 
 ### `public.get_my_levelling() returns table(needs_levelling boolean, playtomic_level numeric)`
 
-- `SECURITY DEFINER`, `STABLE`, caller = `auth.uid()`; `authenticated` only.
+- `SECURITY DEFINER`, caller = `auth.uid()`; `authenticated` only. Not
+  `STABLE`: it sets `statement_timeout`.
 - `playtomic_level` is the level on file (> 0) for the step 6 prefill, else
   null. One row; signed-in callers without a player row get
   `needs_levelling = false`.
 
 ### `private.needs_levelling(input_player_id uuid) returns boolean`
 
-- No `player_levelling` row, no `rating_events` row of kind `tournament` or
-  `seed`, and no `registered` row in a `completed` tournament for the player.
-  Revoked from all client roles.
+- No `player_levelling` row and not `private.has_played_night`: no
+  `rating_events` row of kind `tournament` or `seed`, and no `registered` row
+  in a `completed` tournament for the player. Both revoked from all client
+  roles.
 
 ### `public.register_for_tournament` (changed)
 
@@ -143,10 +146,13 @@ the current page as the return path; a pending transfer stays pending.
 
 ## C-7. Reset guards
 
-In `update_my_profile` and `admin_update_player`, `record_mm_reset` is skipped
-when:
+In `update_my_profile`, `record_mm_reset` is skipped when:
 
-- the new level is 0 (both RPCs `coalesce` a null level to the old one, so
+- the new level is 0 (the RPC `coalesce`s a null level to the old one, so
   clearing the field sends 0), or
-- the player has a `player_levelling` row and no played night (as in
-  `needs_levelling`).
+- the player has a `player_levelling` row and no played night
+  (`private.levelling_start_stands`).
+
+`admin_update_player` has called no reset since `20260815160000` (#182), so
+there is nothing to guard there yet. The fix for #182 restores the reset with
+these same guards.

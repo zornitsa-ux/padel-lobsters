@@ -20,6 +20,7 @@ public.merch_items authenticated DELETE,INSERT,SELECT,UPDATE
 public.merch_items_id_seq authenticated USAGE
 public.partner_invites authenticated SELECT
 public.player_aliases authenticated DELETE,INSERT,SELECT,UPDATE
+public.player_levelling authenticated SELECT
 public.players.avatar_url authenticated SELECT
 public.players.id authenticated SELECT
 public.players.name authenticated SELECT

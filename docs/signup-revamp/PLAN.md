@@ -51,13 +51,15 @@ and is finished last.
   `record_mm_reset` pattern and `20260806211259_registration_capacity_rpcs.sql`
   for RPC style (`statement_timeout`, `app.audit_source`).
 - Re-create `update_my_profile` from its latest definition
-  (`20260816140000_remove_device_trust.sql`) and `admin_update_player` from
-  `20260815160000_guard_email_clear.sql`; change only the reset condition.
+  (`20260816140000_remove_device_trust.sql`); change only the reset condition.
+  `admin_update_player` has no reset to guard (#182).
 - `supabase/tests/levelling.sql`: each status of `complete_levelling`; both
-  start sources and σ; cap; `already_levelled`; `not_needed` for a player with history; two calls in parallel; audit row; `needs_levelling`
+  start sources and σ; cap; `already_levelled`; `not_needed` for a player with history; audit row; `needs_levelling`
   for a player with a `seed` row, a `tournament` row, a `self_reset` row only,
   a completed team-event registration only, and none; C-7 both guards; RLS (a member can't read another's row, or their
   own).
+- `supabase/tests/levelling_parallel.sh`: two calls at once give `ok` and
+  `already_levelled`, with one row each.
 - `npm run db:types` and commit the generated types.
 
 ### S2
@@ -68,6 +70,8 @@ and is finished last.
 - Answer codes ↔ wording in one module next to the flow.
 - `useMyLevelling()` query over `get_my_levelling`; invalidate on finish, on
   sign-in and in `useRefreshOnFocus`.
+  Parse it with a schema: `playtomic_level` can be null, though the generated
+  type says `number`.
 - `JoinEventCard`: a `needsLevelling` prop decides between the card and the
   register action. Waitlist ("event full") gets the same card.
 - Home: card above `NextEventCard`, shown only when `needsLevelling`.

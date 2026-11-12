@@ -30,7 +30,8 @@ into these docs. Answers are stored as codes (CONTRACTS C-1).
   `initialRating`: the Playtomic level with σ 0.7 (`SIGMA_PRIOR`).
 - **A Playtomic edit** through `update_my_profile` calls `record_mm_reset`:
   `mm_rating` := new level, `mm_sigma` := 0.7, plus a `rating_events` row of
-  kind `self_reset` (`admin_edit` from `admin_update_player`).
+  kind `self_reset`. `admin_update_player` was meant to do the same with
+  kind `admin_edit`, but has lost that reset (#182).
 - **Registration writes are RPC-only.** `authenticated` has SELECT only on
   `registrations`. Rows are written by `register_for_tournament`,
   `register_team_for_tournament`, `respond_to_team_invite`, the transfer RPCs
@@ -104,8 +105,9 @@ client reads it through `get_my_levelling` (C-3).
 
 ### 2.4 The Playtomic-edit reset after levelling
 
-`update_my_profile` and `admin_update_player` keep their D-002 reset, with two
-guards:
+`update_my_profile` keeps its D-002 reset, with two guards
+(`admin_update_player` lost its reset in August, #182; its fix takes the same
+guards):
 
 - **No reset before the first played night of a levelled player.** The
   levelling start stands; the Playtomic level on the profile still updates.
