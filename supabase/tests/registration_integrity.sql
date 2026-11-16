@@ -3,8 +3,9 @@
 --
 -- Covers the capacity guard (20260806211143), the capacity-aware RPCs
 -- (20260806211259), the audit trail (20260806210842), the no-hard-delete
--- changes (20260806211102), the max_players constraints (20260806213000)
--- and the transfer row-scoping fix (20260815050555).
+-- changes (20260806211102), the max_players constraints (20260806213000),
+-- the transfer row-scoping fix (20260815050555) and the levelling gate
+-- (20261116120000, signup revamp S3).
 --
 -- There is no pgTAP harness in this repo, so this is a plain script: every
 -- check raises on failure and the whole thing runs inside a transaction that
@@ -23,6 +24,14 @@
 begin;
 
 set local client_min_messages = notice;
+
+-- A finished levelling (signup revamp C-1), so the gate (S3) lets them in.
+create function pg_temp.level(input_player uuid) returns void
+language sql as $$
+  insert into public.player_levelling
+    (player_id, years_playing, frequency, lessons, racket_sports, walls, start_source, start_mu, start_sigma)
+  values (input_player, 'under_1y', 'weekly_1_2', 'none', 'casual', 'slow_back_wall', 'walls', 1.5, 1.0);
+$$;
 
 do $$
 declare
@@ -46,6 +55,8 @@ declare
   v_pm_a text;
   v_pm_b text;
   v_reason text;
+  v_t4 uuid;
+  v_gp uuid[];
 begin
   -- ── Fixtures: a 2-player event and 6 players ──────────────────────────────
   insert into public.tournaments (name, date, time, max_players, status)
@@ -58,6 +69,8 @@ begin
     returning id, name
   )
   select array_agg(id order by name) into v_players from ins;
+  -- Regulars here; CHECK 15 makes its own newcomers.
+  perform pg_temp.level(p) from unnest(v_players) p;
 
   -- The RPCs are admin-gated via require_admin(), which reads the JWT claim.
   -- psql has no JWT, so forge one: auth.uid() and auth.jwt() both read this
@@ -547,6 +560,136 @@ begin
     raise exception 'CHECK 14h FAILED: offer left as status=%, closed_reason=%', v_status, v_reason;
   end if;
   raise notice 'CHECK 14h ok — an offer from a player who is no longer registered is auto-closed';
+
+  -- ── 15. Levelling gate (signup revamp S3, CONTRACTS C-3, C-6) ─────────────
+  -- Fresh players with no history and no levelling row need levelling. The
+  -- event takes 2; v_players[6] is the admin.
+  insert into public.tournaments (name, date, time, max_players, status)
+  values ('GATE TEST', current_date + 33, '18:00', 2, 'upcoming')
+  returning id into v_t4;
+
+  with ins as (
+    insert into public.players (name, status)
+    select 'Gate Test N' || g, 'active' from generate_series(1, 6) g
+    returning id, name
+  )
+  select array_agg(id order by name) into v_gp from ins;
+
+  -- 15a. Signing themselves up is refused, with nothing written.
+  perform set_config('request.jwt.claims', json_build_object('sub', v_gp[1])::text, true);
+  select r.status, r.registration_id into v_status, v_id
+    from public.register_for_tournament(v_t4, v_gp[1]) r;
+  if v_status <> 'needs_level' or v_id is not null
+     or exists (select 1 from public.registrations where tournament_id = v_t4) then
+    raise exception 'CHECK 15a FAILED: expected needs_level and no row, got % (%)', v_status, v_id;
+  end if;
+  raise notice 'CHECK 15a ok — a player who needs levelling cannot sign themselves up';
+
+  -- 15b. An admin registering them is not gated.
+  perform set_config('request.jwt.claims', json_build_object(
+    'sub', v_players[6], 'app_metadata', json_build_object('role', 'admin'))::text, true);
+  select r.status into v_status from public.register_for_tournament(v_t4, v_gp[1]) r;
+  if v_status <> 'registered' then
+    raise exception 'CHECK 15b FAILED: expected registered, got %', v_status;
+  end if;
+  raise notice 'CHECK 15b ok — an admin can register a player who needs levelling';
+
+  -- 15c. Once levelled, they sign themselves up. The event is then full.
+  perform pg_temp.level(v_gp[2]);
+  perform set_config('request.jwt.claims', json_build_object('sub', v_gp[2])::text, true);
+  select r.status into v_status from public.register_for_tournament(v_t4, v_gp[2]) r;
+  if v_status <> 'registered' then
+    raise exception 'CHECK 15c FAILED: expected registered, got %', v_status;
+  end if;
+  raise notice 'CHECK 15c ok — after levelling, signing up works';
+
+  -- 15d. A transfer to a recipient who needs levelling raises needs_level;
+  -- the offer stays pending and the sender keeps their spot.
+  select x.transfer_id, x.status into v_xfer_id, v_status
+    from public.create_transfer(v_gp[4], v_t4) x;
+  if v_status <> 'ok' then
+    raise exception 'CHECK 15d PRECONDITION FAILED: create_transfer returned %', v_status;
+  end if;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_gp[4])::text, true);
+  begin
+    perform public.respond_to_transfer(v_xfer_id, true);
+    raise exception 'CHECK 15d FAILED: the transfer was accepted';
+  exception when sqlstate 'P0001' then
+    get stacked diagnostics v_err = message_text;
+    if v_err <> 'needs_level' then raise; end if;
+  end;
+  select status into v_status from public.registration_transfers where id = v_xfer_id;
+  if v_status <> 'pending' then
+    raise exception 'CHECK 15d FAILED: offer left as %', v_status;
+  end if;
+  if exists (select 1 from public.registrations where tournament_id = v_t4 and player_id = v_gp[4])
+     or not exists (select 1 from public.registrations
+                     where tournament_id = v_t4 and player_id = v_gp[2] and status = 'registered') then
+    raise exception 'CHECK 15d FAILED: registrations changed';
+  end if;
+  raise notice 'CHECK 15d ok — a transfer to a recipient who needs levelling is refused, nothing moves';
+
+  -- 15e. Waitlist promotion isn't gated: the admin waitlists a player who
+  -- needs levelling, then a cancel promotes them.
+  perform set_config('request.jwt.claims', json_build_object(
+    'sub', v_players[6], 'app_metadata', json_build_object('role', 'admin'))::text, true);
+  perform public.register_for_tournament(v_t4, v_gp[3]);
+  select r.id into v_reg from public.registrations r
+   where r.tournament_id = v_t4 and r.player_id = v_gp[1] and r.status = 'registered';
+  select c.promoted_player_id into v_promoted from public.cancel_registration(v_reg) c;
+  if v_promoted is distinct from v_gp[3] then
+    raise exception 'CHECK 15e FAILED: expected the waitlister promoted, got %', v_promoted;
+  end if;
+  select r.status into v_status from public.register_for_tournament(v_t4, v_gp[5]) r;
+  if v_status <> 'waitlist' then
+    raise exception 'CHECK 15e FAILED: expected the event full again, got %', v_status;
+  end if;
+  raise notice 'CHECK 15e ok — waitlist promotion is not gated';
+
+  -- 15f. A recipient already on the waitlist takes the spot: their row was
+  -- already active, so it is promoted, not gated (DESIGN §2.5).
+  perform set_config('request.jwt.claims', json_build_object('sub', v_gp[3])::text, true);
+  select x.transfer_id into v_xfer_id from public.create_transfer(v_gp[5], v_t4) x;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_gp[5])::text, true);
+  select r.status into v_status from public.respond_to_transfer(v_xfer_id, true) r;
+  if v_status <> 'accepted' then
+    raise exception 'CHECK 15f FAILED: expected accepted, got %', v_status;
+  end if;
+  raise notice 'CHECK 15f ok — a waitlisted recipient who needs levelling is promoted by a transfer';
+
+  -- 15g. The trigger alone: a row written with no caller (service role, a
+  -- migration) stands; the player's own updates that keep it active pass;
+  -- activating a row of their own outside any RPC raises.
+  perform set_config('request.jwt.claims', '', true);
+  insert into public.registrations (tournament_id, player_id, status)
+  values (v_t3, v_gp[6], 'registered')
+  returning id into v_reg;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_gp[6])::text, true);
+  update public.registrations set payment_status = 'pending_confirmation' where id = v_reg;
+  update public.registrations set status = 'cancelled' where id = v_reg;
+  begin
+    update public.registrations set status = 'waitlist' where id = v_reg;
+    raise exception 'CHECK 15g FAILED: reactivating their own row went through';
+  exception when sqlstate 'P0001' then
+    get stacked diagnostics v_err = message_text;
+    if v_err <> 'needs_level' then raise; end if;
+  end;
+  begin
+    insert into public.registrations (tournament_id, player_id, status)
+    values (v_t2, v_gp[6], 'waitlist');
+    raise exception 'CHECK 15g FAILED: inserting their own active row went through';
+  exception when sqlstate 'P0001' then
+    get stacked diagnostics v_err = message_text;
+    if v_err <> 'needs_level' then raise; end if;
+  end;
+  raise notice 'CHECK 15g ok — the trigger leaves existing rows alone and stops new active ones';
+
+  -- 15h. The trigger function is closed to client roles.
+  if has_function_privilege('anon', 'private.registrations_require_levelling()', 'execute')
+     or has_function_privilege('authenticated', 'private.registrations_require_levelling()', 'execute') then
+    raise exception 'CHECK 15h FAILED: client roles can execute the trigger function';
+  end if;
+  raise notice 'CHECK 15h ok — the trigger function is revoked from client roles';
 
   raise notice '';
   raise notice 'All registration integrity checks passed.';

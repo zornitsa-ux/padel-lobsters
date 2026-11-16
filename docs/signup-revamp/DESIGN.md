@@ -140,7 +140,8 @@ Players with a played night keep today's behaviour.
     forms already name the player and confirm (`useConfirmOnBehalf`);
   - service-role and migration writes (`auth.uid()` is null);
   - rows already active at release, and waitlist → registered promotion
-    (already active).
+    (already active). That includes a transfer recipient already on the
+    waitlist: the transfer promotes their row rather than inserting one.
 
 ## 3. Signup
 
