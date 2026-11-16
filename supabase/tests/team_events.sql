@@ -760,6 +760,15 @@ begin
           where team_id = v_team and player_id = v_new[2] and status = 'registered') is not null then
     raise exception 'CHECK 31b FAILED: %', v_r.status;
   end if;
+  -- The trigger alone (C-6): accepting their own team row outside the RPC raises.
+  begin
+    update public.registrations set accepted_at = now()
+     where team_id = v_team and player_id = v_new[2] and status = 'registered';
+    raise exception 'CHECK 31e FAILED: accepted_at set without levelling';
+  exception when sqlstate 'P0001' then
+    get stacked diagnostics v_err = message_text;
+    if v_err <> 'needs_level' then raise; end if;
+  end;
   perform pg_temp.level(v_new[2]);
   select * into v_r from public.respond_to_team_invite(v_team, true);
   if v_r.status <> 'accepted' then raise exception 'CHECK 31c FAILED: %', v_r.status; end if;
@@ -770,7 +779,7 @@ begin
   select * into v_r from public.respond_to_team_invite(v_x.team_id, false);
   if v_r.status <> 'declined' then raise exception 'CHECK 31d FAILED: %', v_r.status; end if;
   perform pg_temp.assert_teams(v_t);
-  raise notice 'CHECK 31 ok: partner gated on accepting, never on declining';
+  raise notice 'CHECK 31 ok: partner gated on accepting (RPC and trigger), never on declining';
 
   -- CHECK 32: a team transfer to a recipient who needs levelling raises; nothing moves
   perform pg_temp.act(v_p[2], false);
