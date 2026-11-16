@@ -95,7 +95,7 @@ function LevellingFlow({
       confirmLabel: 'Stop',
       cancelLabel: 'Keep going',
     })
-    if (stop) navigate(from)
+    if (stop) navigate(from, { replace: true })
   }
 
   const back = () => (state.step === 0 ? void close() : dispatch({ type: 'back' }))
@@ -111,7 +111,7 @@ function LevellingFlow({
     }
     finished.current = true
     clearDraft({ userId })
-    navigate(from)
+    navigate(from, { replace: true })
     if (status !== 'not_needed') {
       showToast({ variant: 'success', message: finishedToast({ name: player?.name }) })
     }

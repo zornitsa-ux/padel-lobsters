@@ -22,15 +22,20 @@ const LEVELLING_LIVE = '2026-11-16'
 export const isExistingPlayer = ({ createdAt }: { createdAt: string | null | undefined }) =>
   !!createdAt && createdAt < LEVELLING_LIVE
 
+/** Whether the viewer's account predates levelling; undefined until the roster has it. */
+export function useIsExistingPlayer(): boolean | undefined {
+  const { session } = useApp()
+  const me = usePlayer(session?.user?.id)
+  if (me.isPending) return undefined
+  return isExistingPlayer({ createdAt: me.data?.created_at })
+}
+
 /** `needsLevelling` is false until the read resolves, so the levelling card never flashes in. */
 export function useNeedsLevelling() {
-  const { session } = useApp()
   const { data } = useMyLevelling()
-  const { data: me } = usePlayer(session?.user?.id)
   return {
     needsLevelling: data?.needsLevelling ?? false,
     levelOnFile: data?.levelOnFile ?? null,
-    existing: isExistingPlayer({ createdAt: me?.created_at }),
   }
 }
 

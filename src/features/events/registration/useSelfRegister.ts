@@ -4,6 +4,7 @@ import { NEEDS_LEVEL } from '../../levelling/levellingQueries'
 import { useNeedsLevelling, useRefreshLevelling } from '../../levelling/useMyLevelling'
 
 export const SELF_REGISTER_ERROR = 'Could not sign you up. Please try again.'
+export const SELF_REGISTER_NEEDS_LEVEL = 'Set your level first, then you can register.'
 
 /**
  * A player signing themselves up, shared by the Info tab's JoinEventCard and
@@ -41,7 +42,11 @@ export function useSelfRegister({
     setError('')
     try {
       const { regId, status } = await registerPlayer(tournamentId, playerId)
-      if (status === NEEDS_LEVEL) refreshLevelling()
+      if (status === NEEDS_LEVEL) {
+        // The card replaces Register once the gate re-reads; the message covers a failed re-read.
+        setError(SELF_REGISTER_NEEDS_LEVEL)
+        refreshLevelling()
+      }
       // A null regId is the failure signal — see the note above.
       else if (!regId) setError(SELF_REGISTER_ERROR)
     } finally {

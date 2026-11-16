@@ -1,4 +1,4 @@
-import { parseLevel } from '../../lib/parseLevel'
+import { levelProblem, parseLevel } from '../../lib/parseLevel'
 import { QUESTIONS, TOTAL_STEPS, type QuestionKey } from './levellingQuestions'
 
 export type PlaytomicChoice = 'yes' | 'no' | null
@@ -62,9 +62,7 @@ export function levellingReducer(state: LevellingState, action: LevellingAction)
 /** Why the typed level can't be sent, or '' when it can. 0 means "no level" in the app. */
 export function playtomicProblem({ text }: { text: string }): string {
   if (!text.trim()) return 'Enter your level, e.g. 2.5.'
-  const level = parseLevel(text)
-  if (level === null || level <= 0 || level > 7) return 'Enter a number above 0 and up to 7.'
-  return ''
+  return levelProblem({ value: text, min: 0, aboveMin: true })
 }
 
 const allAnswered = (answers: LevellingState['answers']) =>

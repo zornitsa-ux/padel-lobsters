@@ -23,6 +23,7 @@ const RESPOND_MESSAGES: Record<string, string> = {
     'You are already registered for this event, so there is nothing to accept.',
   from_not_registered: 'That spot is no longer registered — the transfer can’t be completed.',
   needs_level: 'Set your level first, then accept. The offer stays open.',
+  error: 'Something went wrong. Try again.',
 }
 
 export const respondFailureMessage = ({ status }: { status: string }): string =>

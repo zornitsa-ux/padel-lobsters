@@ -15,7 +15,7 @@ interface StepHeaderProps {
 
 /**
  * The top of a one-question-per-screen flow: Back, "2 of 6", close, and a progress bar
- * that fills as steps are done.
+ * filled to the current step (full on the last one).
  */
 export function StepHeader({ step, total, onBack, onClose, closeLabel }: StepHeaderProps) {
   return (

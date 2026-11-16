@@ -216,7 +216,7 @@ describe('Info tab — players sign themselves up here', () => {
   })
 
   // A page loaded before levelling was required still shows Register; the gate answers.
-  it('re-reads the gate when the server answers needs_level, with no error', async () => {
+  it('re-reads the gate when the server answers needs_level, and says why', async () => {
     registrations = withoutViewer()
     mockRegisterPlayer.mockResolvedValue({ regId: null, status: 'needs_level' })
 
@@ -224,7 +224,7 @@ describe('Info tab — players sign themselves up here', () => {
     fireEvent.click(screen.getByRole('button', { name: /register for this event/i }))
 
     await waitFor(() => expect(refreshLevelling).toHaveBeenCalledOnce())
-    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByRole('alert').textContent).toMatch(/set your level first/i)
   })
 
   it('offers the waitlist once the roster is full', () => {

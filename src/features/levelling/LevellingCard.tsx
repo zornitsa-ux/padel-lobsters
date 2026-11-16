@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { levellingPath } from './levellingRoutes'
-import { useNeedsLevelling } from './useMyLevelling'
+import { useIsExistingPlayer, useNeedsLevelling } from './useMyLevelling'
 
 type Place = 'event' | 'home'
 
@@ -50,7 +50,10 @@ function copyFor({
  */
 export default function LevellingCard({ place }: { place: Place }) {
   const { pathname, search } = useLocation()
-  const { existing, levelOnFile } = useNeedsLevelling()
+  const { levelOnFile } = useNeedsLevelling()
+  const existing = useIsExistingPlayer()
+  // The wording depends on the account's age; wait for it rather than swap wording on screen.
+  if (existing === undefined) return null
   const copy = copyFor({ place, existing, hasLevel: levelOnFile != null && levelOnFile > 0 })
   return (
     <div

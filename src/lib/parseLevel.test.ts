@@ -31,3 +31,13 @@ describe('levelProblem', () => {
     expect(levelProblem({ value: '0.5', min: 0.5 })).toBe('')
   })
 })
+
+describe('levelProblem with aboveMin', () => {
+  it.each(['0.1', '2,5', '7'])('takes %j', (value) => {
+    expect(levelProblem({ value, aboveMin: true })).toBe('')
+  })
+
+  it.each(['0', '7.1', 'abc'])('refuses %j', (value) => {
+    expect(levelProblem({ value, aboveMin: true })).toMatch(/above 0 and up to 7/)
+  })
+})

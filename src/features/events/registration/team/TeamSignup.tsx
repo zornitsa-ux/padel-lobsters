@@ -67,7 +67,10 @@ export default function TeamSignup({
           displayName={displayName}
         />
       ) : needsLevelling ? (
-        <LevellingCard place="event" />
+        <>
+          {ended && <EndedTeamNotice notice={ended} />}
+          <LevellingCard place="event" />
+        </>
       ) : (
         <>
           {ended && !joinOpen && (

@@ -21,6 +21,7 @@ export function resetLevellingMock() {
   completeLevelling.mockReset()
 }
 
+export const useIsExistingPlayer = () => levellingState.existing
 export const useNeedsLevelling = () => ({ ...levellingState })
 export const useRefreshLevelling = () => refreshLevelling
 export const useMyLevelling = () => ({ data: { ...levellingState }, isError: false })
