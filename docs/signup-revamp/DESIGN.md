@@ -45,18 +45,20 @@ into these docs. Answers are stored as codes (CONTRACTS C-1).
 
 ### 2.1 Who must level
 
-A player **needs levelling** when both hold:
+A player **needs levelling** when no level is recorded (D-16): both hold:
 
-- no `player_levelling` row, and
-- no **played night**: no `rating_events` row of kind `tournament` or `seed`,
-  and no `registered` row in a tournament with status `completed`. The second
-  part covers formats that don't write rating events (team events, King of
-  the Court).
+- no Playtomic level on file (`players.playtomic_level` is 0 or null), and
+- no `player_levelling` row (a levelling start).
 
-Players with a played night are never asked. This covers newcomers, existing
-players who haven't played a played night, and admin-added or invited players.
-`private.needs_levelling(input_player_id)` is the single definition, and the
-client reads it through `get_my_levelling` (C-3).
+A player who already has a level is never gated, whether they set it, an admin
+did, or the captain who added them. `private.needs_levelling(input_player_id)`
+is the single definition, and the client reads it through `get_my_levelling`
+(C-3). Players who have a level are asked the five questions through a
+separate Home prompt that never blocks registering (S3c).
+
+A **played night** (`private.has_played_night`) still matters to the reset
+guard (§2.4, C-7): a `rating_events` row of kind `tournament` or `seed`, or a
+`registered` row (a spot, not the waitlist) in a `completed` tournament.
 
 ### 2.2 The flow
 

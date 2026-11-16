@@ -1,5 +1,6 @@
 -- ============================================================================
--- Levelling storage and RPCs (20261112120000, docs/signup-revamp/ S1).
+-- Levelling storage and RPCs (20261112120000, docs/signup-revamp/ S1), and
+-- the "level recorded" gate (20261116180000, S3b).
 --
 -- Plain script in one transaction that rolls back. Callers are faked through
 -- request.jwt.claims, which auth.uid() and auth.jwt() read. The double-tap
@@ -88,25 +89,28 @@ begin
   values (v_done, v_p[7], 'cancelled');
 
   -- ── 1. needs_levelling ────────────────────────────────────────────────────
-  perform pg_temp.check(private.needs_levelling(v_p[1]), '1a: no history needs levelling');
-  perform pg_temp.check(not private.needs_levelling(v_p[2]), '1b: seed row is a played night');
-  perform pg_temp.check(not private.needs_levelling(v_p[3]), '1c: tournament row is a played night');
-  perform pg_temp.check(private.needs_levelling(v_p[4]), '1d: self_reset only still needs levelling');
-  perform pg_temp.check(not private.needs_levelling(v_p[5]), '1e: completed team event (captain)');
-  perform pg_temp.check(not private.needs_levelling(v_p[6]), '1f: completed team event (partner)');
-  perform pg_temp.check(private.needs_levelling(v_p[7]), '1g: a cancelled row is not a played night');
+  -- A level on file is enough; with level 0, playing a night doesn't stand in for one.
+  perform pg_temp.check(not private.needs_levelling(v_p[1]), '1a: a level on file needs no levelling');
+  perform pg_temp.check(not private.needs_levelling(v_p[4]), '1b: a level on file (self_reset)');
+  perform pg_temp.check(private.needs_levelling(v_p[7]), '1c: no level, no history');
+  perform pg_temp.check(private.needs_levelling(v_p[2]), '1d: no level, seed row');
+  perform pg_temp.check(private.needs_levelling(v_p[3]), '1e: no level, tournament row');
+  perform pg_temp.check(private.needs_levelling(v_p[5]), '1f: no level, completed team event');
+  update public.players set playtomic_level = null where id = v_p[14];
+  perform pg_temp.check(private.needs_levelling(v_p[14]), '1g: a null level is no level');
+  update public.players set playtomic_level = 0 where id = v_p[14];
   raise notice 'CHECK 1 ok: needs_levelling';
 
   -- ── 2. get_my_levelling ───────────────────────────────────────────────────
   perform pg_temp.act_as(v_p[1]);
   select * into v_row from public.get_my_levelling();
-  perform pg_temp.check(v_row.needs_levelling and v_row.playtomic_level = 2.3, '2a: prefill level');
+  perform pg_temp.check(not v_row.needs_levelling and v_row.playtomic_level = 2.3, '2a: level on file');
   perform pg_temp.act_as(v_p[8]);
   select * into v_row from public.get_my_levelling();
   perform pg_temp.check(v_row.needs_levelling and v_row.playtomic_level is null, '2b: level 0 is no prefill');
   perform pg_temp.act_as(v_p[2]);
   select * into v_row from public.get_my_levelling();
-  perform pg_temp.check(not v_row.needs_levelling, '2c: played night');
+  perform pg_temp.check(v_row.needs_levelling, '2c: played night, no level');
   perform pg_temp.act_as(gen_random_uuid());
   select * into v_row from public.get_my_levelling();
   perform pg_temp.check(not v_row.needs_levelling and v_row.playtomic_level is null, '2d: no player row');
@@ -164,6 +168,7 @@ begin
     and v_row.playtomic_level is null and v_row.walls = 'corners' and v_row.years_playing = 'under_1y'
     and not v_row.prefilled,
     '5g: stored answers');
+  perform pg_temp.check(not private.needs_levelling(v_p[11]), '5i: a walls start counts as a level');
   select * into v_row from public.rating_events where player_id = v_p[11];
   perform pg_temp.check(
     v_row.kind = 'levelling' and v_row.tournament_id is null and v_row.prior_mu = 0

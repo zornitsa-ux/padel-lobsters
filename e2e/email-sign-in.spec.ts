@@ -237,9 +237,7 @@ test('signed-out transfer deep link: code sign-in lands on the transfer', async 
 
     await expect(page).toHaveURL(new RegExp(`/transfer/${transferId}$`))
     await expect(page.getByText(/wants to transfer their spot to you/i)).toBeVisible()
-    // The seeded recipient hasn't played a night, so accepting waits for levelling.
-    await expect(page.getByRole('link', { name: /set your level to accept/i })).toBeVisible()
-    await expect(page.getByRole('button', { name: /^decline$/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /accept transfer/i })).toBeVisible()
   } finally {
     await admin.from('registration_transfers').delete().eq('id', transferId)
   }

@@ -71,10 +71,14 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
 
 ### `private.needs_levelling(input_player_id uuid) returns boolean`
 
-- No `player_levelling` row and not `private.has_played_night`: no
-  `rating_events` row of kind `tournament` or `seed`, and no `registered` row
-  in a `completed` tournament for the player. Both revoked from all client
-  roles.
+- No level recorded (D-16): `players.playtomic_level` is 0 or null and there
+  is no `player_levelling` row. Revoked from all client roles.
+
+### `private.has_played_night(input_player_id uuid) returns boolean`
+
+- A `rating_events` row of kind `tournament` or `seed`, or a `registered` row
+  in a `completed` tournament. Used by the reset guard (C-7) and
+  `complete_levelling`'s `not_needed`. Revoked from all client roles.
 
 ### `public.register_for_tournament` (changed)
 

@@ -6,7 +6,7 @@ this file records how the code carries them out.
 - **D-1. Levelling is stored in its own admin-only table** (`player_levelling`),
   not as `players` columns. `players` is read widely through `players_public`;
   answers are for analysis only. "Has levelled" is the row's existence.
-- **D-2. "Needs levelling" = no levelling row and no played night**: no
+- **D-2. Superseded by D-16.** "Needs levelling" = no levelling row and no played night: no
   `rating_events` row of kind `tournament` or `seed`, and no registration in a
   completed tournament. Rating events alone would gate regulars who have only
   played team or King of the Court nights. A `self_reset`-only player counts as
@@ -48,3 +48,11 @@ this file records how the code carries them out.
   (first proposed with D-14) would give admins and members different seeds.
   One public constant keeps them the same, errs low as the walls starts do,
   and replaces today's μ 0 for players an admin registers without a level.
+- **D-16. "Needs levelling" = no level recorded** (owner, 16 Nov; supersedes
+  D-2): no Playtomic level on file (`playtomic_level` > 0) and no levelling
+  start (`player_levelling` row). Everyone must have a level, set by the
+  player, an admin, or the captain who adds them. The gate checks only that.
+  Playing a night no longer enters into it, so players who already have a
+  level are never gated. The five questions are data collection, asked of
+  players who already have a level through a separate prompt that never blocks
+  registering (S3c).
