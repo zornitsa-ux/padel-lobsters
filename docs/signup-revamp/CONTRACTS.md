@@ -46,9 +46,9 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
 - `SECURITY DEFINER`, caller = `auth.uid()`; `authenticated` only.
 - `input_answers`: the five C-1 keys, plus `playtomic_level` (number or null)
   and `prefilled` (boolean).
-- Statuses: `ok`, `already_levelled`, `not_needed` (the caller has a played
-  night, so their learned rating is never replaced; also a caller with no
-  player row), `invalid_answers`
+- Statuses: `ok`, `already_levelled`, `not_needed` (the gate doesn't hold
+  the caller: they have a level, so their rating is never re-seeded; also a
+  caller with no player row), `invalid_answers`
   (unknown code, missing key, or a level outside (0, 7]),
   `not_authenticated` (raised, P0001).
 - Locks the caller's `players` row `FOR UPDATE` first (as
@@ -58,7 +58,8 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
 - Effects on `ok` (one transaction): insert `player_levelling`; set
   `mm_rating`, `mm_sigma`, `mm_rating_updated_at`; when a level is given, set
   `playtomic_level`, `adjusted_level`, `playtomic_updated_at`; insert one
-  `rating_events` row (C-4).
+  `rating_events` row (C-4). For a caller with a played night, only the
+  `player_levelling` row and the level are written: the rating is kept.
 - `prefilled` is stored as sent; it doesn't change the result.
 
 ### `public.get_my_levelling() returns table(needs_levelling boolean, playtomic_level numeric)`
@@ -78,7 +79,8 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
 
 - A `rating_events` row of kind `tournament` or `seed`, or a `registered` row
   in a `completed` tournament. Used by the reset guard (C-7) and
-  `complete_levelling`'s `not_needed`. Revoked from all client roles.
+  `complete_levelling`, which keeps the learned rating of a gated player who
+  has played (DESIGN §2.3). Revoked from all client roles.
 
 ### `public.register_for_tournament` (changed)
 

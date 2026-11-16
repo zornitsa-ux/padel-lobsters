@@ -76,7 +76,9 @@ guard (§2.4, C-7): a `rating_events` row of kind `tournament` or `seed`, or a
   answers; closing asks to confirm and keeps answers in memory for the session
   only (nothing is saved until the end).
 - **Prefill.** For a player with `playtomic_level > 0`, step 6 starts on "yes"
-  with that level.
+  with that level. Since D-16 the gate holds only players with no level, so
+  the gated flow never prefills; S3c's prompt for players with a level drops
+  step 6 and this path with it.
 - **Finish.** `complete_levelling` (C-3) in one call. On success: invalidate
   the player and levelling queries, return to the return path, show the toast.
   The register action is then available. **Finishing never registers.**
@@ -104,9 +106,13 @@ guard (§2.4, C-7): a `rating_events` row of kind `tournament` or `seed`, or a
   `update_my_profile` does), `breakdown` = `{ "source": "playtomic" | "walls" }`.
 - **Overwrites** an `mm_rating` left by an earlier `self_reset` (a player with
   no played night who edited their level). The audit row keeps the prior.
-- Levelling runs once. A second call returns `already_levelled`. A player
-  with a played night gets `not_needed`, so the RPC can't replace a learned
-  rating with a self-chosen start.
+- Levelling runs once. A second call returns `already_levelled`. Only a
+  player the gate holds (`needs_levelling`, D-16) may level; anyone else gets
+  `not_needed`, so a player with a level can't re-seed their rating.
+- **A gated player with a played night** (their level was cleared, or a
+  captain-added partner played without one) levels too: the answers and any
+  Playtomic level are stored, but their learned `mm_rating` is kept and no
+  `levelling` rating event is written.
 
 ### 2.4 The Playtomic-edit reset after levelling
 
