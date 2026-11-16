@@ -849,6 +849,66 @@ export type Database = {
         }
         Relationships: []
       }
+      player_levelling: {
+        Row: {
+          completed_at: string
+          frequency: string
+          lessons: string
+          player_id: string
+          playtomic_level: number | null
+          prefilled: boolean
+          racket_sports: string
+          start_mu: number
+          start_sigma: number
+          start_source: string
+          walls: string
+          years_playing: string
+        }
+        Insert: {
+          completed_at?: string
+          frequency: string
+          lessons: string
+          player_id: string
+          playtomic_level?: number | null
+          prefilled?: boolean
+          racket_sports: string
+          start_mu: number
+          start_sigma: number
+          start_source: string
+          walls: string
+          years_playing: string
+        }
+        Update: {
+          completed_at?: string
+          frequency?: string
+          lessons?: string
+          player_id?: string
+          playtomic_level?: number | null
+          prefilled?: boolean
+          racket_sports?: string
+          start_mu?: number
+          start_sigma?: number
+          start_source?: string
+          walls?: string
+          years_playing?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'player_levelling_player_id_fkey'
+            columns: ['player_id']
+            isOneToOne: true
+            referencedRelation: 'players'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'player_levelling_player_id_fkey'
+            columns: ['player_id']
+            isOneToOne: true
+            referencedRelation: 'players_public'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       players: {
         Row: {
           adjusted_level: number | null
@@ -2082,6 +2142,12 @@ export type Database = {
           status: string
         }[]
       }
+      complete_levelling: {
+        Args: { input_answers: Json }
+        Returns: {
+          status: string
+        }[]
+      }
       create_transfer: {
         Args: {
           input_from_player_id?: string
@@ -2144,6 +2210,13 @@ export type Database = {
           acknowledged: boolean
           requested_by_name: string
           tournament_name: string
+        }[]
+      }
+      get_my_levelling: {
+        Args: never
+        Returns: {
+          needs_levelling: boolean
+          playtomic_level: number
         }[]
       }
       get_my_profile_v2: {
