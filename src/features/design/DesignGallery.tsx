@@ -63,6 +63,7 @@ import { Section } from '../../components/ui/Section'
 import { LeagueMatchRow } from '../league/ui/LeagueMatchRow'
 import type { LeagueMatch, LeagueTeam } from '../league/domain/types'
 import { OptionRow } from '../../components/ui/OptionRow'
+import { StepHeader } from '../../components/ui/StepHeader'
 import { ImageTile, OptionTile } from '../../components/ui/OptionTile'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { Spinner } from '../../components/ui/Spinner'
@@ -569,6 +570,26 @@ const SAMPLE_PLAYERS = [
 ]
 
 const SAMPLE_PHOTOS = ['/logo-256.webp', '/lobster-way/transfer-step-1.png', '/favicon-64.png']
+
+function StepHeaderSection() {
+  const [step, setStep] = useState(2)
+  return (
+    <GallerySection title="StepHeader">
+      <Row label="One question per screen: Back · count · close · progress" block>
+        <div className="space-y-3">
+          <StepHeader
+            step={step}
+            total={6}
+            onBack={() => setStep((s) => Math.max(1, s - 1))}
+            onClose={() => setStep(1)}
+            closeLabel="Stop"
+          />
+          <OptionRow title="Next step" onClick={() => setStep((s) => Math.min(6, s + 1))} />
+        </div>
+      </Row>
+    </GallerySection>
+  )
+}
 
 function OptionSection() {
   const [picked, setPicked] = useState('p1')
@@ -1394,6 +1415,7 @@ export default function DesignGallery() {
       <FormErrorSection />
       <ChoiceSection />
       <OptionSection />
+      <StepHeaderSection />
       <MenuSection />
       <DialogSection />
       <CardLinkSection />

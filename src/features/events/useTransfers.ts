@@ -5,6 +5,8 @@ import { registrationKeys } from './registrationKeys'
 import { teamKeys } from './teams/teamKeys'
 import * as q from './transferQueries'
 import { isStaleTransferStatus } from './transferStatus'
+import { useRefreshLevelling } from '../levelling/useMyLevelling'
+import { NEEDS_LEVEL } from '../levelling/levellingQueries'
 
 export function useTransfers() {
   return useQuery({
@@ -21,6 +23,7 @@ export function useTransferActions({
   session: { user?: { id: string } | null } | null
 }) {
   const qc = useQueryClient()
+  const refreshLevelling = useRefreshLevelling()
   const invalidateTransfers = useCallback(
     () => qc.invalidateQueries({ queryKey: transferKeys.all() }),
     [qc],
@@ -53,9 +56,10 @@ export function useTransferActions({
         await invalidateTransfers()
         invalidateRegistrations()
       }
+      if (result.status === NEEDS_LEVEL) refreshLevelling()
       return result
     },
-    [session, invalidateTransfers, invalidateRegistrations],
+    [session, invalidateTransfers, invalidateRegistrations, refreshLevelling],
   )
 
   const cancelTransfer = useCallback(

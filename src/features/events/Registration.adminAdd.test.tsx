@@ -7,6 +7,7 @@ import type { NormalisedTournament } from '../../lib/normalise'
 const mockRegisterPlayer = vi.fn()
 const mockConfirm = vi.fn()
 
+vi.mock('../levelling/useMyLevelling', () => import('../../test/levellingMock'))
 vi.mock('../../context/useApp', () => ({
   useApp: () => ({ session: { user: { id: 'admin' } }, role: 'admin', isAdmin: true }),
 }))

@@ -7,8 +7,10 @@ import {
   deleteEvent,
   deletePlayer,
   deletePlayerByEmail,
+  markLevelled,
   registerPlayers,
   registrationOf,
+  sql,
 } from './fixtures/db'
 import { clearInbox, waitForCode, waitForConfirmPath } from './fixtures/mailpit'
 import { SEED_PLAYERS } from './fixtures/seed'
@@ -19,6 +21,8 @@ import { expect, test } from './fixtures/test'
    G3: a signed-out visitor opens a shared event, joins, and lands back on the
    event with its sign-up action on screen. Phone-sized, because that's where
    shared links are opened and where the action used to sit below the fold.
+   A player who hasn't levelled lands on the levelling card in its place
+   (signup revamp S2); levelling returns them to the event with Register.
    ════════════════════════════════════════════════════════════════════════════ */
 
 test.use({ viewport: { width: 375, height: 667 } })
@@ -65,23 +69,64 @@ async function expectOnEventWithAction({
   await expect(page.getByRole('button', { name: action })).toBeInViewport()
 }
 
+async function expectOnEventWithLevelling({ page, eventId }: { page: Page; eventId: string }) {
+  await expect(page).toHaveURL(new RegExp(`/events/${eventId}/info$`))
+  await expect(page.getByTestId('levelling-card')).toBeInViewport()
+}
+
+/** Answers the six levelling steps, keeping the Playtomic level from signup. */
+async function setLevel({ page }: { page: Page }) {
+  await page.getByRole('link', { name: 'Set your level' }).click()
+  for (const answer of [
+    'Less than 1 year',
+    'Once or twice a week',
+    'No',
+    'Casually',
+    'I can return a slow ball off the back wall',
+  ]) {
+    await page.getByRole('button', { name: answer, exact: true }).click()
+  }
+  await expect(page.getByText('6 of 6')).toBeVisible()
+  await page.getByRole('button', { name: 'Finish' }).click()
+}
+
 async function playerIdByEmail({ email }: { email: string }): Promise<string> {
   const { data, error } = await admin.from('players').select('id').eq('email', email).single()
   if (error || !data) throw new Error(`No player for ${email}`)
   return data.id
 }
 
-test('new account: code signup lands on the event and registers in one tap', async ({ page }) => {
+test('new account: code signup, set your level, back on the event to register', async ({
+  page,
+}) => {
   const event = await createEvent()
   const email = newEmail('code')
   try {
     const since = await joinAsNewPlayer({ page, eventId: event.id, email, cta: /join to play/i })
     await enterCode({ page, email, since })
 
+    await expectOnEventWithLevelling({ page, eventId: event.id })
+    await expect(page.getByText('One step before you join')).toBeVisible()
+    await setLevel({ page })
+
+    await expect(page.getByText(/you.re all set and ready to register/i)).toBeVisible()
     await expectOnEventWithAction({ page, eventId: event.id, action: /register for this event/i })
+    const playerId = await playerIdByEmail({ email })
+    // Direct SQL: locally, service_role has no default grants on new tables.
+    const [levelling] = await sql`
+      select walls, playtomic_level::float8 as playtomic_level, start_source, prefilled
+        from player_levelling where player_id = ${playerId}`
+    expect({ ...levelling }).toEqual({
+      walls: 'slow_back_wall',
+      playtomic_level: 2.5,
+      start_source: 'playtomic',
+      prefilled: true,
+    })
+    // Finishing never registers.
+    expect(await registrationOf({ eventId: event.id, playerId, columns: 'status' })).toBeNull()
+
     await page.getByRole('button', { name: /register for this event/i }).click()
     await expect(page.getByText(/you.re registered/i)).toBeVisible()
-    const playerId = await playerIdByEmail({ email })
     expect(await registrationOf({ eventId: event.id, playerId, columns: 'status' })).toEqual({
       status: 'registered',
     })
@@ -105,11 +150,7 @@ test('new account: the email link opened in another browser lands on the event',
     await other.goto(await waitForConfirmPath({ to: email, since }))
     await other.getByRole('button', { name: /tap to finish signing in/i }).click()
 
-    await expectOnEventWithAction({
-      page: other,
-      eventId: event.id,
-      action: /register for this event/i,
-    })
+    await expectOnEventWithLevelling({ page: other, eventId: event.id })
   } finally {
     await other.close()
     await cleanUp(
@@ -135,9 +176,12 @@ test('full event: "Join to get on the waitlist" lands on Join the waitlist', asy
     })
     await enterCode({ page, email, since })
 
+    await expectOnEventWithLevelling({ page, eventId: event.id })
+    const playerId = await playerIdByEmail({ email })
+    await markLevelled({ playerId })
+    await page.reload()
     await expectOnEventWithAction({ page, eventId: event.id, action: /join the waitlist/i })
     await page.getByRole('button', { name: /join the waitlist/i }).click()
-    const playerId = await playerIdByEmail({ email })
     await expect
       .poll(async () => registrationOf({ eventId: event.id, playerId, columns: 'status' }))
       .toEqual({ status: 'waitlist' })
@@ -161,6 +205,9 @@ test('existing member: "Sign in" on the event page returns to it', async ({ page
     await page.getByRole('button', { name: /email me a sign-in code/i }).click()
     await enterCode({ page, email: member.email, since })
 
+    await expectOnEventWithLevelling({ page, eventId: event.id })
+    await markLevelled({ playerId: member.id })
+    await page.reload()
     await expectOnEventWithAction({ page, eventId: event.id, action: /register for this event/i })
   } finally {
     await cleanUp(
@@ -170,14 +217,14 @@ test('existing member: "Sign in" on the event page returns to it', async ({ page
   }
 })
 
-test('team event: lands with "Sign up as a team" on screen', async ({ page }) => {
+test('team event: a new player lands with the levelling card on screen', async ({ page }) => {
   const event = await createEvent({ entryMode: 'team' })
   const email = newEmail('team')
   try {
     const since = await joinAsNewPlayer({ page, eventId: event.id, email, cta: /join to play/i })
     await enterCode({ page, email, since })
 
-    await expectOnEventWithAction({ page, eventId: event.id, action: /sign up as a team/i })
+    await expectOnEventWithLevelling({ page, eventId: event.id })
   } finally {
     await cleanUp(
       () => deleteEvent({ id: event.id }),

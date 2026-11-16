@@ -7,6 +7,7 @@ import WaitlistNotice from './WaitlistNotice'
 import { AlertBox } from '../../../components/ui/AlertBox'
 import { isSettled, isUnpaid } from '../paymentStatus'
 import PaymentStatusBadge from './PaymentStatusBadge'
+import LevellingCard from '../../levelling/LevellingCard'
 
 interface JoinEventCardProps {
   /** Derived by `myRegistrationSummary` — the same source /me reads. */
@@ -22,6 +23,8 @@ interface JoinEventCardProps {
   onGoToPayment: () => void
   /** Shown under "You're registered": the moment to ask them to bring a friend. */
   share?: ReactNode
+  /** The viewer hasn't levelled yet: the levelling card stands in for Register (and the waitlist). */
+  needsLevelling?: boolean
 }
 
 /**
@@ -39,8 +42,10 @@ export default function JoinEventCard({
   onRegister,
   onGoToPayment,
   share,
+  needsLevelling = false,
 }: JoinEventCardProps) {
   if (summary.status === 'not_registered' || summary.status === 'cancelled') {
+    if (needsLevelling) return <LevellingCard place="event" />
     const wasCancelled = summary.status === 'cancelled'
     return (
       <div className="card space-y-3">

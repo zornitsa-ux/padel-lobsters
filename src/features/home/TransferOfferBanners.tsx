@@ -3,7 +3,7 @@ import { ArrowRightLeft, Clock } from 'lucide-react'
 import type { Player } from '../../lib/normalise'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedTransfer } from '../events/transferQueries'
-import { OutgoingTransferActions, TransferResponseActions } from '../events/TransferActions'
+import { IncomingTransferActions, OutgoingTransferActions } from '../events/TransferActions'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { formatDate } from '../events/eventHelpers'
 
@@ -51,7 +51,7 @@ export default function TransferOfferBanners({
             icon={<ArrowRightLeft />}
             title={`${fromFirst} wants to transfer their spot to you`}
             actions={
-              <TransferResponseActions
+              <IncomingTransferActions
                 busy={busy}
                 acceptLabel="Accept"
                 onRespond={({ accept }) => onIncomingResponse(xfer, accept)}

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { OutgoingTransferActions, TransferResponseActions } from './TransferActions'
 import { childrenOf, propsOf } from '../../test/element'
+import SetLevelAction from '../levelling/SetLevelAction'
 
 const labels = (el: unknown) => childrenOf(el).map((child) => propsOf(child).children)
 
@@ -28,6 +29,21 @@ describe('TransferResponseActions', () => {
     ;(propsOf(decline).onClick as () => void)()
     ;(propsOf(accept).onClick as () => void)()
     expect(onRespond.mock.calls).toEqual([[{ accept: false }], [{ accept: true }]])
+  })
+})
+
+describe('TransferResponseActions while the viewer needs levelling', () => {
+  it('keeps Decline and swaps Accept for the levelling action', () => {
+    const [decline, accept] = childrenOf(
+      TransferResponseActions({
+        busy: false,
+        acceptLabel: 'Accept',
+        onRespond: vi.fn(),
+        needsLevelling: true,
+      }),
+    )
+    expect(propsOf(decline).children).toBe('Decline')
+    expect((accept as { type: unknown }).type).toBe(SetLevelAction)
   })
 })
 

@@ -61,10 +61,13 @@ client reads it through `get_my_levelling` (C-3).
 ### 2.2 The flow
 
 - **Entry points.** On an event page, `JoinEventCard` shows the levelling card
-  in place of the register action when the viewer needs levelling. On Home, a
-  card above the next event. Both open the flow with the current page as the
-  return path (`src/features/auth/returnPath.ts`, as G3 does), so a share link → signup →
-  levelling → back on the event works.
+  in place of the register action when the viewer needs levelling (also /me's
+  registration card and the team-event join card). On Home, a card above the
+  next event. A transfer offer or team invite keeps Decline and swaps Accept
+  for "Set your level to accept". All open the route `/levelling?from=<path>`
+  with the current page; `from` goes through `safeAppPath`, and survives a
+  reload. A share link → signup (G3's return path) → event page → levelling →
+  back on the event works.
 - **Steps.** One question per screen, six steps: the five placement questions,
   each a single tap that moves on, then the Playtomic level (yes with a number,
   or no). The Playtomic step is the only one with a submit button. Back keeps
@@ -75,9 +78,9 @@ client reads it through `get_my_levelling` (C-3).
 - **Finish.** `complete_levelling` (C-3) in one call. On success: invalidate
   the player and levelling queries, return to the return path, show the toast.
   The register action is then available. **Finishing never registers.**
-- **UI parts.** `OptionRow` or `OptionTile` for answers, `ProgressBar` for the
-  step count, `Toast`, `Button`, `FullScreenDialog` or a route for the flow.
-  Add variants to these rather than new markup (CLAUDE.md, UI).
+- **UI parts.** `OptionRow` for answers, `StepHeader` (Back, "N of 6", close,
+  `ProgressBar`) for the step count, `Toast`, `Button`; the flow is a route
+  (`src/features/levelling/`).
 
 ### 2.3 Writing the start
 

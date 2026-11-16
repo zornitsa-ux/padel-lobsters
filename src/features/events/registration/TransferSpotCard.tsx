@@ -4,7 +4,7 @@ import type { NormalisedTransfer } from '../transferQueries'
 import type { GetPlayer, TransferShareTarget } from './utils'
 import { TextButton } from '../../../components/ui/TextButton'
 import { Button } from '../../../components/ui/Button'
-import { OutgoingTransferActions, TransferResponseActions } from '../TransferActions'
+import { IncomingTransferActions, OutgoingTransferActions } from '../TransferActions'
 import { AlertBox } from '../../../components/ui/AlertBox'
 
 interface TransferSpotCardProps {
@@ -75,7 +75,7 @@ export default function TransferSpotCard({
               icon={<ArrowRightLeft />}
               title={`${fromFirst} wants to give you their spot`}
               actions={
-                <TransferResponseActions
+                <IncomingTransferActions
                   busy={busy}
                   acceptLabel="Accept spot"
                   onRespond={({ accept }) => onIncomingResponse(xfer, accept)}

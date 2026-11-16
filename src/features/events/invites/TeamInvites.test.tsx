@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react'
 import { Link, MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { levellingState, resetLevellingMock } from '../../../test/levellingMock'
 
 const m = vi.hoisted(() => ({
   respondToTeamInvite: vi.fn(),
@@ -11,6 +12,7 @@ const m = vi.hoisted(() => ({
   session: { user: { id: 'me' } } as { user: { id: string } } | null,
 }))
 
+vi.mock('../../levelling/useMyLevelling', () => import('../../../test/levellingMock'))
 vi.mock('../../../context/useApp', () => ({ useApp: () => ({ session: m.session }) }))
 vi.mock('../../../lib/confirmBus', () => ({ useConfirm: () => m.confirm }))
 vi.mock('../../players/usePlayers', () => ({
@@ -54,6 +56,7 @@ const renderPage = () =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  resetLevellingMock()
   m.session = { user: { id: 'me' } }
   m.invites = [invite()]
   m.setup = null
@@ -87,6 +90,16 @@ describe('acceptance screen', () => {
       teamId: 'tm1',
       accept: true,
     })
+  })
+
+  it('asks a partner who needs levelling to set their level, keeping the decline', () => {
+    levellingState.needsLevelling = true
+    renderPage()
+
+    expect(screen.queryByRole('button', { name: 'Accept' })).toBeNull()
+    const setLevel = screen.getByRole('link', { name: 'Set your level to accept' })
+    expect(setLevel.getAttribute('href')).toMatch(/^\/levelling\?from=/)
+    expect(screen.getByRole('button', { name: /not playing/i })).not.toBeNull()
   })
 
   it('sends an unconfirmed captain-created account to finish setup first', () => {

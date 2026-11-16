@@ -18,6 +18,7 @@ const m = vi.hoisted(() => ({
   invites: [] as unknown[],
 }))
 
+vi.mock('../../../levelling/useMyLevelling', () => import('../../../../test/levellingMock'))
 vi.mock('../../../../context/useApp', () => ({ useApp: () => m.useApp() }))
 vi.mock('../../useTournaments', () => ({
   useUpdateTournament: () => ({ mutateAsync: vi.fn() }),

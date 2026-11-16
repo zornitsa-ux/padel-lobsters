@@ -14,6 +14,7 @@ const m = vi.hoisted(() => ({
   phase: 'open',
 }))
 
+vi.mock('../levelling/useMyLevelling', () => import('../../test/levellingMock'))
 vi.mock('../../context/useApp', async () => {
   const { fixtureAuth } = await import('../../test/sessions')
   return { useApp: () => fixtureAuth(m.session) }

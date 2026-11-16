@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { supabase } from '../../supabase'
 import { normaliseRegistrations } from '../../lib/normalise'
 import { firstRow } from '../../lib/firstRow'
+import { isNeedsLevel, NEEDS_LEVEL } from '../levelling/levellingQueries'
 
 const nullableString = z.string().nullable().optional()
 
@@ -50,6 +51,7 @@ export async function registerPlayer(tournamentId: string, playerId: string) {
     input_player_id: playerId,
   })
   if (error) {
+    if (isNeedsLevel({ error })) return { regId: null, status: NEEDS_LEVEL }
     console.error('register_for_tournament error:', error)
     return { regId: null, status: 'error' }
   }

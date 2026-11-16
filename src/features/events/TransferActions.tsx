@@ -1,6 +1,8 @@
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
+import SetLevelAction from '../levelling/SetLevelAction'
+import { useNeedsLevelling } from '../levelling/useMyLevelling'
 
 type Response = 'accept' | 'decline'
 
@@ -9,6 +11,8 @@ interface TransferResponseActionsProps {
   busy: boolean | Response
   acceptLabel: string
   onRespond: ({ accept }: { accept: boolean }) => void
+  /** Accepting waits for levelling; the offer stays open meanwhile. */
+  needsLevelling?: boolean
 }
 
 /** Decline / accept a spot transfer offered to the viewer. */
@@ -16,6 +20,7 @@ export function TransferResponseActions({
   busy,
   acceptLabel,
   onRespond,
+  needsLevelling = false,
 }: TransferResponseActionsProps) {
   const pending = (response: Response) => busy === true || busy === response
   return (
@@ -23,11 +28,23 @@ export function TransferResponseActions({
       <Button variant="neutral" onClick={() => onRespond({ accept: false })} disabled={!!busy}>
         {pending('decline') ? 'Declining…' : 'Decline'}
       </Button>
-      <Button onClick={() => onRespond({ accept: true })} disabled={!!busy}>
-        {pending('accept') ? 'Accepting…' : acceptLabel}
-      </Button>
+      {needsLevelling ? (
+        <SetLevelAction />
+      ) : (
+        <Button onClick={() => onRespond({ accept: true })} disabled={!!busy}>
+          {pending('accept') ? 'Accepting…' : acceptLabel}
+        </Button>
+      )}
     </ActionRow>
   )
+}
+
+/** `TransferResponseActions` for the signed-in viewer: Accept waits for levelling if needed. */
+export function IncomingTransferActions(
+  props: Omit<TransferResponseActionsProps, 'needsLevelling'>,
+) {
+  const { needsLevelling } = useNeedsLevelling()
+  return <TransferResponseActions {...props} needsLevelling={needsLevelling} />
 }
 
 interface OutgoingTransferActionsProps {

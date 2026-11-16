@@ -19,7 +19,8 @@ import type { Player } from '../lib/normalise'
 import type { EventNavigate } from '../features/events/eventHelpers'
 import { Button } from './ui/Button'
 import { TextButton } from './ui/TextButton'
-import { TransferResponseActions } from '../features/events/TransferActions'
+import { IncomingTransferActions } from '../features/events/TransferActions'
+import { respondFailureMessage } from '../features/events/transferStatus'
 import { AlertBox } from './ui/AlertBox'
 import { loadFailed } from '../lib/queryState'
 
@@ -39,19 +40,6 @@ import { loadFailed } from '../lib/queryState'
 interface TransferAcceptProps {
   transferId?: string | null
   onNavigate?: EventNavigate
-}
-
-// RPC status code → recipient-facing message.
-const RESPOND_ERRORS: Record<string, string> = {
-  wrong_pin: 'Sign in again to respond.',
-  forbidden: 'This transfer is for a different player.',
-  not_found: 'This transfer no longer exists.',
-  not_pending: 'This transfer was already responded to or closed.',
-  tournament_started: 'Too late — the event has already started.',
-  to_already_registered:
-    'You are already registered for this event, so there is nothing to accept.',
-  from_not_registered: 'That spot is no longer registered — the transfer can’t be completed.',
-  error: 'Something went wrong. Try again.',
 }
 
 // How a non-pending transfer is described on the "already resolved" card.
@@ -103,7 +91,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
       setDone({ kind: r.status }) // 'accepted' or 'declined'
       return
     }
-    setError(RESPOND_ERRORS[r.status] || 'Could not record your response.')
+    setError(respondFailureMessage({ status: r.status }))
   }
 
   const handleSignOut = async () => {
@@ -258,7 +246,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
           </AlertBox>
         )}
 
-        <TransferResponseActions
+        <IncomingTransferActions
           busy={busy ?? false}
           acceptLabel="Accept transfer"
           onRespond={({ accept }) => handleRespond(accept)}

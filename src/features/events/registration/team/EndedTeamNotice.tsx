@@ -10,7 +10,8 @@ export default function EndedTeamNotice({
   onSignUpAgain,
 }: {
   notice: Ended
-  onSignUpAgain: () => void
+  /** Left out while the player can't sign up yet (levelling comes first). */
+  onSignUpAgain?: () => void
 }) {
   const text =
     notice.kind === 'partner_declined'
@@ -20,9 +21,11 @@ export default function EndedTeamNotice({
     <AlertBox
       variant="warning"
       actions={
-        <Button onClick={onSignUpAgain} fullWidth>
-          Sign up again
-        </Button>
+        onSignUpAgain && (
+          <Button onClick={onSignUpAgain} fullWidth>
+            Sign up again
+          </Button>
+        )
       }
     >
       {text}

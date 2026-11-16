@@ -59,6 +59,7 @@ export const REGISTER_TEAM_MESSAGES: Partial<Record<RegisterTeamStatus | 'error'
   not_team_event: 'This event takes individual signups.',
   tournament_completed: 'This event has already finished.',
   captain_not_active: "That player's account isn't active.",
+  needs_level: 'Set your level first, then sign your team up.',
 }
 
 export const CHANGE_PARTNER_MESSAGES: Partial<Record<ChangePartnerStatus | 'error', string>> = {
@@ -88,6 +89,7 @@ export const RESPOND_INVITE_MESSAGES: Partial<Record<RespondInviteStatus | 'erro
   not_pending: "You've already answered this invite.",
   tournament_started: 'This event has already started.',
   account_not_acknowledged: 'Finish setting up your account first.',
+  needs_level: 'Set your level first, then accept.',
 }
 
 export const CANCEL_TEAM_MESSAGES: Partial<Record<CancelTeamStatus | 'error', string>> = {

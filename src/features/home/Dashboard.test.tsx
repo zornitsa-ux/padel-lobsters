@@ -4,6 +4,7 @@ import { screen, cleanup } from '@testing-library/react'
 import { renderWithClient } from '../../test/renderWithClient'
 import { MemoryRouter } from 'react-router-dom'
 import Dashboard from './Dashboard'
+import { levellingState, resetLevellingMock } from '../../test/levellingMock'
 
 // The Lobster Way entry point at the foot of the dashboard renders a
 // react-router <Link>, which needs router context to mount.
@@ -13,6 +14,8 @@ const renderDashboard = () =>
       <Dashboard onNavigate={vi.fn()} />
     </MemoryRouter>,
   )
+
+vi.mock('../levelling/useMyLevelling', () => import('../../test/levellingMock'))
 
 const appContext = vi.fn()
 vi.mock('../../context/useApp', () => ({
@@ -88,6 +91,7 @@ function setAllOk() {
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  resetLevellingMock()
 })
 
 describe('Dashboard — load failures vs genuine empty state', () => {
@@ -163,5 +167,33 @@ describe('Dashboard — loading states', () => {
 
     expect(screen.queryByText(/welcome to padel lobsters/i)).toBeNull()
     expect(screen.queryByText(/loading your greeting/i)).not.toBeNull()
+  })
+})
+
+describe('Dashboard — levelling card', () => {
+  const showMember = () => {
+    setAllOk()
+    appContext.mockReturnValue({ session: MEMBER_SESSION, sessionSettled: true })
+    tournamentsQuery.mockReturnValue(okResult([UPCOMING]))
+  }
+
+  it('shows no card to a player who has levelled or played', () => {
+    showMember()
+    renderDashboard()
+    expect(screen.queryByTestId('levelling-card')).toBeNull()
+  })
+
+  it('asks an existing player who has not played yet, above the next event', () => {
+    showMember()
+    levellingState.needsLevelling = true
+    levellingState.existing = true
+    levellingState.levelOnFile = 2.3
+    renderDashboard()
+
+    const card = screen.getByTestId('levelling-card')
+    expect(card.textContent).toMatch(/getting to know you better/i)
+    expect(card.textContent).toMatch(/Playtomic level is already filled in/)
+    const nextEvent = screen.getByText('Friday Padel')
+    expect(card.compareDocumentPosition(nextEvent) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })

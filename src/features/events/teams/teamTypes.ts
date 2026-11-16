@@ -62,6 +62,7 @@ export type RegisterTeamStatus =
   | 'not_team_event'
   | 'tournament_completed'
   | 'captain_not_active'
+  | 'needs_level'
   | PartnerError
 
 export type ChangePartnerStatus =
@@ -89,6 +90,7 @@ export type RespondInviteStatus =
   | 'not_pending'
   | 'tournament_started'
   | 'account_not_acknowledged'
+  | 'needs_level'
 
 export interface TeamInvite {
   teamId: string

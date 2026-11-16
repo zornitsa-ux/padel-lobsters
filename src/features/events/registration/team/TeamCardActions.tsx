@@ -8,6 +8,8 @@ import type { DisplayName } from '../utils'
 import ChangePartnerPanel from './ChangePartnerPanel'
 import { useConfirmDecline } from './useConfirmDecline'
 import { ActionRow } from '../../../../components/ui/ActionRow'
+import SetLevelAction from '../../../levelling/SetLevelAction'
+import { useNeedsLevelling } from '../../../levelling/useMyLevelling'
 import { Button } from '../../../../components/ui/Button'
 import { TextButton } from '../../../../components/ui/TextButton'
 
@@ -66,6 +68,7 @@ export function CaptainPendingActions({
 export function PartnerPendingActions({ entry, tournamentId, otherName }: ActionsProps) {
   const confirmDecline = useConfirmDecline()
   const { respondToTeamInvite } = useTeamActions()
+  const { needsLevelling } = useNeedsLevelling()
   const [busy, setBusy] = useState(false)
 
   const respond = async ({ accept }: { accept: boolean }) => {
@@ -84,9 +87,13 @@ export function PartnerPendingActions({ entry, tournamentId, otherName }: Action
         <Button onClick={() => void respond({ accept: false })} disabled={busy} variant="secondary">
           I&apos;m not playing
         </Button>
-        <Button onClick={() => void respond({ accept: true })} disabled={busy}>
-          Accept
-        </Button>
+        {needsLevelling ? (
+          <SetLevelAction />
+        ) : (
+          <Button onClick={() => void respond({ accept: true })} disabled={busy}>
+            Accept
+          </Button>
+        )}
       </ActionRow>
     </div>
   )
