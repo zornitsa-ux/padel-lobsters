@@ -24,6 +24,22 @@ begin
   )::text, true);
 end $$;
 
+-- A finished levelling (signup revamp C-1), so the gate (S3) lets them in.
+create function pg_temp.level(input_player uuid) returns void
+language sql as $$
+  insert into public.player_levelling
+    (player_id, years_playing, frequency, lessons, racket_sports, walls, start_source, start_mu, start_sigma)
+  values (input_player, 'under_1y', 'weekly_1_2', 'none', 'casual', 'slow_back_wall', 'walls', 1.5, 1.0);
+$$;
+
+-- Seed players stand in for regulars; CHECK 30 makes its own newcomers. Called
+-- at the top of each block, since earlier blocks create partners.
+create function pg_temp.level_everyone() returns void
+language plpgsql as $$
+begin
+  perform pg_temp.level(p.id) from public.players p where private.needs_levelling(p.id);
+end $$;
+
 -- Fires pending deferred checks now, then asserts the pair rule directly too.
 create function pg_temp.assert_teams(input_tournament uuid) returns void
 language plpgsql as $$
@@ -69,6 +85,7 @@ declare
   v_queue_before bigint;
   v_count integer;
 begin
+  perform pg_temp.level_everyone();
   select id into v_admin from public.players where role = 'admin' and status = 'active' order by id limit 1;
   select array_agg(id order by id) into v_p
     from (select id from public.players where role = 'player' and status = 'active' order by id limit 14) s;
@@ -451,6 +468,7 @@ declare
   v_reg uuid;
 begin
   select id into v_admin from public.players where role = 'admin' and status = 'active' order by id limit 1;
+  perform pg_temp.level_everyone();
   select array_agg(id order by id) into v_p
     from (select id from public.players where role = 'player' and status = 'active' order by id desc limit 10) s;
   v_t := pg_temp.event(4, now() + interval '10 days');
@@ -592,6 +610,7 @@ declare
   v_new uuid;
   v_url text;
 begin
+  perform pg_temp.level_everyone();
   select array_agg(id order by id) into v_p
     from (select id from public.players where role = 'player' and status = 'active' order by id limit 14) s;
 
@@ -665,6 +684,11 @@ begin
   if v_r.status <> 'ok' then raise exception 'CHECK 28c FAILED: %', v_r.status; end if;
   select * into v_r from public.acknowledge_my_account();
   if v_r.status <> 'not_needed' then raise exception 'CHECK 28d FAILED: %', v_r.status; end if;
+  -- S3: a captain-created partner is new, so they level before accepting (DESIGN §2.5).
+  select * into v_r from public.respond_to_team_invite(
+    (select team_id from public.registrations where tournament_id = v_t and player_id = v_new), true);
+  if v_r.status <> 'needs_level' then raise exception 'CHECK 28h FAILED: %', v_r.status; end if;
+  perform pg_temp.level(v_new);
   select * into v_r from public.respond_to_team_invite(
     (select team_id from public.registrations where tournament_id = v_t and player_id = v_new), true);
   if v_r.status <> 'accepted' then raise exception 'CHECK 28e FAILED: %', v_r.status; end if;
@@ -684,6 +708,91 @@ begin
     raise exception 'CHECK 29 FAILED: early email check';
   end if;
   raise notice 'CHECK 29 ok: early new-partner email check';
+end $$;
+
+-- ── Signup revamp S3: the levelling gate (CONTRACTS C-3, C-6) ──────────────
+do $$
+declare
+  v_admin uuid;
+  v_p uuid[];
+  v_new uuid[];
+  v_t uuid;
+  v_r record;
+  v_x record;
+  v_team uuid;
+  v_err text;
+begin
+  select id into v_admin from public.players where role = 'admin' and status = 'active' order by id limit 1;
+  perform pg_temp.level_everyone();
+  select array_agg(id order by id) into v_p
+    from (select id from public.players where role = 'player' and status = 'active' order by id limit 6) s;
+  with ins as (
+    insert into public.players (name, status)
+    select 'Levelling Gate N' || g, 'active' from generate_series(1, 4) g
+    returning id, name
+  )
+  select array_agg(id order by name) into v_new from ins;
+  v_t := pg_temp.event(16, now() + interval '10 days');
+
+  -- CHECK 30: a captain who needs levelling can't register a team; an admin can for them
+  perform pg_temp.act(v_new[1], false);
+  select * into v_r from public.register_team_for_tournament(v_t, v_new[1], v_p[1]);
+  if v_r.status <> 'needs_level' or v_r.team_id is not null
+     or exists (select 1 from public.event_teams where tournament_id = v_t)
+     or exists (select 1 from public.registrations where tournament_id = v_t) then
+    raise exception 'CHECK 30a FAILED: %', v_r.status;
+  end if;
+  perform pg_temp.act(v_admin, true);
+  select * into v_r from public.register_team_for_tournament(v_t, v_new[1], v_p[1]);
+  if v_r.status <> 'registered' then raise exception 'CHECK 30b FAILED: %', v_r.status; end if;
+  perform pg_temp.assert_teams(v_t);
+  raise notice 'CHECK 30 ok: captain gated on self-registration, not when an admin registers them';
+
+  -- CHECK 31: a partner who needs levelling can decline, but not accept until levelled
+  perform pg_temp.act(v_p[2], false);
+  select * into v_r from public.register_team_for_tournament(v_t, v_p[2], v_new[2]);
+  if v_r.status <> 'registered' then raise exception 'CHECK 31a FAILED: %', v_r.status; end if;
+  v_team := v_r.team_id;
+  perform pg_temp.act(v_new[2], false);
+  select * into v_r from public.respond_to_team_invite(v_team, true);
+  if v_r.status <> 'needs_level'
+     or (select accepted_at from public.registrations
+          where team_id = v_team and player_id = v_new[2] and status = 'registered') is not null then
+    raise exception 'CHECK 31b FAILED: %', v_r.status;
+  end if;
+  perform pg_temp.level(v_new[2]);
+  select * into v_r from public.respond_to_team_invite(v_team, true);
+  if v_r.status <> 'accepted' then raise exception 'CHECK 31c FAILED: %', v_r.status; end if;
+
+  perform pg_temp.act(v_p[3], false);
+  select team_id into v_x from public.register_team_for_tournament(v_t, v_p[3], v_new[3]);
+  perform pg_temp.act(v_new[3], false);
+  select * into v_r from public.respond_to_team_invite(v_x.team_id, false);
+  if v_r.status <> 'declined' then raise exception 'CHECK 31d FAILED: %', v_r.status; end if;
+  perform pg_temp.assert_teams(v_t);
+  raise notice 'CHECK 31 ok: partner gated on accepting, never on declining';
+
+  -- CHECK 32: a team transfer to a recipient who needs levelling raises; nothing moves
+  perform pg_temp.act(v_p[2], false);
+  select * into v_x from public.create_transfer(v_new[4], v_t);
+  if v_x.status <> 'ok' then raise exception 'CHECK 32a FAILED: %', v_x.status; end if;
+  perform pg_temp.act(v_new[4], false);
+  begin
+    perform public.respond_to_transfer(v_x.transfer_id, true);
+    raise exception 'CHECK 32b FAILED: transfer accepted';
+  exception when sqlstate 'P0001' then
+    get stacked diagnostics v_err = message_text;
+    if v_err <> 'needs_level' then raise; end if;
+  end;
+  if (select status from public.registration_transfers where id = v_x.transfer_id) <> 'pending'
+     or not exists (select 1 from public.registrations
+                     where team_id = v_team and player_id = v_p[2] and status = 'registered') then
+    raise exception 'CHECK 32c FAILED: transfer or sender row changed';
+  end if;
+  perform pg_temp.assert_teams(v_t);
+  raise notice 'CHECK 32 ok: team transfer refused for a recipient who needs levelling';
+
+  raise notice 'ALL LEVELLING GATE CHECKS PASSED';
 end $$;
 
 rollback;
