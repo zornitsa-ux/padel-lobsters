@@ -7,6 +7,8 @@ import { registrationKeys } from '../registrationKeys'
 import { registrationMessage } from '../registrationStatusMessages'
 import * as q from './teamQueries'
 import { teamKeys } from './teamKeys'
+import { useRefreshLevelling } from '../../levelling/useMyLevelling'
+import { NEEDS_LEVEL } from '../../levelling/levellingQueries'
 import {
   CANCEL_MY_TEAM_MESSAGES,
   CANCEL_TEAM_MESSAGES,
@@ -144,6 +146,7 @@ export function useAcknowledgeMyAccount() {
 export function useTeamActions() {
   const qc = useQueryClient()
   const { showToast } = useToast()
+  const refreshLevelling = useRefreshLevelling()
 
   const invalidate = useCallback(
     (tournamentId: string, { newPlayer = false }: { newPlayer?: boolean } = {}) =>
@@ -166,13 +169,14 @@ export function useTeamActions() {
       try {
         const result = await q.registerTeam(args)
         await invalidate(args.tournamentId, { newPlayer: args.choice.kind === 'new' })
+        if (result.status === NEEDS_LEVEL) refreshLevelling()
         return result
       } catch (error) {
         console.error('registerTeam failed:', error)
         return { status: 'error' as const, teamId: null, partnerId: null }
       }
     },
-    [invalidate],
+    [invalidate, refreshLevelling],
   )
 
   const changeTeamPartner = useCallback(
@@ -265,6 +269,7 @@ export function useTeamActions() {
       try {
         const status = await q.respondToTeamInvite({ teamId, accept })
         await invalidate(tournamentId)
+        if (status === NEEDS_LEVEL) refreshLevelling()
         if (status !== 'accepted' && status !== 'declined') {
           showToast({
             variant: 'error',
@@ -278,7 +283,7 @@ export function useTeamActions() {
         return 'error' as const
       }
     },
-    [invalidate, showToast],
+    [invalidate, showToast, refreshLevelling],
   )
 
   return {

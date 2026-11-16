@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { supabase } from '../../../supabase'
 import { firstRow } from '../../../lib/firstRow'
+import { isNeedsLevel, NEEDS_LEVEL } from '../../levelling/levellingQueries'
 import type {
   CancelMyTeamStatus,
   CancelTeamStatus,
@@ -178,7 +179,10 @@ export async function registerTeam({
     input_captain_id: captainId,
     ...partnerArgs(choice),
   })
-  if (error) throw error
+  if (error) {
+    if (isNeedsLevel({ error })) return { status: NEEDS_LEVEL, teamId: null, partnerId: null }
+    throw error
+  }
   const row = firstRow(data)
   return {
     status: (row?.status ?? 'not_found') as RegisterTeamStatus,
@@ -237,7 +241,10 @@ export async function respondToTeamInvite({ teamId, accept }: { teamId: string; 
     input_team_id: teamId,
     input_accept: accept,
   })
-  if (error) throw error
+  if (error) {
+    if (isNeedsLevel({ error })) return NEEDS_LEVEL
+    throw error
+  }
   return (firstRow(data)?.status ?? 'not_found') as RespondInviteStatus
 }
 

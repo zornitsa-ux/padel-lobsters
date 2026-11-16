@@ -20,6 +20,7 @@ const players = [
   { id: 'p4', name: 'Margaret Hamilton' },
 ]
 
+vi.mock('../levelling/useMyLevelling', () => import('../../test/levellingMock'))
 vi.mock('../../context/useApp', () => ({
   useApp: () => fixtureAuth(mockSession),
 }))

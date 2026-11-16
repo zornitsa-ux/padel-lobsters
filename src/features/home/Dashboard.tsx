@@ -33,6 +33,9 @@ import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEve
 import MyKingOfCourtLine from '../events/kingOfCourt/MyKingOfCourtLine'
 import { isKingOfTheCourt } from '../events/eventFormat'
 import { owesPayment } from '../events/paymentStatus'
+import { respondFailureMessage } from '../events/transferStatus'
+import LevellingCard from '../levelling/LevellingCard'
+import { useNeedsLevelling } from '../levelling/useMyLevelling'
 
 // Only mounts after the player taps "share" on an outgoing transfer offer.
 const TransferPendingModal = lazy(() => import('../../components/TransferPendingModal'))
@@ -92,6 +95,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     [registrations],
   )
   const claimedId = session?.user?.id ?? null
+  const { needsLevelling } = useNeedsLevelling()
 
   // Pending-transfer state surfaced on the home screen so the player
   // sees their open offers right after reload — even before drilling
@@ -109,18 +113,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     setTransferBusy(xfer.id)
     const r = await respondToTransfer(xfer.id, accept)
     setTransferBusy(null)
-    if (!r.ok) {
-      const map: Record<string, string> = {
-        wrong_pin: 'Sign in again to respond.',
-        forbidden: 'This transfer is for a different player.',
-        not_pending: 'This transfer was already responded to or closed.',
-        tournament_started: 'Too late — the event has already started.',
-        to_already_registered:
-          'You are already registered for this event, so there is nothing to accept.',
-        from_not_registered: 'That spot is no longer registered — the transfer can’t be completed.',
-      }
-      alert(map[r.status] || 'Could not record your response.')
-    }
+    if (!r.ok) alert(respondFailureMessage({ status: r.status }))
   }
   const handleOutgoingCancel = async (xfer: NormalisedTransfer) => {
     if (
@@ -256,6 +249,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         <TipOfTheDay tip={todayTip} />
 
         <LeagueDashboardCard myPlayerId={claimedId} />
+
+        {needsLevelling && <LevellingCard place="home" />}
 
         <NextEventCard
           upcoming={upcoming}

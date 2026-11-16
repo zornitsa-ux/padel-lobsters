@@ -19,6 +19,8 @@ import {
   inviteSeenKey,
   inviteWhen,
 } from './inviteRoutes'
+import SetLevelAction from '../../levelling/SetLevelAction'
+import { useNeedsLevelling } from '../../levelling/useMyLevelling'
 import { Button } from '../../../components/ui/Button'
 import { TextButton } from '../../../components/ui/TextButton'
 import { Well } from '../../../components/ui/Well'
@@ -40,12 +42,14 @@ function InviteCard({
   invite,
   captainAvatarUrl,
   busy,
+  needsLevelling,
   onAccept,
   onDecline,
 }: {
   invite: TeamInvite
   captainAvatarUrl: string | null
   busy: boolean
+  needsLevelling: boolean
   onAccept: () => void
   onDecline: () => void
 }) {
@@ -65,9 +69,13 @@ function InviteCard({
         {partnerAcceptNote({ captainName: invite.captainName })}
       </p>
       <div className="space-y-2">
-        <Button onClick={onAccept} disabled={busy} fullWidth>
-          Accept
-        </Button>
+        {needsLevelling ? (
+          <SetLevelAction fullWidth />
+        ) : (
+          <Button onClick={onAccept} disabled={busy} fullWidth>
+            Accept
+          </Button>
+        )}
         <Button onClick={onDecline} disabled={busy} variant="secondary" fullWidth>
           I&apos;m not playing
         </Button>
@@ -88,6 +96,7 @@ export default function TeamInvitesPage() {
   const { data: players = [] } = usePlayers()
   const [busyId, setBusyId] = useState<string | null>(null)
   const [answered, setAnswered] = useState<string[]>([])
+  const { needsLevelling } = useNeedsLevelling()
 
   useEffect(() => {
     if (playerId) writeStorage({ area: 'session', key: inviteSeenKey({ playerId }), value: '1' })
@@ -139,6 +148,7 @@ export default function TeamInvitesPage() {
           invite={invite}
           captainAvatarUrl={players.find((p) => p.id === invite.captainId)?.avatarUrl || null}
           busy={busyId === invite.teamId}
+          needsLevelling={needsLevelling}
           onAccept={() => void respond({ invite, accept: true })}
           onDecline={() => void respond({ invite, accept: false })}
         />

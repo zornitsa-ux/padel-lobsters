@@ -6,6 +6,7 @@ import {
   createPlayer,
   deleteEvent,
   deletePlayer,
+  markLevelled,
   PLAYER_PASSWORD,
   registerPlayers,
   registrationOf,
@@ -58,6 +59,7 @@ test('transfer a spot: the other player accepts and takes it', async ({ page, br
   const event = await createEvent()
   const recipient = await createPlayer()
   try {
+    await markLevelled({ playerId: recipient.id })
     await registerPlayers({ eventId: event.id, playerIds: [PLAYER.id] })
     await page.goto(`/events/${event.id}/info`)
     await page.getByRole('button', { name: /transfer spot to another player/i }).click()
@@ -101,6 +103,7 @@ test('sign up as a pair: the partner accepts the invite', async ({ page, browser
   const event = await createEvent({ entryMode: 'team' })
   const partner = await createPlayer()
   try {
+    await markLevelled({ playerId: partner.id })
     await page.goto(`/events/${event.id}/info`)
     await page.getByRole('button', { name: 'Sign up as a team' }).click()
     await page.getByRole('textbox', { name: 'Search players' }).fill(partner.firstName)

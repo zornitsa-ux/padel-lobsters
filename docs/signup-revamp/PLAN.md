@@ -64,7 +64,7 @@ and is finished last.
 
 ### S2
 
-- Route or `FullScreenDialog` for the flow; state is a pure reducer
+- A route (`/levelling?from=`) for the flow; state is a pure reducer
   (step, answers, Playtomic value) with unit tests: advance on tap, back keeps
   answers, step 6 validation (> 0, ≤ 7, comma decimal via `parseLevel`).
 - Answer codes ↔ wording in one module next to the flow.
@@ -75,8 +75,8 @@ and is finished last.
 - `JoinEventCard`: a `needsLevelling` prop decides between the card and the
   register action. Waitlist ("event full") gets the same card.
 - Home: card above `NextEventCard`, shown only when `needsLevelling`.
-- Check every ui component first (CLAUDE.md, UI). Likely new variants: an
-  `OptionRow` that submits on tap, a progress header with back and close.
+- Check every ui component first (CLAUDE.md, UI). `OptionRow` already acts on
+  tap; the progress header with back and close is the new `StepHeader`.
 
 ### S3
 

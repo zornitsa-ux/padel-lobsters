@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react'
+import { levellingState, refreshLevelling, resetLevellingMock } from '../../test/levellingMock'
 import { MemoryRouter } from 'react-router-dom'
 import type { NormalisedTournament } from '../../lib/normalise'
 
@@ -17,6 +18,8 @@ import type { NormalisedTournament } from '../../lib/normalise'
 
 const mockUseApp = vi.fn()
 
+const mockRegisterPlayer = vi.fn()
+vi.mock('../levelling/useMyLevelling', () => import('../../test/levellingMock'))
 vi.mock('../../context/useApp', () => ({ useApp: () => mockUseApp() }))
 vi.mock('./useTournaments', () => ({
   useUpdateTournament: () => ({ mutateAsync: vi.fn() }),
@@ -30,7 +33,7 @@ vi.mock('../players/usePlayers', () => ({ usePlayers: () => ({ data: players }) 
 vi.mock('./useRegistrations', () => ({
   useRegistrations: () => ({ data: registrations }),
   useRegistrationActions: () => ({
-    registerPlayer: vi.fn(),
+    registerPlayer: mockRegisterPlayer,
     updateRegistration: vi.fn(),
     cancelRegistration: vi.fn().mockResolvedValue({ status: 'cancelled', promotedPlayerId: null }),
     promoteWaitlistRegistration: vi.fn(),
@@ -115,6 +118,7 @@ const PHASES: Array<[string, Partial<NormalisedTournament>]> = [
 
 beforeEach(() => {
   vi.clearAllMocks()
+  resetLevellingMock()
   registrations = allRegistered()
 })
 afterEach(cleanup)
@@ -199,6 +203,28 @@ describe('Info tab — players sign themselves up here', () => {
     renderInfo()
 
     expect(screen.getByRole('button', { name: /register for this event/i })).not.toBeNull()
+  })
+
+  it('offers levelling instead of Register to a player who needs it', () => {
+    registrations = withoutViewer()
+    levellingState.needsLevelling = true
+
+    renderInfo()
+
+    expect(screen.getByTestId('levelling-card')).not.toBeNull()
+    expect(screen.queryByRole('button', { name: /register for this event/i })).toBeNull()
+  })
+
+  // A page loaded before levelling was required still shows Register; the gate answers.
+  it('re-reads the gate when the server answers needs_level, with no error', async () => {
+    registrations = withoutViewer()
+    mockRegisterPlayer.mockResolvedValue({ regId: null, status: 'needs_level' })
+
+    renderInfo()
+    fireEvent.click(screen.getByRole('button', { name: /register for this event/i }))
+
+    await waitFor(() => expect(refreshLevelling).toHaveBeenCalledOnce())
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 
   it('offers the waitlist once the roster is full', () => {

@@ -26,6 +26,7 @@ import type { EventNavigate } from './features/events/eventHelpers'
 import CommunityShell from './features/community/CommunityShell'
 import PartnerOnboardingRedirect from './features/events/invites/PartnerOnboardingRedirect'
 import { FINISH_ACCOUNT_PATH, TEAM_INVITES_PATH } from './features/events/invites/inviteRoutes'
+import { LEVELLING_PATH } from './features/levelling/levellingRoutes'
 import { DESIGN_GALLERY_ENABLED, DESIGN_GALLERY_PATH } from './lib/designGallery'
 import { GROUP_SETTINGS_PATH } from './features/settings/settingsHelpers'
 import { useApp } from './context/useApp'
@@ -59,6 +60,7 @@ const Game = lazy(() => import('./features/oscars/Game'))
 const Admin = lazy(() => import('./features/admin/AdminTools'))
 const TeamInvitesPage = lazy(() => import('./features/events/invites/TeamInvitesPage'))
 const FinishAccountPage = lazy(() => import('./features/events/invites/FinishAccountPage'))
+const LevellingPage = lazy(() => import('./features/levelling/LevellingPage'))
 const TransferAccept = lazy(() => import('./components/TransferAccept'))
 const LeaguePage = lazy(() => import('./features/league/LeaguePage'))
 const LeagueIndexPage = lazy(() => import('./features/league/LeagueIndexPage'))
@@ -140,6 +142,7 @@ export default function App() {
                   <Route path="/transfer/:id" element={<TransferRoute />} />
                   <Route path={TEAM_INVITES_PATH} element={<TeamInvitesPage />} />
                   <Route path={FINISH_ACCOUNT_PATH} element={<FinishAccountPage />} />
+                  <Route path={LEVELLING_PATH} element={<LevellingPage />} />
                   <Route path="/league" element={<LeagueIndexPage />} />
                   <Route path="/league/seasons" element={<SeasonsPage />} />
                   <Route path="/league/:id" element={<LeaguePage />} />

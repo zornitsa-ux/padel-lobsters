@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { supabase } from '../../supabase'
 import { normaliseTransfers } from '../../lib/normalise'
 import { transferRowSchema } from './transferSchemas'
+import { isNeedsLevel, NEEDS_LEVEL } from '../levelling/levellingQueries'
 
 export type NormalisedTransfer = ReturnType<typeof normaliseTransfers>[number]
 
@@ -68,6 +69,7 @@ export async function respondToTransfer(transferId: string, accept: boolean) {
       input_accept: !!accept,
     })
     if (error) {
+      if (isNeedsLevel({ error })) return { ok: false, status: NEEDS_LEVEL }
       console.error('respond_to_transfer error:', error)
       return { ok: false, status: 'error' }
     }

@@ -10,6 +10,8 @@ import TeamNotices from './TeamNotices'
 import EndedTeamNotice from './EndedTeamNotice'
 import { eligiblePlayers, endedTeamNotice } from './teamHelpers'
 import type { TeamSignupResult } from './useTeamSignup'
+import LevellingCard from '../../../levelling/LevellingCard'
+import { useNeedsLevelling } from '../../../levelling/useMyLevelling'
 
 interface TeamSignupProps {
   tournament: NormalisedTournament
@@ -38,6 +40,7 @@ export default function TeamSignup({
 }: TeamSignupProps) {
   const [signup, setSignup] = useState<{ notices: string[]; status: string } | null>(null)
   const [joinOpen, setJoinOpen] = useState(false)
+  const { needsLevelling } = useNeedsLevelling()
   const notices =
     signup && (!entry || (entry.status === signup.status && !entry.confirmed)) ? signup.notices : []
   const ended = useMemo(
@@ -63,6 +66,8 @@ export default function TeamSignup({
           getPlayer={getPlayer}
           displayName={displayName}
         />
+      ) : needsLevelling ? (
+        <LevellingCard place="event" />
       ) : (
         <>
           {ended && !joinOpen && (

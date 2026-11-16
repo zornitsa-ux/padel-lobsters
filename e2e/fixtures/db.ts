@@ -257,6 +257,20 @@ export async function createPlayer({ email }: { email?: string } = {}): Promise<
   return { id: data.user.id, firstName, email: address }
 }
 
+/**
+ * Gives a spec's player a finished levelling, so a flow that isn't about levelling
+ * (accepting a transfer or a team invite) isn't stopped by the levelling gate.
+ */
+export async function markLevelled({ playerId }: { playerId: string }): Promise<void> {
+  await sql`
+    insert into player_levelling
+      (player_id, years_playing, frequency, lessons, racket_sports, walls,
+       start_source, start_mu, start_sigma, prefilled)
+    values
+      (${playerId}, 'under_1y', 'weekly_1_2', 'none', 'casual', 'slow_back_wall',
+       'walls', 1.5, 1.0, false)`
+}
+
 /** Removes a player made by a spec, with the rows that would block it. */
 export async function deletePlayer({ id }: { id: string }): Promise<void> {
   await sql.begin(async (tx) => {

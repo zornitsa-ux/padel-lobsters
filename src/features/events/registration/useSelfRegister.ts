@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useRegistrationActions } from '../useRegistrations'
+import { NEEDS_LEVEL } from '../../levelling/levellingQueries'
+import { useNeedsLevelling, useRefreshLevelling } from '../../levelling/useMyLevelling'
 
 export const SELF_REGISTER_ERROR = 'Could not sign you up. Please try again.'
 
@@ -16,6 +18,9 @@ export const SELF_REGISTER_ERROR = 'Could not sign you up. Please try again.'
  *
  * A double-tap is not an error: the second call finds the row the first one
  * created and returns 'already_registered' / 'already_waitlist' with its id.
+ *
+ * `needsLevelling` swaps Register for the levelling card. A stale page that still
+ * offered Register gets `needs_level` from the gate; re-reading the gate shows the card.
  */
 export function useSelfRegister({
   tournamentId,
@@ -25,6 +30,8 @@ export function useSelfRegister({
   playerId: string | null
 }) {
   const { registerPlayer } = useRegistrationActions()
+  const { needsLevelling } = useNeedsLevelling()
+  const refreshLevelling = useRefreshLevelling()
   const [registering, setRegistering] = useState(false)
   const [error, setError] = useState('')
 
@@ -33,13 +40,14 @@ export function useSelfRegister({
     setRegistering(true)
     setError('')
     try {
-      const { regId } = await registerPlayer(tournamentId, playerId)
+      const { regId, status } = await registerPlayer(tournamentId, playerId)
+      if (status === NEEDS_LEVEL) refreshLevelling()
       // A null regId is the failure signal — see the note above.
-      if (!regId) setError(SELF_REGISTER_ERROR)
+      else if (!regId) setError(SELF_REGISTER_ERROR)
     } finally {
       setRegistering(false)
     }
   }
 
-  return { register, registering, error }
+  return { register, registering, error, needsLevelling }
 }

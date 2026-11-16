@@ -29,6 +29,7 @@ import { AlertBox } from '../../components/ui/AlertBox'
 import { isSettled, isUnpaid } from './paymentStatus'
 import PaymentStatusBadge from './registration/PaymentStatusBadge'
 import ShareEventButton from './ShareEventButton'
+import LevellingCard from '../levelling/LevellingCard'
 
 type Props = {
   tournament: NormalisedTournament
@@ -185,6 +186,7 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
       registering={selfRegister.registering}
       registerError={selfRegister.error}
       onRegister={() => void selfRegister.register()}
+      needsLevelling={selfRegister.needsLevelling}
       onTikkieClick={handleTikkieClick}
       onSelfDeclare={handleSelfDeclare}
     />
@@ -254,6 +256,7 @@ function RegistrationCard({
   registering,
   registerError,
   onRegister,
+  needsLevelling,
   onTikkieClick,
   onSelfDeclare,
 }: {
@@ -269,11 +272,17 @@ function RegistrationCard({
   /** Set when the sign-up failed; blank otherwise. */
   registerError?: string
   onRegister: () => void
+  needsLevelling: boolean
   onTikkieClick: () => void
   onSelfDeclare: () => void
 }) {
   if (registration.status === 'waitlisted') {
     return <WaitlistNotice position={waitlistPosition} />
+  }
+
+  const signedUp = registration.status !== 'not_registered' && registration.status !== 'cancelled'
+  if (needsLevelling && !signedUp) {
+    return <LevellingCard place="event" />
   }
 
   const registerErrorNotice = registerError ? (

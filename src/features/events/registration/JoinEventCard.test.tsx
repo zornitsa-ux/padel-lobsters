@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import JoinEventCard from './JoinEventCard'
+import { levellingState, resetLevellingMock } from '../../../test/levellingMock'
+
+vi.mock('../../levelling/useMyLevelling', () => import('../../../test/levellingMock'))
 import type { MyRegistrationSummary } from '../nextMatch'
 
 const summaryOf = (over: Partial<MyRegistrationSummary> = {}): MyRegistrationSummary => ({
@@ -19,22 +23,29 @@ const renderCard = ({
   error = '',
   onRegister = vi.fn(),
   onGoToPayment = vi.fn(),
+  needsLevelling = false,
 }: Partial<Parameters<typeof JoinEventCard>[0]> = {}) => {
   render(
-    <JoinEventCard
-      summary={summary}
-      isEventFull={isEventFull}
-      hasTikkie={hasTikkie}
-      registering={registering}
-      error={error}
-      onRegister={onRegister}
-      onGoToPayment={onGoToPayment}
-    />,
+    <MemoryRouter initialEntries={['/events/e1/info']}>
+      <JoinEventCard
+        summary={summary}
+        isEventFull={isEventFull}
+        hasTikkie={hasTikkie}
+        registering={registering}
+        error={error}
+        onRegister={onRegister}
+        onGoToPayment={onGoToPayment}
+        needsLevelling={needsLevelling}
+      />
+    </MemoryRouter>,
   )
   return { onRegister, onGoToPayment }
 }
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  resetLevellingMock()
+})
 
 describe('JoinEventCard — signing up', () => {
   it('offers registration to a player who has not signed up', () => {
@@ -136,5 +147,40 @@ describe('JoinEventCard — already in', () => {
 
     expect(screen.getByText(/confirmed/i)).not.toBeNull()
     expect(screen.queryByRole('button', { name: /pay/i })).toBeNull()
+  })
+})
+
+describe('JoinEventCard — levelling first', () => {
+  const levellingLink = () => screen.getByRole('link', { name: 'Set your level' })
+
+  it('offers levelling instead of Register, returning to this page', () => {
+    renderCard({ needsLevelling: true })
+    expect(levellingLink().getAttribute('href')).toBe('/levelling?from=%2Fevents%2Fe1%2Finfo')
+    expect(screen.queryByRole('button', { name: /register/i })).toBeNull()
+  })
+
+  it('does the same for the waitlist and for a cancelled player', () => {
+    renderCard({ needsLevelling: true, isEventFull: true })
+    expect(levellingLink()).not.toBeNull()
+    expect(screen.queryByRole('button', { name: /waitlist/i })).toBeNull()
+    cleanup()
+    renderCard({ needsLevelling: true, summary: summaryOf({ status: 'cancelled' }) })
+    expect(levellingLink()).not.toBeNull()
+  })
+
+  it('frames it as a quick check for an existing player', () => {
+    levellingState.existing = true
+    renderCard({ needsLevelling: true })
+    expect(screen.getByText('Quick check before you join')).not.toBeNull()
+    expect(screen.getByRole('link', { name: 'Answer 6 questions' })).not.toBeNull()
+  })
+
+  it('leaves a registered player their registration', () => {
+    renderCard({
+      needsLevelling: true,
+      summary: summaryOf({ status: 'registered', paymentStatus: 'paid' }),
+    })
+    expect(screen.getByText(/you're registered/i)).not.toBeNull()
+    expect(screen.queryByTestId('levelling-card')).toBeNull()
   })
 })

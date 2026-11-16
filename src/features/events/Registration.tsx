@@ -67,7 +67,7 @@ import type {
   TransferShareTarget,
 } from './registration/utils'
 import { Button } from '../../components/ui/Button'
-import { isStaleTransferStatus } from './transferStatus'
+import { isStaleTransferStatus, respondFailureMessage } from './transferStatus'
 
 export default function Registration({
   tournament,
@@ -431,20 +431,7 @@ export default function Registration({
     setRespondingTo(xfer.id)
     const r = await respondToTransfer(xfer.id, accept)
     setRespondingTo(null)
-    if (!r.ok) {
-      const map: Record<string, string> = {
-        wrong_pin: 'Sign in again to respond.',
-        forbidden: 'This transfer is for a different player.',
-        not_pending: 'This transfer was already responded to or closed.',
-        tournament_started: 'Too late — the event has already started.',
-        transfers_closed:
-          'Transfers are closed for this event — reach out to the community admins for help.',
-        to_already_registered:
-          'You are already registered for this event, so there is nothing to accept.',
-        from_not_registered: 'That spot is no longer registered — the transfer can’t be completed.',
-      }
-      alert(map[r.status] || 'Could not record your response.')
-    }
+    if (!r.ok) alert(respondFailureMessage({ status: r.status }))
   }
 
   return (
@@ -508,6 +495,7 @@ export default function Registration({
           registering={selfRegister.registering}
           error={selfRegister.error}
           onRegister={() => void selfRegister.register()}
+          needsLevelling={selfRegister.needsLevelling}
           onGoToPayment={() => onNavigate('me', tournament)}
           share={
             <ShareEventButton
