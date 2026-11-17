@@ -6,6 +6,7 @@ import Avatar from '../../../components/ui/Avatar'
 import { OptionRow } from '../../../components/ui/OptionRow'
 import { EmptyState } from '../../../components/ui/EmptyState'
 import { SearchInput } from '../../../components/ui/SearchInput'
+import { levelText } from '../../../lib/level'
 
 interface PlayerPickerProps {
   players: Player[]
@@ -50,7 +51,7 @@ export default function PlayerPicker({
             onClick={() => onSelect(selectedId === p.id ? '' : p.id)}
             leading={<Avatar player={p} size="sm" />}
             title={displayName(p)}
-            trailing={`Lv ${(p.playtomicLevel || 0).toFixed(1)}`}
+            trailing={levelText({ level: p.playtomicLevel })}
           />
         ))}
       </div>

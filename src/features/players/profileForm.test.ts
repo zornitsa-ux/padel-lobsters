@@ -24,6 +24,9 @@ describe('profileProblem', () => {
       'Please complete: Country, Email, Phone / WhatsApp',
     )
   })
+  it('accepts a profile without a Playtomic level', () => {
+    expect(profileProblem({ form: { ...complete, playtomicLevel: '  ' } })).toBe('')
+  })
   it('checks the phone format and the level range', () => {
     expect(profileProblem({ form: { ...complete, phone: '0612345678' } })).toMatch(/^Phone must/)
     expect(profileProblem({ form: { ...complete, playtomicLevel: '9' } })).toMatch(/^Playtomic/)

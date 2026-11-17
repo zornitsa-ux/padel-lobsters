@@ -18,6 +18,8 @@ import { OtpCodeStep } from '../features/auth/OtpCodeStep'
 import { confirmedJustNow } from '../features/auth/newAccount'
 import { takeReturnPath } from '../features/auth/returnPath'
 import { buildSignupMetadata } from '../features/auth/signupMetadata'
+import { NO_SIGNUP_SOURCE } from '../features/auth/signupSource'
+import { SignupSourceField } from '../features/auth/SignupSourceField'
 import {
   describeSignupError,
   SIGNUP_HOOK_MESSAGES,
@@ -39,8 +41,9 @@ import { AlertBox } from './ui/AlertBox'
 //
 //  Flow:
 //    1. User fills the full profile (first/last name, country, gender,
-//       hand, preferred side, Playtomic level, email,
-//       phone, birthday, rotating "lobby prompt" note).
+//       hand, preferred side, an optional Playtomic level, email,
+//       phone, birthday, rotating "lobby prompt" note, and an optional
+//       "How did you find us").
 //    2. If the typed full name matches a placeholder (a teammate an admin
 //       entered by name), signup is blocked: placeholders are activated only
 //       through the admin invite, so an admin confirms who takes the profile.
@@ -135,6 +138,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
   const queryClient = useQueryClient()
 
   const [form, setForm] = useState(emptyForm)
+  const [source, setSource] = useState(NO_SIGNUP_SOURCE)
   // useState's lazy initializer rolls a prompt on first mount, but in
   // rare cases (hot reload, fast refresh, parent preserving an instance
   // across guest signups) the same prompt can stick. The effect below
@@ -258,6 +262,7 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
         taglineLabel: lobbyPrompt.label,
         notes: form.notes,
       },
+      source,
     })
 
   const requestSignupCode = () =>
@@ -354,6 +359,8 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
             />
           </div>
+
+          <SignupSourceField value={source} onChange={setSource} error={fieldErrors.source} />
 
           {error && (
             <AlertBox variant="error" size="sm">

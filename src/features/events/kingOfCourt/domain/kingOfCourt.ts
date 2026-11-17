@@ -1,3 +1,4 @@
+import { hasLevel, NO_LEVEL_START } from '../../../../lib/level'
 import type {
   Court,
   CourtMove,
@@ -11,11 +12,11 @@ import type {
 } from './types'
 
 // D-025, D-030: the team's average reported Playtomic level, never the learned
-// rating. Level 0 means not reported, and an unreported player counts as 1.
-const UNRATED_LEVEL = 1
-
+// rating. A player with no level counts as NO_LEVEL_START (signup revamp D-15).
 const playerValue = (player: KotcPlayer | undefined): number | null =>
-  player?.playtomicLevel != null && player.playtomicLevel > 0 ? player.playtomicLevel : null
+  player?.playtomicLevel != null && hasLevel({ level: player.playtomicLevel })
+    ? player.playtomicLevel
+    : null
 
 export function teamStrength({
   team,
@@ -27,7 +28,7 @@ export function teamStrength({
   const a = playerValue(playersById[team.captainId])
   const b = playerValue(playersById[team.partnerId])
   return {
-    strength: ((a ?? UNRATED_LEVEL) + (b ?? UNRATED_LEVEL)) / 2,
+    strength: ((a ?? NO_LEVEL_START) + (b ?? NO_LEVEL_START)) / 2,
     unrated: a == null || b == null,
   }
 }

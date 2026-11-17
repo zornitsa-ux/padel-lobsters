@@ -909,6 +909,42 @@ export type Database = {
           },
         ]
       }
+      player_signup_source: {
+        Row: {
+          created_at: string
+          detail: string | null
+          player_id: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          player_id: string
+          source: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          player_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'player_signup_source_player_id_fkey'
+            columns: ['player_id']
+            isOneToOne: true
+            referencedRelation: 'players'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'player_signup_source_player_id_fkey'
+            columns: ['player_id']
+            isOneToOne: true
+            referencedRelation: 'players_public'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       players: {
         Row: {
           adjusted_level: number | null

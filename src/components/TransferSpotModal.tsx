@@ -12,6 +12,7 @@ import { AlertBox } from './ui/AlertBox'
 import { Badge } from './ui/Badge'
 import { EmptyState } from './ui/EmptyState'
 import { SearchInput } from './ui/SearchInput'
+import { levelText } from '../lib/level'
 
 // Picker modal Josephine sees when she taps "Transfer spot to another player".
 // Lists waitlist players first (so transferring to them is a one-tap promotion
@@ -229,7 +230,7 @@ export default function TransferSpotModal({
                   </>
                 }
                 nameClassName="font-semibold text-sm text-lob-dark flex items-center gap-1.5"
-                subtitle={`Lv ${(p.playtomicLevel || 0).toFixed(1)}`}
+                subtitle={levelText({ level: p.playtomicLevel })}
                 trailing={<ArrowRightLeft size={14} className="text-lob-teal flex-shrink-0" />}
               />
             )

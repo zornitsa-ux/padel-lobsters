@@ -1,3 +1,5 @@
+import { hasLevel } from '../../lib/level'
+
 /** Playtomic level bands (owner, 2026-11-04): a teal ramp, darker as the level rises. */
 const LEVEL_BANDS = [
   { below: 2, className: 'bg-lob-line-strong text-lob-slate' },
@@ -17,7 +19,7 @@ const levelBand = ({ level }: { level: number | null | undefined }): string => {
 }
 
 interface LevelBadgeProps {
-  /** Playtomic level, 0 to 7; a missing level shows 0.0 in the lowest band. */
+  /** Playtomic level, 0 to 7. No level (0 or missing) renders nothing (signup revamp D-14). */
   level: number | null | undefined
   /** md beside a name in a list or header; sm inline in a line of text. */
   size?: keyof typeof SIZES
@@ -25,6 +27,7 @@ interface LevelBadgeProps {
 
 /** A player's Playtomic level, one decimal, in its band's colour. */
 export function LevelBadge({ level, size = 'md' }: LevelBadgeProps) {
+  if (!hasLevel({ level })) return null
   return (
     <span className={`inline-block font-bold tabular-nums ${SIZES[size]} ${levelBand({ level })}`}>
       {(level || 0).toFixed(1)}

@@ -156,11 +156,13 @@ Players with a played night keep today's behaviour.
 ### 3.1 Playtomic level optional
 
 - `profileProblem` no longer lists the level as missing. `levelProblem` runs
-  only when a value is given. This applies to all four callers of
-  `ProfileFields`; the field's hint changes to say it's optional.
+  only when a value is given. Signup and the invite "finish your account" page
+  use `profileProblem`, and the shared field's hint there says it's optional.
+  Settings and the admin player form already accepted an empty level.
 - The hook already accepts an empty level; the trigger stores `0`.
-- **Readers of `playtomic_level = 0`** show no level instead of "Level 0.0"
-  (`RegisteredSection`, community lists). The levelling start stays admin-only
+- **Readers of `playtomic_level = 0`** show no level instead of "Level 0.0":
+  `LevelBadge` renders nothing, and the "Lv x.x" texts in pickers and lists
+  are left out (`levelText`, `src/lib/level.ts`). The levelling start stays admin-only
   (owner).
 - **One fallback for "no level", the same on every screen.** King of the Court
   seeds on every viewer's device from `playtomic_level`

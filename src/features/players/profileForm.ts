@@ -30,12 +30,12 @@ export function profileProblem({
   if (!form.gender) missing.push('Gender')
   if (email !== undefined && !email.trim()) missing.push('Email')
   if (!form.phone.trim()) missing.push('Phone / WhatsApp')
-  if (!form.playtomicLevel.trim()) missing.push('Playtomic Level')
   if (missing.length > 0) return `Please complete: ${missing.join(', ')}`
   // E.164 so we can build wa.me links for transfer offers.
   if (!isE164(form.phone)) {
     return 'Phone must start with + and the country code (e.g. +31612345678).'
   }
+  // Optional (signup revamp S4): checked only when given.
   return levelProblem({ value: form.playtomicLevel })
 }
 

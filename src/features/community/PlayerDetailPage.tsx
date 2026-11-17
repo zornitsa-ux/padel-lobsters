@@ -41,7 +41,6 @@ function PlayerHero({
   player: CommunityPlayer
   review: ReturnType<typeof corpReview>
 }) {
-  const level = player.playtomicLevel || 0
   return (
     <div className="card space-y-3">
       <div className="flex items-center gap-3">
@@ -52,7 +51,7 @@ function PlayerHero({
             <span className="truncate">{player.name}</span>
           </p>
           <div className="mt-1">
-            <LevelBadge level={level} />
+            <LevelBadge level={player.playtomicLevel} />
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { parseLevel } from '../../lib/parseLevel'
+import { NO_SIGNUP_SOURCE, signupSourceMetadata, type SignupSourceAnswer } from './signupSource'
 
 export interface SignupProfile {
   name: string
@@ -13,8 +14,15 @@ export interface SignupProfile {
   notes: string
 }
 
-// C-2: exactly these keys, all strings. No email and no avatar_url.
-export function buildSignupMetadata({ profile }: { profile: SignupProfile }) {
+// Pin-auth C-2: exactly these keys, all strings, plus signup-revamp C-5's
+// two optional keys. No email and no avatar_url.
+export function buildSignupMetadata({
+  profile,
+  source = NO_SIGNUP_SOURCE,
+}: {
+  profile: SignupProfile
+  source?: SignupSourceAnswer
+}) {
   return {
     name: profile.name.trim(),
     phone: profile.phone.trim(),
@@ -27,5 +35,6 @@ export function buildSignupMetadata({ profile }: { profile: SignupProfile }) {
     preferred_position: profile.preferredPosition,
     tagline_label: profile.taglineLabel,
     notes: profile.notes,
+    ...signupSourceMetadata({ answer: source }),
   }
 }

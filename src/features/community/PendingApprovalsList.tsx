@@ -9,6 +9,7 @@ import { useRevealPii } from './useRevealPii'
 import type { CommunityPlayer } from './playersSelectors'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
+import { hasLevel, levelText } from '../../lib/level'
 
 // Per-row, on-demand email reveal. Approve/Reject need no PII at all;
 // only "Played before?" (identity disambiguation) does, and that flow
@@ -77,7 +78,9 @@ export default function PendingApprovalsList({
               nameClassName="font-semibold text-lob-dark truncate"
               subtitle={
                 <span className="inline-flex items-center gap-1">
-                  Lv {(p.playtomicLevel || 0).toFixed(1)} ·{' '}
+                  {hasLevel({ level: p.playtomicLevel }) && (
+                    <>{levelText({ level: p.playtomicLevel })} · </>
+                  )}
                   <PendingEmailReveal playerId={String(p.id)} />
                 </span>
               }

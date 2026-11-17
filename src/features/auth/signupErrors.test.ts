@@ -4,12 +4,14 @@ import { describeSignupError, GENERIC_SIGNUP_ERROR, SIGNUP_HOOK_MESSAGES } from 
 const hookError = (message: string) => ({ status: 400, code: 'unknown', message })
 
 describe('SIGNUP_HOOK_MESSAGES', () => {
-  it('matches the C-3 strings exactly', () => {
+  it('matches the hook strings exactly (pin-auth C-3, signup-revamp C-5)', () => {
     expect(SIGNUP_HOOK_MESSAGES).toEqual({
       nameRequired: 'Please enter your name.',
       nameTooLong: 'Your name can be at most 100 characters.',
       levelInvalid: 'Enter your Playtomic level as a number, like 2.5.',
       placeholder: 'You’ve already been added to a Lobster team — ask an admin to invite you.',
+      sourceUnknown: 'Please pick how you found us from the list.',
+      sourceDetailTooLong: 'How you found us can be at most 100 characters.',
     })
   })
 })
@@ -20,6 +22,8 @@ describe('describeSignupError', () => {
     [SIGNUP_HOOK_MESSAGES.nameTooLong, 'name'],
     [SIGNUP_HOOK_MESSAGES.levelInvalid, 'level'],
     [SIGNUP_HOOK_MESSAGES.placeholder, 'name'],
+    [SIGNUP_HOOK_MESSAGES.sourceUnknown, 'source'],
+    [SIGNUP_HOOK_MESSAGES.sourceDetailTooLong, 'source'],
   ])('puts "%s" next to the %s field', (message, field) => {
     expect(describeSignupError({ error: hookError(message) })).toEqual({ field, message })
   })

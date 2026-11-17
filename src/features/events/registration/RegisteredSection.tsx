@@ -13,6 +13,7 @@ import { EmptyState } from '../../../components/ui/EmptyState'
 import { ListCard, ListRow } from '../../../components/ui/ListCard'
 import { Section } from '../../../components/ui/Section'
 import { RankMarker } from '../../../components/ui/RankMarker'
+import { levelText } from '../../../lib/level'
 
 interface RegisteredSectionProps {
   isCompleted: boolean
@@ -69,7 +70,7 @@ export default function RegisteredSection({
                   player={p}
                   prefix={<RankMarker rank={idx + 1} />}
                   name={displayName(p)}
-                  subtitle={`Level ${(p.playtomicLevel || 0).toFixed(1)}`}
+                  subtitle={levelText({ level: p.playtomicLevel, prefix: 'Level' })}
                   trailing={
                     <>
                       <PaymentStatusBadge paymentStatus={reg.paymentStatus} />
