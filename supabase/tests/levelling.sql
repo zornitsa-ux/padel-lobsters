@@ -1,5 +1,6 @@
 -- ============================================================================
--- Levelling storage and RPCs (20261112120000, docs/signup-revamp/ S1).
+-- Levelling storage and RPCs (20261112120000, docs/signup-revamp/ S1), and
+-- the "level recorded" gate (20261116180000, S3b).
 --
 -- Plain script in one transaction that rolls back. Callers are faked through
 -- request.jwt.claims, which auth.uid() and auth.jwt() read. The double-tap
@@ -88,25 +89,27 @@ begin
   values (v_done, v_p[7], 'cancelled');
 
   -- ── 1. needs_levelling ────────────────────────────────────────────────────
-  perform pg_temp.check(private.needs_levelling(v_p[1]), '1a: no history needs levelling');
-  perform pg_temp.check(not private.needs_levelling(v_p[2]), '1b: seed row is a played night');
-  perform pg_temp.check(not private.needs_levelling(v_p[3]), '1c: tournament row is a played night');
-  perform pg_temp.check(private.needs_levelling(v_p[4]), '1d: self_reset only still needs levelling');
-  perform pg_temp.check(not private.needs_levelling(v_p[5]), '1e: completed team event (captain)');
-  perform pg_temp.check(not private.needs_levelling(v_p[6]), '1f: completed team event (partner)');
-  perform pg_temp.check(private.needs_levelling(v_p[7]), '1g: a cancelled row is not a played night');
+  -- A level on file is enough; with level 0, playing a night doesn't stand in for one.
+  perform pg_temp.check(not private.needs_levelling(v_p[1]), '1a: a level on file needs no levelling');
+  perform pg_temp.check(not private.needs_levelling(v_p[4]), '1b: a level on file (self_reset)');
+  perform pg_temp.check(private.needs_levelling(v_p[7]), '1c: no level, no history');
+  perform pg_temp.check(private.needs_levelling(v_p[2]), '1d: no level, seed row');
+  perform pg_temp.check(private.needs_levelling(v_p[3]), '1e: no level, tournament row');
+  perform pg_temp.check(private.needs_levelling(v_p[5]), '1f: no level, completed team event');
+  update public.players set playtomic_level = null where id = v_p[6];
+  perform pg_temp.check(private.needs_levelling(v_p[6]), '1g: a null level is no level');
   raise notice 'CHECK 1 ok: needs_levelling';
 
   -- ── 2. get_my_levelling ───────────────────────────────────────────────────
   perform pg_temp.act_as(v_p[1]);
   select * into v_row from public.get_my_levelling();
-  perform pg_temp.check(v_row.needs_levelling and v_row.playtomic_level = 2.3, '2a: prefill level');
+  perform pg_temp.check(not v_row.needs_levelling and v_row.playtomic_level = 2.3, '2a: level on file');
   perform pg_temp.act_as(v_p[8]);
   select * into v_row from public.get_my_levelling();
   perform pg_temp.check(v_row.needs_levelling and v_row.playtomic_level is null, '2b: level 0 is no prefill');
   perform pg_temp.act_as(v_p[2]);
   select * into v_row from public.get_my_levelling();
-  perform pg_temp.check(not v_row.needs_levelling, '2c: played night');
+  perform pg_temp.check(v_row.needs_levelling, '2c: played night, no level');
   perform pg_temp.act_as(gen_random_uuid());
   select * into v_row from public.get_my_levelling();
   perform pg_temp.check(not v_row.needs_levelling and v_row.playtomic_level is null, '2d: no player row');
@@ -129,18 +132,18 @@ begin
   raise notice 'CHECK 3 ok: not_authenticated';
 
   -- ── 4. invalid_answers writes nothing ─────────────────────────────────────
-  perform pg_temp.check(pg_temp.complete(v_p[1], '[]') = 'invalid_answers', '4a: not an object');
-  perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers() - 'lessons') = 'invalid_answers', '4b: missing key');
-  perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers('sometimes')) = 'invalid_answers', '4c: unknown code');
-  perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers(input_level => 0)) = 'invalid_answers', '4d: level 0');
-  perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers(input_level => 7.5)) = 'invalid_answers', '4e: level over 7');
-  perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers() || '{"playtomic_level": "2"}') = 'invalid_answers', '4f: level as text');
-  perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers() || '{"prefilled": "yes"}') = 'invalid_answers', '4g: prefilled as text');
-  perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers() || '{"walls": 2}') = 'invalid_answers', '4h: code as number');
+  perform pg_temp.check(pg_temp.complete(v_p[7], '[]') = 'invalid_answers', '4a: not an object');
+  perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers() - 'lessons') = 'invalid_answers', '4b: missing key');
+  perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers('sometimes')) = 'invalid_answers', '4c: unknown code');
+  perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers(input_level => 0)) = 'invalid_answers', '4d: level 0');
+  perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers(input_level => 7.5)) = 'invalid_answers', '4e: level over 7');
+  perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers() || '{"playtomic_level": "2"}') = 'invalid_answers', '4f: level as text');
+  perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers() || '{"prefilled": "yes"}') = 'invalid_answers', '4g: prefilled as text');
+  perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers() || '{"walls": 2}') = 'invalid_answers', '4h: code as number');
   perform pg_temp.check(
-    not exists (select 1 from public.player_levelling where player_id = v_p[1])
-    and not exists (select 1 from public.rating_events where player_id = v_p[1])
-    and (select mm_rating from public.players where id = v_p[1]) is null,
+    not exists (select 1 from public.player_levelling where player_id = v_p[7])
+    and not exists (select 1 from public.rating_events where player_id = v_p[7])
+    and (select mm_rating from public.players where id = v_p[7]) is null,
     '4: nothing written');
   raise notice 'CHECK 4 ok: invalid_answers';
 
@@ -164,6 +167,7 @@ begin
     and v_row.playtomic_level is null and v_row.walls = 'corners' and v_row.years_playing = 'under_1y'
     and not v_row.prefilled,
     '5g: stored answers');
+  perform pg_temp.check(not private.needs_levelling(v_p[11]), '5i: a walls start counts as a level');
   select * into v_row from public.rating_events where player_id = v_p[11];
   perform pg_temp.check(
     v_row.kind = 'levelling' and v_row.tournament_id is null and v_row.prior_mu = 0
@@ -193,12 +197,14 @@ begin
   raise notice 'CHECK 6 ok: Playtomic starts';
 
   -- ── 7. Overwrites a self_reset start; audit keeps the prior ───────────────
+  -- p[4]'s level is cleared, so the gate holds them; their self_reset μ stays the prior.
+  update public.players set playtomic_level = 0 where id = v_p[4];
   perform pg_temp.check(pg_temp.complete(v_p[4], pg_temp.answers('slow_back_wall')) = 'ok', '7a');
   select * into v_row from public.rating_events where player_id = v_p[4] and kind = 'levelling';
   perform pg_temp.check(
     v_row.prior_mu = 2.0 and v_row.prior_sigma = 0.7 and v_row.applied_delta = -0.5, '7b: prior kept');
   perform pg_temp.check(
-    (select mm_rating = 1.5 and playtomic_level = 2.0 from public.players where id = v_p[4]),
+    (select mm_rating = 1.5 and playtomic_level = 0 from public.players where id = v_p[4]),
     '7c: start overwritten, profile level kept');
   raise notice 'CHECK 7 ok: self_reset overwritten';
 
@@ -208,13 +214,30 @@ begin
     (select count(*) from public.rating_events where player_id = v_p[8]) = 1
     and (select mm_rating = 1.0 from public.players where id = v_p[8]),
     '8b: second call writes nothing');
-  perform pg_temp.check(pg_temp.complete(v_p[2], pg_temp.answers()) = 'not_needed', '8c: seed');
-  perform pg_temp.check(pg_temp.complete(v_p[5], pg_temp.answers()) = 'not_needed', '8d: team event');
-  perform pg_temp.check(pg_temp.complete(gen_random_uuid(), pg_temp.answers()) = 'not_needed', '8e: no player row');
+  -- A player with a level isn't held by the gate, so can't re-seed their rating.
+  perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers()) = 'not_needed', '8c: has a level');
+  perform pg_temp.check(pg_temp.complete(gen_random_uuid(), pg_temp.answers()) = 'not_needed', '8d: no player row');
   perform pg_temp.check(
-    not exists (select 1 from public.player_levelling where player_id in (v_p[2], v_p[5])),
-    '8f: nothing stored');
+    not exists (select 1 from public.player_levelling where player_id = v_p[1])
+    and (select mm_rating is null from public.players where id = v_p[1]),
+    '8e: nothing stored');
   raise notice 'CHECK 8 ok: already_levelled / not_needed';
+
+  -- ── 8b. No level but a played night: levels, keeps the learned rating ─────
+  update public.players set mm_rating = 2.2, mm_sigma = 0.4 where id in (v_p[2], v_p[5]);
+  perform pg_temp.check(pg_temp.complete(v_p[2], pg_temp.answers('corners', 2.6)) = 'ok', '8f: seed, with level');
+  perform pg_temp.check(pg_temp.complete(v_p[5], pg_temp.answers('lets_go')) = 'ok', '8g: team event, walls');
+  perform pg_temp.check(
+    (select bool_and(mm_rating = 2.2 and mm_sigma = 0.4) from public.players where id in (v_p[2], v_p[5]))
+    and (select playtomic_level = 2.6 from public.players where id = v_p[2])
+    and (select playtomic_level = 0 from public.players where id = v_p[5])
+    and not exists (select 1 from public.rating_events
+                     where player_id in (v_p[2], v_p[5]) and kind = 'levelling')
+    and (select count(*) from public.player_levelling where player_id in (v_p[2], v_p[5])) = 2,
+    '8h: answers and level stored, rating untouched');
+  perform pg_temp.check(
+    not private.needs_levelling(v_p[2]) and not private.needs_levelling(v_p[5]), '8i: through the gate');
+  raise notice 'CHECK 8b ok: played without a level';
 
   -- ── 9. Reset guard in update_my_profile (C-7) ─────────────────────────────
   -- Levelled, no played night: the profile level changes, the start stands.
@@ -272,7 +295,7 @@ begin
   set local role authenticated;
   select count(*) into v_count from public.player_levelling where player_id = any(v_p);
   reset role;
-  perform pg_temp.check(v_count = 7, '10b: admin reads all (' || v_count || ')');
+  perform pg_temp.check(v_count = 9, '10b: admin reads all (' || v_count || ')');
 
   v_err := null;
   perform pg_temp.act_as(v_p[1]);
