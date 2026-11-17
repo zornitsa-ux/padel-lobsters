@@ -14,7 +14,8 @@ const DETAIL_PLACEHOLDER: Partial<Record<SignupSourceCode, string>> = {
 }
 
 // One optional tap; tapping the chosen answer again clears it. The detail box
-// shows for lobster and other, the codes that take a detail (C-5).
+// shows for lobster and other, the codes that take a detail (C-5); changing
+// the answer empties it, so a friend's name is never stored as "other".
 export function SignupSourceField({
   value,
   onChange,
@@ -29,7 +30,7 @@ export function SignupSourceField({
   return (
     <div className="space-y-2">
       <div>
-        <label className="label">How did you find us?</label>
+        <p className="label">How did you find us?</p>
         <p className="caption">Optional</p>
       </div>
       <SegmentedControl
@@ -37,7 +38,9 @@ export function SignupSourceField({
         ariaLabel="How did you find us?"
         options={[...SIGNUP_SOURCES]}
         value={value.source}
-        onChange={(source) => onChange({ ...value, source: value.source === source ? '' : source })}
+        onChange={(source) =>
+          onChange({ source: value.source === source ? '' : source, detail: '' })
+        }
       />
       {detailPlaceholder && (
         <input

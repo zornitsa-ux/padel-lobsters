@@ -1,12 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { hasLevel, levelText } from './level'
+import { hasLevel, knownLevel, levelOrNoLevelStart, levelText } from './level'
 
-describe('hasLevel', () => {
-  it('is true only for a level above 0', () => {
-    expect(hasLevel({ level: 0.5 })).toBe(true)
-    expect(hasLevel({ level: 0 })).toBe(false)
+describe('knownLevel and hasLevel', () => {
+  it('keep only a level above 0', () => {
+    expect(knownLevel({ level: 0.5 })).toBe(0.5)
+    expect(knownLevel({ level: 0 })).toBeNull()
+    expect(knownLevel({ level: Number.NaN })).toBeNull()
+    expect(hasLevel({ level: 2 })).toBe(true)
     expect(hasLevel({ level: null })).toBe(false)
     expect(hasLevel({ level: undefined })).toBe(false)
+  })
+})
+
+describe('levelOrNoLevelStart', () => {
+  it('falls back to 1 for no level (D-15)', () => {
+    expect(levelOrNoLevelStart({ level: 3.5 })).toBe(3.5)
+    expect(levelOrNoLevelStart({ level: 0 })).toBe(1)
   })
 })
 
