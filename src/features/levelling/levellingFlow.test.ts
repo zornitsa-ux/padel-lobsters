@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 import {
   canFinish,
   initialLevellingState,
+  isFinalStep,
   levellingReducer,
   PLAYTOMIC_STEP,
   playtomicProblem,
   toPayload,
+  totalSteps,
   type LevellingAction,
   type LevellingState,
 } from './levellingFlow'
@@ -25,6 +27,7 @@ const fresh = () => initialLevellingState({ levelOnFile: null })
 describe('initialLevellingState', () => {
   it('starts with nothing chosen when there is no level on file', () => {
     expect(fresh()).toEqual({
+      mode: 'level',
       step: 0,
       answers: {},
       playtomic: { choice: null, text: '' },
@@ -40,6 +43,37 @@ describe('initialLevellingState', () => {
 
   it('treats 0 as no level', () => {
     expect(initialLevellingState({ levelOnFile: 0 }).prefilled).toBe(false)
+  })
+
+  it('never prefills the questions-only flow', () => {
+    const state = initialLevellingState({ levelOnFile: 2.3, mode: 'questions' })
+    expect(state.prefilled).toBe(false)
+    expect(state.playtomic).toEqual({ choice: null, text: '' })
+  })
+})
+
+describe('questions mode', () => {
+  const questions = () => initialLevellingState({ levelOnFile: 2.3, mode: 'questions' })
+
+  it('has five steps and stops on the last question', () => {
+    expect(totalSteps({ mode: 'questions' })).toBe(5)
+    expect(totalSteps({ mode: 'level' })).toBe(6)
+    const state = run(questions(), answerAll)
+    expect(state.step).toBe(QUESTIONS.length - 1)
+    expect(isFinalStep(state)).toBe(true)
+    expect(isFinalStep(run(fresh(), answerAll))).toBe(true)
+    expect(isFinalStep(run(questions(), answerAll.slice(0, 3)))).toBe(false)
+  })
+
+  it('finishes with every question answered, and sends no level', () => {
+    expect(canFinish(run(questions(), answerAll.slice(0, 4)))).toBe(false)
+    const state = run(questions(), [...answerAll, { type: 'choosePlaytomic', choice: 'yes' }])
+    expect(canFinish(state)).toBe(true)
+    expect(toPayload(state)).toMatchObject({
+      walls: 'lets_go',
+      playtomic_level: null,
+      prefilled: false,
+    })
   })
 })
 

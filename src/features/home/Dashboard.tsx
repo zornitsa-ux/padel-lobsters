@@ -35,7 +35,8 @@ import { isKingOfTheCourt } from '../events/eventFormat'
 import { owesPayment } from '../events/paymentStatus'
 import { respondFailureMessage } from '../events/transferStatus'
 import LevellingCard from '../levelling/LevellingCard'
-import { useNeedsLevelling } from '../levelling/useMyLevelling'
+import QuestionsCard from '../levelling/QuestionsCard'
+import { useNeedsLevelling, useQuestionsPrompt } from '../levelling/useMyLevelling'
 
 // Only mounts after the player taps "share" on an outgoing transfer offer.
 const TransferPendingModal = lazy(() => import('../../components/TransferPendingModal'))
@@ -96,6 +97,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   )
   const claimedId = session?.user?.id ?? null
   const { needsLevelling } = useNeedsLevelling()
+  const questionsPrompt = useQuestionsPrompt()
 
   // Pending-transfer state surfaced on the home screen so the player
   // sees their open offers right after reload — even before drilling
@@ -251,6 +253,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         <LeagueDashboardCard myPlayerId={claimedId} />
 
         {needsLevelling && <LevellingCard place="home" />}
+        {questionsPrompt.open && <QuestionsCard onDismiss={questionsPrompt.dismiss} />}
 
         <NextEventCard
           upcoming={upcoming}

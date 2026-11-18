@@ -1,6 +1,7 @@
 -- ============================================================================
--- Levelling storage and RPCs (20261112120000, docs/signup-revamp/ S1), and
--- the "level recorded" gate (20261116180000, S3b).
+-- Levelling storage and RPCs (20261112120000, docs/signup-revamp/ S1), the
+-- "level recorded" gate (20261116180000, S3b), and the questions for players
+-- who have a level (20261118180000, S3c).
 --
 -- Plain script in one transaction that rolls back. Callers are faked through
 -- request.jwt.claims, which auth.uid() and auth.jwt() read. The double-tap
@@ -103,16 +104,21 @@ begin
   -- ── 2. get_my_levelling ───────────────────────────────────────────────────
   perform pg_temp.act_as(v_p[1]);
   select * into v_row from public.get_my_levelling();
-  perform pg_temp.check(not v_row.needs_levelling and v_row.playtomic_level = 2.3, '2a: level on file');
+  perform pg_temp.check(
+    not v_row.needs_levelling and v_row.playtomic_level = 2.3 and v_row.questions_open, '2a: level on file');
   perform pg_temp.act_as(v_p[8]);
   select * into v_row from public.get_my_levelling();
-  perform pg_temp.check(v_row.needs_levelling and v_row.playtomic_level is null, '2b: level 0 is no prefill');
+  perform pg_temp.check(
+    v_row.needs_levelling and v_row.playtomic_level is null and not v_row.questions_open,
+    '2b: level 0 is no prefill, and no prompt');
   perform pg_temp.act_as(v_p[2]);
   select * into v_row from public.get_my_levelling();
   perform pg_temp.check(v_row.needs_levelling, '2c: played night, no level');
   perform pg_temp.act_as(gen_random_uuid());
   select * into v_row from public.get_my_levelling();
-  perform pg_temp.check(not v_row.needs_levelling and v_row.playtomic_level is null, '2d: no player row');
+  perform pg_temp.check(
+    not v_row.needs_levelling and v_row.playtomic_level is null and not v_row.questions_open,
+    '2d: no player row');
   raise notice 'CHECK 2 ok: get_my_levelling';
 
   -- ── 3. Signed out ─────────────────────────────────────────────────────────
@@ -214,14 +220,26 @@ begin
     (select count(*) from public.rating_events where player_id = v_p[8]) = 1
     and (select mm_rating = 1.0 from public.players where id = v_p[8]),
     '8b: second call writes nothing');
-  -- A player with a level isn't held by the gate, so can't re-seed their rating.
-  perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers()) = 'not_needed', '8c: has a level');
-  perform pg_temp.check(pg_temp.complete(gen_random_uuid(), pg_temp.answers()) = 'not_needed', '8d: no player row');
-  perform pg_temp.check(
-    not exists (select 1 from public.player_levelling where player_id = v_p[1])
-    and (select mm_rating is null from public.players where id = v_p[1]),
-    '8e: nothing stored');
+  perform pg_temp.check(pg_temp.complete(gen_random_uuid(), pg_temp.answers()) = 'not_needed', '8c: no player row');
   raise notice 'CHECK 8 ok: already_levelled / not_needed';
+
+  -- ── 8a. A player with a level answers only: no start, no rating change ────
+  perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers('corners', 5.0)) = 'ok', '8j: answers stored');
+  select * into v_row from public.player_levelling where player_id = v_p[1];
+  perform pg_temp.check(
+    v_row.start_source = 'none' and v_row.start_mu is null and v_row.start_sigma is null
+    and v_row.playtomic_level = 2.3 and not v_row.prefilled and v_row.walls = 'corners',
+    '8k: answers only, the level on file kept, the value sent ignored');
+  perform pg_temp.check(
+    (select mm_rating is null and playtomic_level = 2.3 from public.players where id = v_p[1])
+    and not exists (select 1 from public.rating_events where player_id = v_p[1]),
+    '8l: rating and profile untouched');
+  perform pg_temp.act_as(v_p[1]);
+  select * into v_row from public.get_my_levelling();
+  perform pg_temp.check(not v_row.needs_levelling and not v_row.questions_open, '8m: prompt closed');
+  perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers()) = 'already_levelled', '8n: once only');
+  perform pg_temp.check(not private.levelling_start_stands(v_p[1]), '8o: answers are not a start');
+  raise notice 'CHECK 8a ok: answers only';
 
   -- ── 8b. No level but a played night: levels, keeps the learned rating ─────
   update public.players set mm_rating = 2.2, mm_sigma = 0.4 where id in (v_p[2], v_p[5]);
@@ -248,13 +266,13 @@ begin
     and not exists (select 1 from public.rating_events where player_id = v_p[8] and kind = 'self_reset'),
     '9a: levelled start stands');
 
-  -- Not levelled: today's reset.
+  -- Answers only, no start (8a): today's reset.
   perform pg_temp.act_as(v_p[1]);
   perform public.update_my_profile('{"playtomic_level": 2.8}');
   perform pg_temp.check(
     (select mm_rating = 2.8 and mm_sigma = 0.7 from public.players where id = v_p[1])
     and exists (select 1 from public.rating_events where player_id = v_p[1] and kind = 'self_reset'),
-    '9b: unlevelled player resets');
+    '9b: answers only, resets');
 
   -- Clearing the level never resets to 0.
   perform public.update_my_profile('{"playtomic_level": 0}');
@@ -262,6 +280,21 @@ begin
     (select playtomic_level = 0 and mm_rating = 2.8 from public.players where id = v_p[1])
     and (select count(*) from public.rating_events where player_id = v_p[1] and kind = 'self_reset') = 1,
     '9c: no reset to 0');
+
+  -- Cleared after answering: the answers-only row is no level, so the gate
+  -- holds them, and levelling replaces the row with a start.
+  perform pg_temp.check(private.needs_levelling(v_p[1]), '9i: answers only is no level');
+  select * into v_row from public.get_my_levelling();
+  perform pg_temp.check(v_row.needs_levelling and not v_row.questions_open, '9j: gated, no prompt');
+  perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers('slow_back_wall')) = 'ok', '9k: levels');
+  select * into v_row from public.player_levelling where player_id = v_p[1];
+  perform pg_temp.check(
+    v_row.start_source = 'walls' and v_row.start_mu = 1.5 and v_row.walls = 'slow_back_wall'
+    and v_row.playtomic_level is null
+    and (select mm_rating = 1.5 from public.players where id = v_p[1])
+    and (select count(*) = 1 from public.rating_events where player_id = v_p[1] and kind = 'levelling'),
+    '9l: row replaced with a start');
+  perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers()) = 'already_levelled', '9m: once only');
 
   -- Levelled with a played night since: today's reset.
   insert into public.rating_events (kind, player_id, prior_mu, prior_sigma, proposed_delta, applied_delta, breakdown)
@@ -281,7 +314,7 @@ begin
 
   perform pg_temp.check(private.levelling_start_stands(v_p[8]), '9f: levelled, no night');
   perform pg_temp.check(not private.levelling_start_stands(v_p[9]), '9g: levelled, played since');
-  perform pg_temp.check(not private.levelling_start_stands(v_p[1]), '9h: not levelled');
+  perform pg_temp.check(private.levelling_start_stands(v_p[1]), '9h: levelled after clearing');
   raise notice 'CHECK 9 ok: reset guard';
 
   -- ── 10. RLS: members read no levelling row, not even their own ───────────
@@ -295,7 +328,7 @@ begin
   set local role authenticated;
   select count(*) into v_count from public.player_levelling where player_id = any(v_p);
   reset role;
-  perform pg_temp.check(v_count = 9, '10b: admin reads all (' || v_count || ')');
+  perform pg_temp.check(v_count = 10, '10b: admin reads all (' || v_count || ')');
 
   v_err := null;
   perform pg_temp.act_as(v_p[1]);

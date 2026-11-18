@@ -109,6 +109,19 @@ and is finished last.
 - PIN removal docs list the hook's rejection strings (PLAN, "exact strings"):
   add the new ones there too.
 
+### S3c
+
+- One migration: `player_levelling` takes `start_source` `none` with no
+  start (C-2); `needs_levelling` and `levelling_start_stands` count only real
+  starts; `complete_levelling` answers-only branch; `get_my_levelling` adds
+  `questions_open` (return type changes: drop and re-create, re-grant).
+- Client: the flow's `questions` mode (five steps, Finish on the last
+  question); `QuestionsCard` on Home with "Not now" (`useQuestionsPrompt`).
+  The client deploys before `db push`, so it reads a missing
+  `questions_open` as false.
+- Tests: `levelling.sql` (answers only, prompt state, cleared level after
+  answering, reset guard); `levelling_parallel.sh` for the answers-only path.
+
 ## Release
 
 | Task | Window                      | Steps                                |
@@ -116,4 +129,5 @@ and is finished last.
 | S1   | Any day outside the freeze  | merge → `db push` → `db:grants:prod` |
 | S2   | 16–26 Nov or after 29 Nov   | merge (Vercel deploys)               |
 | S3   | Same window as S2, after it | merge → `db push` → `db:grants:prod` |
+| S3c  | 16–26 Nov or after 29 Nov   | merge → `db push` → `db:grants:prod` |
 | S4   | After S3 is live            | merge → `db push` → `db:grants:prod` |

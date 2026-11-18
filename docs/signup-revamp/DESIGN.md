@@ -48,7 +48,8 @@ into these docs. Answers are stored as codes (CONTRACTS C-1).
 A player **needs levelling** when no level is recorded (D-16): both hold:
 
 - no Playtomic level on file (`players.playtomic_level` is 0 or null), and
-- no `player_levelling` row (a levelling start).
+- no `player_levelling` row with a start (`start_source` `playtomic` or
+  `walls`; an answers-only row from §2.6 doesn't count).
 
 A player who already has a level is never gated, whether they set it, an admin
 did, or the captain who added them. `private.needs_levelling(input_player_id)`
@@ -107,8 +108,8 @@ guard (§2.4, C-7): a `rating_events` row of kind `tournament` or `seed`, or a
 - **Overwrites** an `mm_rating` left by an earlier `self_reset` (a player with
   no played night who edited their level). The audit row keeps the prior.
 - Levelling runs once. A second call returns `already_levelled`. Only a
-  player the gate holds (`needs_levelling`, D-16) may level; anyone else gets
-  `not_needed`, so a player with a level can't re-seed their rating.
+  player the gate holds (`needs_levelling`, D-16) sets a start; anyone else
+  answers only (§2.6), so a player with a level can't re-seed their rating.
 - **A gated player with a played night** (their level was cleared, or a
   captain-added partner played without one) levels too: the answers and any
   Playtomic level are stored, but their learned `mm_rating` is kept and no
@@ -122,6 +123,7 @@ guards):
 
 - **No reset before the first played night of a levelled player.** The
   levelling start stands; the Playtomic level on the profile still updates.
+  Only a real start counts: answers alone (§2.6) don't stop the reset.
 - **No reset to 0.** Clearing the level (now allowed) never sets
   `mm_rating` := 0.
 
@@ -150,6 +152,28 @@ Players with a played night keep today's behaviour.
   - rows already active at release, and waitlist → registered promotion
     (already active). That includes a transfer recipient already on the
     waitlist: the transfer promotes their row rather than inserting one.
+
+### 2.6 The five questions for players with a level (S3c)
+
+- **Who.** A player the gate doesn't hold (they have a level) and who has no
+  `player_levelling` row. `get_my_levelling` returns this as `questions_open`
+  (C-3). Never a gate: registering doesn't read it.
+- **Prompt.** A Home card above the next event, in the same place as the
+  levelling card (the two never show together). "Not now" hides it on that
+  device for good (D-17, `localStorage`, keyed by player).
+- **Flow.** The same route (`/levelling?from=`), in `questions` mode: five
+  steps, no Playtomic step (players change their level from their profile).
+  On the last question, tapping records the answer and Finish sends it.
+  The mode comes from `get_my_levelling` (`needs_levelling` → six steps,
+  else `questions_open` → five); a session draft from the other mode is
+  dropped.
+- **Writing.** `complete_levelling` stores the answers with `start_source`
+  `none`, no start, and the level on file as `playtomic_level` (the value to
+  judge the questions against). `mm_*`, the profile level and `rating_events`
+  are untouched; a Playtomic value in the call is ignored.
+- **Clearing the level afterwards.** An answers-only row isn't a level, so
+  the gate holds the player again. Levelling then replaces the row with a
+  start (new answers, the start, `completed_at`).
 
 ## 3. Signup
 

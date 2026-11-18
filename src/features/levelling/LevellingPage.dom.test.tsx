@@ -155,3 +155,53 @@ describe('LevellingPage', () => {
     expect(screen.getByText('EVENT PAGE')).toBeTruthy()
   })
 })
+
+describe('LevellingPage, questions only (S3c)', () => {
+  beforeEach(() => {
+    levellingState.needsLevelling = false
+    levellingState.questionsOpen = true
+    levellingState.levelOnFile = 2.3
+  })
+
+  it('asks the five questions, with Finish on the last and no Playtomic step', async () => {
+    completeLevelling.mockResolvedValue('ok')
+    renderFlow()
+    expect(screen.getByText('1 of 5')).toBeTruthy()
+    const finish = () =>
+      screen.queryByRole('button', { name: 'Finish' }) as HTMLButtonElement | null
+    for (const question of QUESTIONS.slice(0, -1)) {
+      expect(finish()).toBeNull()
+      tap(question.options[1].label)
+    }
+    expect(screen.getByText('5 of 5')).toBeTruthy()
+    expect(finish()?.disabled).toBe(true)
+    tap(QUESTIONS[4].options[3].label)
+    expect(screen.getByText('5 of 5')).toBeTruthy()
+    expect(screen.queryByText(/Playtomic/)).toBeNull()
+    tap('Finish')
+
+    await screen.findByText('EVENT PAGE')
+    expect(completeLevelling).toHaveBeenCalledWith({
+      payload: expect.objectContaining({
+        walls: 'corners',
+        playtomic_level: null,
+        prefilled: false,
+      }),
+    })
+    expect(m.showToast).toHaveBeenCalledWith({
+      variant: 'success',
+      message: 'Thanks, Sam! That helps us put you in the right games.',
+    })
+  })
+
+  it('labels closing as stopping the questions', () => {
+    renderFlow()
+    expect(screen.getByRole('button', { name: 'Stop answering' })).toBeTruthy()
+  })
+
+  it('sends a player who has answered straight back', () => {
+    levellingState.questionsOpen = false
+    renderFlow()
+    expect(screen.getByText('EVENT PAGE')).toBeTruthy()
+  })
+})

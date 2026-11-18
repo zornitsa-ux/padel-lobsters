@@ -4,11 +4,18 @@ import type { QUESTIONS } from './levellingQuestions'
 interface QuestionStepProps {
   question: (typeof QUESTIONS)[number]
   answer: string | undefined
+  /** The flow's last step: tapping records the answer and Finish sends it. */
+  last?: boolean
   onAnswer: (code: string) => void
 }
 
 /** One question; tapping an answer records it and moves on. */
-export default function QuestionStep({ question, answer, onAnswer }: QuestionStepProps) {
+export default function QuestionStep({
+  question,
+  answer,
+  last = false,
+  onAnswer,
+}: QuestionStepProps) {
   return (
     <section className="space-y-4" aria-labelledby="levelling-question">
       <div className="space-y-1">
@@ -27,7 +34,9 @@ export default function QuestionStep({ question, answer, onAnswer }: QuestionSte
           />
         ))}
       </div>
-      <p className="caption text-center">Tap an answer to continue</p>
+      <p className="caption text-center">
+        {last ? 'Pick an answer, then Finish' : 'Tap an answer to continue'}
+      </p>
     </section>
   )
 }

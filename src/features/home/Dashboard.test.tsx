@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { screen, cleanup } from '@testing-library/react'
+import { screen, cleanup, fireEvent } from '@testing-library/react'
 import { renderWithClient } from '../../test/renderWithClient'
 import { MemoryRouter } from 'react-router-dom'
 import Dashboard from './Dashboard'
-import { levellingState, resetLevellingMock } from '../../test/levellingMock'
+import { dismissQuestions, levellingState, resetLevellingMock } from '../../test/levellingMock'
 
 // The Lobster Way entry point at the foot of the dashboard renders a
 // react-router <Link>, which needs router context to mount.
@@ -183,17 +183,48 @@ describe('Dashboard — levelling card', () => {
     expect(screen.queryByTestId('levelling-card')).toBeNull()
   })
 
-  it('asks an existing player who has not played yet, above the next event', () => {
+  it('asks an existing player with no level, above the next event', () => {
     showMember()
     levellingState.needsLevelling = true
     levellingState.existing = true
-    levellingState.levelOnFile = 2.3
     renderDashboard()
 
     const card = screen.getByTestId('levelling-card')
     expect(card.textContent).toMatch(/getting to know you better/i)
-    expect(card.textContent).toMatch(/Playtomic level is already filled in/)
+    expect(card.textContent).toMatch(/Answer 6 questions/)
     const nextEvent = screen.getByText('Friday Padel')
     expect(card.compareDocumentPosition(nextEvent) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+})
+
+describe('Dashboard — five-questions prompt', () => {
+  const showMember = () => {
+    setAllOk()
+    appContext.mockReturnValue({ session: MEMBER_SESSION, sessionSettled: true })
+    tournamentsQuery.mockReturnValue(okResult([UPCOMING]))
+  }
+
+  it('shows nothing when the questions are answered or dismissed', () => {
+    showMember()
+    renderDashboard()
+    expect(screen.queryByTestId('questions-card')).toBeNull()
+  })
+
+  it('asks a player with a level, above the next event, and lets them put it off', () => {
+    showMember()
+    levellingState.questionsOpen = true
+    renderDashboard()
+
+    const card = screen.getByTestId('questions-card')
+    expect(card.textContent).toMatch(/getting to know you better/i)
+    expect(screen.getByRole('link', { name: 'Answer 5 questions' }).getAttribute('href')).toMatch(
+      /^\/levelling\?from=/,
+    )
+    expect(screen.queryByTestId('levelling-card')).toBeNull()
+    const nextEvent = screen.getByText('Friday Padel')
+    expect(card.compareDocumentPosition(nextEvent) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Not now' }))
+    expect(dismissQuestions).toHaveBeenCalled()
   })
 })

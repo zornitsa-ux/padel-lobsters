@@ -858,8 +858,8 @@ export type Database = {
           playtomic_level: number | null
           prefilled: boolean
           racket_sports: string
-          start_mu: number
-          start_sigma: number
+          start_mu: number | null
+          start_sigma: number | null
           start_source: string
           walls: string
           years_playing: string
@@ -872,8 +872,8 @@ export type Database = {
           playtomic_level?: number | null
           prefilled?: boolean
           racket_sports: string
-          start_mu: number
-          start_sigma: number
+          start_mu?: number | null
+          start_sigma?: number | null
           start_source: string
           walls: string
           years_playing: string
@@ -886,8 +886,8 @@ export type Database = {
           playtomic_level?: number | null
           prefilled?: boolean
           racket_sports?: string
-          start_mu?: number
-          start_sigma?: number
+          start_mu?: number | null
+          start_sigma?: number | null
           start_source?: string
           walls?: string
           years_playing?: string
@@ -2253,6 +2253,7 @@ export type Database = {
         Returns: {
           needs_levelling: boolean
           playtomic_level: number
+          questions_open: boolean
         }[]
       }
       get_my_profile_v2: {

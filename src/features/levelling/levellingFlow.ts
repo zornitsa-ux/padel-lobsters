@@ -3,7 +3,14 @@ import { QUESTIONS, TOTAL_STEPS, type QuestionKey } from './levellingQuestions'
 
 export type PlaytomicChoice = 'yes' | 'no' | null
 
+/**
+ * `level` sets a start: five questions, then the Playtomic step. `questions` is for a
+ * player who already has a level: the five questions only (S3c).
+ */
+export type LevellingMode = 'level' | 'questions'
+
 export interface LevellingState {
+  mode: LevellingMode
   /** 0–4 are the questions, 5 the Playtomic step. */
   step: number
   answers: Partial<Record<QuestionKey, string>>
@@ -26,13 +33,24 @@ export type LevellingPayload = Record<QuestionKey, string> & {
 
 export const PLAYTOMIC_STEP = TOTAL_STEPS - 1
 
+export const totalSteps = ({ mode }: { mode: LevellingMode }) =>
+  mode === 'level' ? TOTAL_STEPS : QUESTIONS.length
+
+const lastStep = ({ mode }: { mode: LevellingMode }) => totalSteps({ mode }) - 1
+
+/** The step that carries Finish. */
+export const isFinalStep = (state: LevellingState) => state.step === lastStep(state)
+
 export function initialLevellingState({
   levelOnFile,
+  mode = 'level',
 }: {
   levelOnFile: number | null
+  mode?: LevellingMode
 }): LevellingState {
-  const prefilled = levelOnFile != null && levelOnFile > 0
+  const prefilled = mode === 'level' && levelOnFile != null && levelOnFile > 0
   return {
+    mode,
     step: 0,
     answers: {},
     playtomic: prefilled
@@ -48,7 +66,7 @@ export function levellingReducer(state: LevellingState, action: LevellingAction)
       return {
         ...state,
         answers: { ...state.answers, [action.key]: action.code },
-        step: Math.min(state.step + 1, PLAYTOMIC_STEP),
+        step: Math.min(state.step + 1, lastStep(state)),
       }
     case 'back':
       return { ...state, step: Math.max(state.step - 1, 0) }
@@ -69,8 +87,10 @@ const allAnswered = (answers: LevellingState['answers']) =>
   QUESTIONS.every(({ key }) => answers[key] !== undefined)
 
 export function canFinish(state: LevellingState): boolean {
+  if (!allAnswered(state.answers)) return false
+  if (state.mode === 'questions') return true
   const { choice, text } = state.playtomic
-  if (!allAnswered(state.answers) || choice === null) return false
+  if (choice === null) return false
   return choice === 'no' || playtomicProblem({ text }) === ''
 }
 
@@ -82,7 +102,10 @@ export function toPayload(state: LevellingState): LevellingPayload | null {
   ) as Record<QuestionKey, string>
   return {
     ...answers,
-    playtomic_level: state.playtomic.choice === 'yes' ? parseLevel(state.playtomic.text) : null,
+    playtomic_level:
+      state.mode === 'level' && state.playtomic.choice === 'yes'
+        ? parseLevel(state.playtomic.text)
+        : null,
     prefilled: state.prefilled,
   }
 }

@@ -11,12 +11,15 @@ import { StepHeader } from '../../components/ui/StepHeader'
 import {
   canFinish,
   initialLevellingState,
+  isFinalStep,
   levellingReducer,
-  PLAYTOMIC_STEP,
   toPayload,
+  totalSteps,
+  type LevellingMode,
   type LevellingState,
 } from './levellingFlow'
-import { QUESTIONS, TOTAL_STEPS } from './levellingQuestions'
+import { QUESTIONS } from './levellingQuestions'
+import type { MyLevelling } from './levellingQueries'
 import { clearDraft, readDraft, saveDraft } from './levellingDraft'
 import { returnPathFrom } from './levellingRoutes'
 import { useCompleteLevelling, useMyLevelling } from './useMyLevelling'
@@ -25,12 +28,23 @@ import PlaytomicStep from './PlaytomicStep'
 
 const SAVE_ERROR = 'We couldn’t save your answers. Please try again.'
 
-const finishedToast = ({ name }: { name: string | undefined }) => {
-  const first = name?.split(' ')[0]
-  return `${first ? `Thanks, ${first}! ` : 'Thanks! '}You’re all set and ready to register for an event.`
+const FINISHED: Record<LevellingMode, string> = {
+  level: 'You’re all set and ready to register for an event.',
+  questions: 'That helps us put you in the right games.',
 }
 
-/** The six-step levelling flow (DESIGN §2.2). Finishing never registers. */
+const finishedToast = ({ name, mode }: { name: string | undefined; mode: LevellingMode }) => {
+  const first = name?.split(' ')[0]
+  return `${first ? `Thanks, ${first}! ` : 'Thanks! '}${FINISHED[mode]}`
+}
+
+/** Six steps for a player who needs levelling; the five questions for one who has a level. */
+const modeFor = ({ needsLevelling, questionsOpen }: MyLevelling): LevellingMode | null => {
+  if (needsLevelling) return 'level'
+  return questionsOpen ? 'questions' : null
+}
+
+/** The levelling flow (DESIGN §2.2, §2.6). Finishing never registers. */
 export default function LevellingPage() {
   const { session, sessionSettled } = useApp()
   const userId = session?.user?.id ?? null
@@ -51,7 +65,7 @@ export default function LevellingPage() {
     <LevellingFlow
       userId={userId}
       from={from}
-      needsLevelling={levelling.data.needsLevelling}
+      mode={modeFor(levelling.data)}
       levelOnFile={levelling.data.levelOnFile}
     />
   )
@@ -60,12 +74,13 @@ export default function LevellingPage() {
 function LevellingFlow({
   userId,
   from,
-  needsLevelling,
+  mode,
   levelOnFile,
 }: {
   userId: string
   from: string
-  needsLevelling: boolean
+  /** Null once there's nothing left to answer. */
+  mode: LevellingMode | null
   levelOnFile: number | null
 }) {
   const navigate = useNavigate()
@@ -76,17 +91,25 @@ function LevellingFlow({
   const [error, setError] = useState('')
   // Set once Finish succeeds, so the refetched `needsLevelling: false` can't redirect first.
   const finished = useRef(false)
-  const [state, dispatch] = useReducer(
-    levellingReducer,
-    undefined,
-    (): LevellingState => readDraft({ userId }) ?? initialLevellingState({ levelOnFile }),
-  )
+  const [state, dispatch] = useReducer(levellingReducer, undefined, (): LevellingState => {
+    const draft = readDraft({ userId })
+    return draft && draft.mode === mode
+      ? draft
+      : initialLevellingState({ levelOnFile, mode: mode ?? 'level' })
+  })
 
   useEffect(() => {
     if (!finished.current) saveDraft({ userId, state })
   }, [userId, state])
 
-  if (!needsLevelling && !finished.current) return <Navigate to={from} replace />
+  // The last question can push Finish below the fold; bring it up once it can be tapped.
+  const finishRef = useRef<HTMLDivElement>(null)
+  const ready = state.mode === 'questions' && canFinish(state)
+  useEffect(() => {
+    if (ready) finishRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' })
+  }, [ready])
+
+  if (!mode && !finished.current) return <Navigate to={from} replace />
 
   const close = async () => {
     const stop = await confirm({
@@ -113,19 +136,23 @@ function LevellingFlow({
     clearDraft({ userId })
     navigate(from, { replace: true })
     if (status !== 'not_needed') {
-      showToast({ variant: 'success', message: finishedToast({ name: player?.name }) })
+      showToast({
+        variant: 'success',
+        message: finishedToast({ name: player?.name, mode: state.mode }),
+      })
     }
   }
 
-  const onPlaytomicStep = state.step === PLAYTOMIC_STEP
+  const final = isFinalStep(state)
+  const onPlaytomicStep = state.mode === 'level' && final
   return (
     <div className="pt-5 space-y-6">
       <StepHeader
         step={state.step + 1}
-        total={TOTAL_STEPS}
+        total={totalSteps(state)}
         onBack={back}
         onClose={() => void close()}
-        closeLabel="Stop setting your level"
+        closeLabel={state.mode === 'level' ? 'Stop setting your level' : 'Stop answering'}
       />
       {onPlaytomicStep ? (
         <PlaytomicStep
@@ -139,11 +166,12 @@ function LevellingFlow({
           key={state.step}
           question={QUESTIONS[state.step]}
           answer={state.answers[QUESTIONS[state.step].key]}
+          last={final}
           onAnswer={(code) => dispatch({ type: 'answer', key: QUESTIONS[state.step].key, code })}
         />
       )}
-      {onPlaytomicStep && (
-        <div className="space-y-3">
+      {final && (
+        <div ref={finishRef} className="space-y-3 scroll-mb-24">
           {error && <AlertBox variant="error">{error}</AlertBox>}
           <Button
             onClick={() => void finish()}
