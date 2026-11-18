@@ -7,25 +7,33 @@ import {
   choiceToDraft,
   draftToChoice,
   isDraftComplete,
-  isLevelValid,
+  partnerLevelProblem,
   rosterLine,
 } from './teamHelpers'
 import type { TeamEntry } from '../../teams/teamTypes'
 
 describe('new partner draft', () => {
-  const filled = { ...EMPTY_DRAFT, name: 'A', email: 'a@test.invalid', consent: true }
+  const filled = { ...EMPTY_DRAFT, name: 'A', email: 'a@test.invalid', level: '2.5', consent: true }
 
-  it('needs consent, name and email', () => {
+  it('needs consent, name, email and a level', () => {
     expect(isDraftComplete({ draft: filled })).toBe(true)
     expect(isDraftComplete({ draft: { ...filled, consent: false } })).toBe(false)
   })
 
-  it('accepts an empty or 0–7 level, with a comma decimal', () => {
-    expect(isLevelValid({ level: '' })).toBe(true)
-    expect(isLevelValid({ level: '3,5' })).toBe(true)
-    expect(isLevelValid({ level: 'abc' })).toBe(false)
-    expect(isLevelValid({ level: '9' })).toBe(false)
+  it('needs a level above 0 and up to 7, with a comma decimal', () => {
+    expect(partnerLevelProblem({ level: '3,5' })).toBe('')
+    expect(partnerLevelProblem({ level: '7' })).toBe('')
+    expect(partnerLevelProblem({ level: '0' })).not.toBe('')
+    expect(partnerLevelProblem({ level: 'abc' })).not.toBe('')
+    expect(partnerLevelProblem({ level: '9' })).not.toBe('')
+    expect(isDraftComplete({ draft: { ...filled, level: '3,5' } })).toBe(true)
     expect(isDraftComplete({ draft: { ...filled, level: 'abc' } })).toBe(false)
+    expect(isDraftComplete({ draft: { ...filled, level: '0' } })).toBe(false)
+  })
+
+  it('shows no error for a blank level, but the form stays incomplete', () => {
+    expect(partnerLevelProblem({ level: '  ' })).toBe('')
+    expect(isDraftComplete({ draft: { ...filled, level: '' } })).toBe(false)
   })
 })
 

@@ -95,7 +95,7 @@ No Phase 2 migration is needed.
 private.create_partner_player(
   input_requested_by   uuid,      -- the person attesting consent (auth.uid())
   input_tournament_id  uuid,
-  input_new_partner    jsonb,     -- {name, email, playtomic_level?}
+  input_new_partner    jsonb,     -- {name, email, playtomic_level}
   input_consent        boolean,
   input_skip_daily_cap boolean    -- true for admins
 ) returns table(status text, player_id uuid)
@@ -104,17 +104,17 @@ private.create_partner_player(
 The checks run in this order. Each failure returns `(code, null)` and writes
 nothing:
 
-| Code                  | When                                                                                     |
-| --------------------- | ---------------------------------------------------------------------------------------- |
-| `consent_required`    | `input_consent is not true` (D-011)                                                      |
-| `invalid_name`        | the name is empty after collapsing whitespace, or longer than 100 characters             |
-| `invalid_email`       | fails `private.is_valid_email`, or ends with `@padelobsters.internal`                    |
-| `invalid_level`       | `playtomic_level` is present but not a number in 0–7                                     |
-| `email_in_use`        | `lower(email)` matches any `players.email` (any status) or any `auth.users.email`        |
-| `partner_cap_reached` | ≥ 3 `partner_invites` rows with this `requested_by` in the last 24h (skipped for admins) |
+| Code                  | When                                                                                         |
+| --------------------- | -------------------------------------------------------------------------------------------- |
+| `consent_required`    | `input_consent is not true` (D-011)                                                          |
+| `invalid_name`        | the name is empty after collapsing whitespace, or longer than 100 characters                 |
+| `invalid_email`       | fails `private.is_valid_email`, or ends with `@padelobsters.internal`                        |
+| `invalid_level`       | `playtomic_level` is missing, blank, or not a number above 0 and up to 7 (signup revamp S6a) |
+| `email_in_use`        | `lower(email)` matches any `players.email` (any status) or any `auth.users.email`            |
+| `partner_cap_reached` | ≥ 3 `partner_invites` rows with this `requested_by` in the last 24h (skipped for admins)     |
 
 On success it inserts an `active` player (`name`, `lower(email)`,
-`playtomic_level` = `adjusted_level` = the level or 0, every other field
+`playtomic_level` = `adjusted_level` = the level, every other field
 default). The `ensure_auth_user` trigger creates the confirmed auth user and
 its email identity. **No `mm_rating` is written:** signup doesn't write one
 either, and the matcher and `teamStrength` fall back to `playtomic_level`. It
@@ -137,7 +137,7 @@ public.register_team_for_tournament(
   input_tournament_id   uuid,
   input_captain_id      uuid,
   input_partner_id      uuid    default null,   -- existing member, or
-  input_new_partner     jsonb   default null,   -- {name, email, playtomic_level?}
+  input_new_partner     jsonb   default null,   -- {name, email, playtomic_level}
   input_partner_consent boolean default false
 ) returns table(status text, team_id uuid, partner_id uuid)
 ```

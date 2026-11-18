@@ -160,9 +160,10 @@ const openNewPartnerForm = () => {
   fireEvent.click(screen.getByRole('button', { name: /isn't on padel lobsters/i }))
 }
 
-const fillNewPartner = () => {
+const fillNewPartner = ({ level = '2,5' }: { level?: string } = {}) => {
   fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Gus' } })
   fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'gus@example.com' } })
+  fireEvent.change(screen.getByLabelText('Playtomic level'), { target: { value: level } })
 }
 
 beforeEach(() => {
@@ -176,7 +177,7 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('team join card', () => {
-  it('keeps submit disabled until consent is ticked and name and email are filled', () => {
+  it('keeps submit disabled until consent is ticked and name, email and level are filled', () => {
     renderInfo()
     openNewPartnerForm()
     expect(screen.getByText(/creating a padel lobsters account for your partner/i)).not.toBeNull()
@@ -187,6 +188,20 @@ describe('team join card', () => {
 
     fireEvent.click(screen.getByRole('checkbox'))
     expect(submit.disabled).toBe(false)
+  })
+
+  it("needs the partner's level: blank waits quietly, 0 says why", () => {
+    renderInfo()
+    openNewPartnerForm()
+    fillNewPartner({ level: '' })
+    fireEvent.click(screen.getByRole('checkbox'))
+    const submit = screen.getByRole('button', { name: 'Continue' }) as HTMLButtonElement
+    expect(submit.disabled).toBe(true)
+    expect(screen.getByText(/not on playtomic\? your best guess/i)).not.toBeNull()
+
+    fireEvent.change(screen.getByLabelText('Playtomic level'), { target: { value: '0' } })
+    expect(submit.disabled).toBe(true)
+    expect(screen.getByText(/above 0 and up to 7/)).not.toBeNull()
   })
 
   it('shows players full names, so members who share a first name can be told apart', () => {
@@ -249,7 +264,7 @@ describe('team join card', () => {
       captainId: 'me',
       choice: {
         kind: 'new',
-        partner: { name: 'Gus', email: 'gus@example.com', playtomicLevel: null },
+        partner: { name: 'Gus', email: 'gus@example.com', playtomicLevel: 2.5 },
         consent: true,
       },
     })

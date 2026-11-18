@@ -1,4 +1,4 @@
-import { parseLevel } from '../../../../lib/parseLevel'
+import { levelProblem, parseLevel } from '../../../../lib/parseLevel'
 import type { Player } from '../../../../lib/normalise'
 import type { NormalisedRegistration } from '../../registrationQueries'
 import type { EventTeam, NewPartnerInput, PartnerChoice, TeamEntry } from '../../teams/teamTypes'
@@ -21,18 +21,19 @@ export interface NewPartnerDraft {
 
 export const EMPTY_DRAFT: NewPartnerDraft = { name: '', email: '', level: '', consent: false }
 
-// Optional on this form: blank is valid; anything typed must be a level 0–7.
-export const isLevelValid = ({ level }: { level: string }): boolean => {
-  if (level.trim() === '') return true
-  const value = parseLevel(level)
-  return value !== null && value <= 7
-}
+/**
+ * What's wrong with the typed level, or '' while it's blank or valid. Required (signup
+ * revamp S6a): above 0, since 0 means "no level", and up to 7.
+ */
+export const partnerLevelProblem = ({ level }: { level: string }): string =>
+  levelProblem({ value: level, min: 0, aboveMin: true })
 
 export const isDraftComplete = ({ draft }: { draft: NewPartnerDraft }): boolean =>
   draft.consent &&
   draft.name.trim() !== '' &&
   draft.email.trim() !== '' &&
-  isLevelValid({ level: draft.level })
+  draft.level.trim() !== '' &&
+  partnerLevelProblem({ level: draft.level }) === ''
 
 export const draftToChoice = ({ draft }: { draft: NewPartnerDraft }): PartnerChoice => {
   const partner: NewPartnerInput = {
