@@ -112,7 +112,9 @@ begin
         input_answers ->> 'lessons',
         input_answers ->> 'racket_sports',
         input_answers ->> 'walls',
-        nullif(v_old_level, 0), 'none', null, null, false
+        -- players.playtomic_level has no range check; keep only values this column takes.
+        case when v_old_level > 0 and v_old_level <= 7 then v_old_level end,
+        'none', null, null, false
       );
     exception when check_violation or not_null_violation then
       return query select 'invalid_answers'::text; return;

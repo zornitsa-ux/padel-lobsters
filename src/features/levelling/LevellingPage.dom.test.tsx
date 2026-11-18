@@ -25,15 +25,16 @@ import LevellingPage from './LevellingPage'
 
 const FROM = '/events/e1/info'
 
-const renderFlow = () =>
-  render(
-    <MemoryRouter initialEntries={[`/levelling?from=${encodeURIComponent(FROM)}`]}>
-      <Routes>
-        <Route path="/levelling" element={<LevellingPage />} />
-        <Route path={FROM} element={<p>EVENT PAGE</p>} />
-      </Routes>
-    </MemoryRouter>,
-  )
+const flowTree = () => (
+  <MemoryRouter initialEntries={[`/levelling?from=${encodeURIComponent(FROM)}`]}>
+    <Routes>
+      <Route path="/levelling" element={<LevellingPage />} />
+      <Route path={FROM} element={<p>EVENT PAGE</p>} />
+    </Routes>
+  </MemoryRouter>
+)
+
+const renderFlow = () => render(flowTree())
 
 const tap = (name: string | RegExp) => fireEvent.click(screen.getByRole('button', { name }))
 
@@ -197,6 +198,17 @@ describe('LevellingPage, questions only (S3c)', () => {
   it('labels closing as stopping the questions', () => {
     renderFlow()
     expect(screen.getByRole('button', { name: 'Stop answering' })).toBeTruthy()
+  })
+
+  it('goes back when the mode changes under the open flow', () => {
+    levellingState.needsLevelling = true
+    levellingState.questionsOpen = false
+    const view = renderFlow()
+    expect(screen.getByText('1 of 6')).toBeTruthy()
+    levellingState.needsLevelling = false
+    levellingState.questionsOpen = true
+    view.rerender(flowTree())
+    expect(screen.getByText('EVENT PAGE')).toBeTruthy()
   })
 
   it('sends a player who has answered straight back', () => {

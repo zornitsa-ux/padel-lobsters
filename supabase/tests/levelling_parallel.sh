@@ -17,7 +17,8 @@ psql_() {
 
 players=()
 cleanup() {
-  for id in "${players[@]}"; do
+  # Guarded expansion: bash 3.2 with set -u calls an empty array unbound.
+  for id in ${players[@]+"${players[@]}"}; do
     psql_ -c "delete from public.players where id = '$id'; delete from auth.users where id = '$id';" >/dev/null
   done
 }

@@ -109,7 +109,9 @@ function LevellingFlow({
     if (ready) finishRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' })
   }, [ready])
 
-  if (!mode && !finished.current) return <Navigate to={from} replace />
+  // The mode changed under the open flow (a level set or cleared elsewhere): the server
+  // would read the answers by the new mode, so go back to the card that matches it.
+  if (mode !== state.mode && !finished.current) return <Navigate to={from} replace />
 
   const close = async () => {
     const stop = await confirm({

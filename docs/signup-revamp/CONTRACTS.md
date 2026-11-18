@@ -50,8 +50,9 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
 - `SECURITY DEFINER`, caller = `auth.uid()`; `authenticated` only.
 - `input_answers`: the five C-1 keys, plus `playtomic_level` (number or null)
   and `prefilled` (boolean).
-- Statuses: `ok`, `already_levelled` (any row already), `not_needed` (a
-  caller with no player row), `invalid_answers`
+- Statuses: `ok`, `already_levelled` (a row with a start; or, for a caller
+  with a level, any row), `not_needed` (a caller with no player row),
+  `invalid_answers`
   (unknown code, missing key, or a level outside (0, 7]),
   `not_authenticated` (raised, P0001).
 - Locks the caller's `players` row `FOR UPDATE` first (as

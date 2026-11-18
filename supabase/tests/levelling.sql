@@ -239,6 +239,13 @@ begin
   perform pg_temp.check(not v_row.needs_levelling and not v_row.questions_open, '8m: prompt closed');
   perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers()) = 'already_levelled', '8n: once only');
   perform pg_temp.check(not private.levelling_start_stands(v_p[1]), '8o: answers are not a start');
+  -- A level on file outside the column's range (players has no check) is stored as null.
+  update public.players set playtomic_level = 7.5 where id = v_p[13];
+  delete from public.player_levelling where player_id = v_p[13];
+  perform pg_temp.check(pg_temp.complete(v_p[13], pg_temp.answers()) = 'ok', '8p: level over 7 on file');
+  perform pg_temp.check(
+    (select playtomic_level is null and start_source = 'none' from public.player_levelling where player_id = v_p[13]),
+    '8q: stored without the level');
   raise notice 'CHECK 8a ok: answers only';
 
   -- ── 8b. No level but a played night: levels, keeps the learned rating ─────
