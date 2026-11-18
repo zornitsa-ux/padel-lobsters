@@ -7,6 +7,15 @@ export function parseLevel(value: unknown): number | null {
 }
 
 /**
+ * A level someone has to give: above 0 (0 means "no level" in the app) and up to 7.
+ * `blank` is the message when nothing is typed.
+ */
+export function givenLevelProblem({ value, blank }: { value: unknown; blank: string }): string {
+  if (!String(value ?? '').trim()) return blank
+  return levelProblem({ value, min: 0, aboveMin: true })
+}
+
+/**
  * What's wrong with a typed level, or '' when it's blank or a number from `min` to 7.
  * `aboveMin` excludes `min` itself (levelling: 0 means "no level").
  */

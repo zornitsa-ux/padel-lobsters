@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 import { FormError } from '../../../../components/ui/FormError'
 import { useFieldError } from '../../../../components/ui/useFieldError'
 import { PARTNER_CONSENT_LABEL, partnerLevelProblem, type NewPartnerDraft } from './teamHelpers'
@@ -18,7 +18,9 @@ export default function NewPartnerForm({
   emailErrorAction,
 }: NewPartnerFormProps) {
   const set = (patch: Partial<NewPartnerDraft>) => onChange({ ...draft, ...patch })
-  const levelError = partnerLevelProblem({ level: draft.level })
+  // Blank waits quietly: Continue stays disabled and the hint says what to enter.
+  const levelError = draft.level.trim() ? partnerLevelProblem({ level: draft.level }) : ''
+  const hintId = useId()
   const email = useFieldError({ message: emailError })
   const level = useFieldError({ message: levelError })
 
@@ -61,12 +63,13 @@ export default function NewPartnerForm({
             className="input py-2 text-sm mt-1"
             value={draft.level}
             onChange={(e) => set({ level: e.target.value })}
+            aria-describedby={levelError ? undefined : hintId}
             {...level.fieldProps}
           />
         </label>
         <FormError id={level.errorId} message={levelError} polite />
         {!levelError && (
-          <p className="caption">
+          <p id={hintId} className="caption">
             Not on Playtomic? Your best guess, e.g. 2.0. They can change it later.
           </p>
         )}

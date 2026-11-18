@@ -44,7 +44,7 @@ export const PARTNER_ERROR_MESSAGES: Record<PartnerError, string> = {
   consent_required: "Tick the box to confirm you have your partner's permission.",
   invalid_name: "Enter your partner's name.",
   invalid_email: 'Enter a valid email address.',
-  invalid_level: "Enter your partner's Playtomic level: a number above 0 and up to 7.",
+  invalid_level: "Enter the partner's Playtomic level: a number above 0 and up to 7.",
   email_in_use: 'That email already has an account. Search for them by name instead.',
   partner_cap_reached:
     "You've added 3 new partners today. Ask an admin if you need to add another.",

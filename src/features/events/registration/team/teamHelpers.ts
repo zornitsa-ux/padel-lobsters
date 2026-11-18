@@ -1,4 +1,4 @@
-import { levelProblem, parseLevel } from '../../../../lib/parseLevel'
+import { givenLevelProblem, parseLevel } from '../../../../lib/parseLevel'
 import type { Player } from '../../../../lib/normalise'
 import type { NormalisedRegistration } from '../../registrationQueries'
 import type { EventTeam, NewPartnerInput, PartnerChoice, TeamEntry } from '../../teams/teamTypes'
@@ -21,25 +21,22 @@ export interface NewPartnerDraft {
 
 export const EMPTY_DRAFT: NewPartnerDraft = { name: '', email: '', level: '', consent: false }
 
-/**
- * What's wrong with the typed level, or '' while it's blank or valid. Required (signup
- * revamp S6a): above 0, since 0 means "no level", and up to 7.
- */
+/** Required (signup revamp S6a): above 0, since 0 means "no level", and up to 7. */
 export const partnerLevelProblem = ({ level }: { level: string }): string =>
-  levelProblem({ value: level, min: 0, aboveMin: true })
+  givenLevelProblem({ value: level, blank: "Enter the partner's Playtomic level." })
 
 export const isDraftComplete = ({ draft }: { draft: NewPartnerDraft }): boolean =>
   draft.consent &&
   draft.name.trim() !== '' &&
   draft.email.trim() !== '' &&
-  draft.level.trim() !== '' &&
   partnerLevelProblem({ level: draft.level }) === ''
 
 export const draftToChoice = ({ draft }: { draft: NewPartnerDraft }): PartnerChoice => {
   const partner: NewPartnerInput = {
     name: draft.name.trim(),
     email: draft.email.trim(),
-    playtomicLevel: parseLevel(draft.level),
+    // isDraftComplete gates this; 0 would be refused as invalid_level.
+    playtomicLevel: parseLevel(draft.level) ?? 0,
   }
   return { kind: 'new', partner, consent: draft.consent }
 }
@@ -50,7 +47,7 @@ export const choiceToDraft = ({ choice }: { choice: PartnerChoice | null }): New
     ? {
         name: choice.partner.name,
         email: choice.partner.email,
-        level: choice.partner.playtomicLevel === null ? '' : String(choice.partner.playtomicLevel),
+        level: String(choice.partner.playtomicLevel),
         consent: choice.consent,
       }
     : EMPTY_DRAFT

@@ -197,7 +197,9 @@ describe('team join card', () => {
     fireEvent.click(screen.getByRole('checkbox'))
     const submit = screen.getByRole('button', { name: 'Continue' }) as HTMLButtonElement
     expect(submit.disabled).toBe(true)
-    expect(screen.getByText(/not on playtomic\? your best guess/i)).not.toBeNull()
+    const hint = screen.getByText(/not on playtomic\? your best guess/i)
+    const input = screen.getByLabelText('Playtomic level')
+    expect(input.getAttribute('aria-describedby')).toBe(hint.id)
 
     fireEvent.change(screen.getByLabelText('Playtomic level'), { target: { value: '0' } })
     expect(submit.disabled).toBe(true)

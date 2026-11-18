@@ -31,8 +31,8 @@ describe('new partner draft', () => {
     expect(isDraftComplete({ draft: { ...filled, level: '0' } })).toBe(false)
   })
 
-  it('shows no error for a blank level, but the form stays incomplete', () => {
-    expect(partnerLevelProblem({ level: '  ' })).toBe('')
+  it('refuses a blank level', () => {
+    expect(partnerLevelProblem({ level: '  ' })).not.toBe('')
     expect(isDraftComplete({ draft: { ...filled, level: '' } })).toBe(false)
   })
 })
