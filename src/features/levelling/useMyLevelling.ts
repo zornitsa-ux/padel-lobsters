@@ -1,10 +1,11 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useApp } from '../../context/useApp'
 import { playerKeys } from '../players/playerKeys'
 import { usePlayer } from '../players/usePlayers'
 import { completeLevelling, fetchMyLevelling } from './levellingQueries'
 import { levellingKeys } from './levellingKeys'
+import { readStorage, writeStorage } from '../../lib/safeStorage'
 
 export function useMyLevelling() {
   const { session } = useApp()
@@ -37,6 +38,31 @@ export function useNeedsLevelling() {
     needsLevelling: data?.needsLevelling ?? false,
     levelOnFile: data?.levelOnFile ?? null,
   }
+}
+
+const questionsDismissedKey = ({ userId }: { userId: string }) =>
+  `lobster_levelling_questions_dismissed_${userId}`
+
+/** The Home prompt for the five questions (S3c). "Not now" hides it on this device for good. */
+export function useQuestionsPrompt() {
+  const { session } = useApp()
+  const userId = session?.user?.id ?? null
+  const { data } = useMyLevelling()
+  const [dismissedFor, setDismissedFor] = useState<string | null>(null)
+  const dismissed =
+    !!userId &&
+    (dismissedFor === userId ||
+      readStorage({ area: 'local', key: questionsDismissedKey({ userId }) }) !== null)
+  const dismiss = useCallback(() => {
+    if (!userId) return
+    writeStorage({
+      area: 'local',
+      key: questionsDismissedKey({ userId }),
+      value: new Date().toISOString(),
+    })
+    setDismissedFor(userId)
+  }, [userId])
+  return { open: !!data?.questionsOpen && !dismissed, dismiss }
 }
 
 /** Re-reads the gate, e.g. after a register call answered `needs_level`. */

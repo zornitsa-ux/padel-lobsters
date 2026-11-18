@@ -32,19 +32,27 @@ beforeEach(() => {
 describe('fetchMyLevelling', () => {
   it('reads a player with no level on file (null, though the generated type says number)', async () => {
     mockRpc.mockResolvedValue({
-      data: [{ needs_levelling: true, playtomic_level: null }],
+      data: [{ needs_levelling: true, playtomic_level: null, questions_open: false }],
       error: null,
     })
-    await expect(fetchMyLevelling()).resolves.toEqual({ needsLevelling: true, levelOnFile: null })
+    await expect(fetchMyLevelling()).resolves.toEqual({
+      needsLevelling: true,
+      levelOnFile: null,
+      questionsOpen: false,
+    })
     expect(mockRpc).toHaveBeenCalledWith('get_my_levelling')
   })
 
-  it('passes the level on file through for the prefill', async () => {
+  it('reads a player with a level who has the questions open', async () => {
     mockRpc.mockResolvedValue({
-      data: [{ needs_levelling: true, playtomic_level: 2.3 }],
+      data: [{ needs_levelling: false, playtomic_level: 2.3, questions_open: true }],
       error: null,
     })
-    await expect(fetchMyLevelling()).resolves.toEqual({ needsLevelling: true, levelOnFile: 2.3 })
+    await expect(fetchMyLevelling()).resolves.toEqual({
+      needsLevelling: false,
+      levelOnFile: 2.3,
+      questionsOpen: true,
+    })
   })
 
   it('throws on an error or a malformed row, so the card never shows on a guess', async () => {
@@ -52,6 +60,17 @@ describe('fetchMyLevelling', () => {
     await expect(fetchMyLevelling()).rejects.toBe(otherError)
     mockRpc.mockResolvedValue({ data: [], error: null })
     await expect(fetchMyLevelling()).rejects.toThrow()
+  })
+
+  it('reads the RPC from before S3c as questions closed', async () => {
+    mockRpc.mockResolvedValue({
+      data: [{ needs_levelling: true, playtomic_level: null }],
+      error: null,
+    })
+    await expect(fetchMyLevelling()).resolves.toMatchObject({
+      needsLevelling: true,
+      questionsOpen: false,
+    })
   })
 })
 

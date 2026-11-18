@@ -29,11 +29,15 @@ Walls → start (DESIGN §2.3): 1.0, 1.5, 2.0, 2.5, in the order above.
 | `racket_sports`   | `text`        | NOT NULL, C-1                      |
 | `walls`           | `text`        | NOT NULL, C-1                      |
 | `playtomic_level` | `numeric`     | NULL when "no"; else > 0 and ≤ 7   |
-| `start_source`    | `text`        | `playtomic` or `walls`             |
-| `start_mu`        | `numeric`     | NOT NULL                           |
-| `start_sigma`     | `numeric`     | NOT NULL                           |
+| `start_source`    | `text`        | `playtomic`, `walls` or `none`     |
+| `start_mu`        | `numeric`     | NULL only for `none`               |
+| `start_sigma`     | `numeric`     | NULL only for `none`               |
 | `prefilled`       | `boolean`     | step 6 opened with a level on file |
 | `completed_at`    | `timestamptz` | NOT NULL DEFAULT `now()`           |
+
+`none` (S3c) is an answers-only row from a player who has a level: no start,
+and `playtomic_level` is the level on file when they answered. Constraint
+`player_levelling_start_present` keeps start and source in step.
 
 RLS on; SELECT policy for admins only; no write policy. Grants: `authenticated`
 SELECT (filtered by RLS), nothing for `anon`. Added to
@@ -46,34 +50,40 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
 - `SECURITY DEFINER`, caller = `auth.uid()`; `authenticated` only.
 - `input_answers`: the five C-1 keys, plus `playtomic_level` (number or null)
   and `prefilled` (boolean).
-- Statuses: `ok`, `already_levelled`, `not_needed` (the gate doesn't hold
-  the caller: they have a level, so their rating is never re-seeded; also a
-  caller with no player row), `invalid_answers`
+- Statuses: `ok`, `already_levelled` (a row with a start; or, for a caller
+  with a level, any row), `not_needed` (a caller with no player row),
+  `invalid_answers`
   (unknown code, missing key, or a level outside (0, 7]),
   `not_authenticated` (raised, P0001).
 - Locks the caller's `players` row `FOR UPDATE` first (as
-  `update_my_profile` does), then checks `already_levelled` and
-  `not_needed`. A double tap gets `ok` then `already_levelled`, never a
+  `update_my_profile` does), then branches on `needs_levelling`. A double tap gets `ok` then `already_levelled`, never a
   unique violation or two audit rows.
-- Effects on `ok` (one transaction): insert `player_levelling`; set
+- **The gate holds the caller** (no level recorded): effects on `ok` (one
+  transaction): insert `player_levelling`, replacing an answers-only row; set
   `mm_rating`, `mm_sigma`, `mm_rating_updated_at`; when a level is given, set
   `playtomic_level`, `adjusted_level`, `playtomic_updated_at`; insert one
   `rating_events` row (C-4). For a caller with a played night, only the
   `player_levelling` row and the level are written: the rating is kept.
+- **Anyone else** (they have a level): `already_levelled` if they have a
+  row; else insert an answers-only row (`start_source` `none`, C-2) and
+  return `ok`. Nothing else is written; `playtomic_level` and `prefilled` in
+  the input are ignored.
 - `prefilled` is stored as sent; it doesn't change the result.
 
-### `public.get_my_levelling() returns table(needs_levelling boolean, playtomic_level numeric)`
+### `public.get_my_levelling() returns table(needs_levelling boolean, playtomic_level numeric, questions_open boolean)`
 
 - `SECURITY DEFINER`, caller = `auth.uid()`; `authenticated` only. Not
   `STABLE`: it sets `statement_timeout`.
 - `playtomic_level` is the level on file (> 0) for the step 6 prefill, else
-  null. One row; signed-in callers without a player row get
-  `needs_levelling = false`.
+  null. `questions_open`: not `needs_levelling` and no `player_levelling`
+  row (S3c). One row; signed-in callers without a player row get
+  `false, null, false`.
 
 ### `private.needs_levelling(input_player_id uuid) returns boolean`
 
 - No level recorded (D-16): `players.playtomic_level` is 0 or null and there
-  is no `player_levelling` row. Revoked from all client roles.
+  is no `player_levelling` row with a start (`start_source` other than
+  `none`). Revoked from all client roles.
 
 ### `private.has_played_night(input_player_id uuid) returns boolean`
 
@@ -161,8 +171,8 @@ In `update_my_profile`, `record_mm_reset` is skipped when:
 
 - the new level is 0 (the RPC `coalesce`s a null level to the old one, so
   clearing the field sends 0), or
-- the player has a `player_levelling` row and no played night
-  (`private.levelling_start_stands`).
+- the player has a `player_levelling` row with a start (not `none`) and no
+  played night (`private.levelling_start_stands`).
 
 `admin_update_player` has called no reset since `20260815160000` (#182), so
 there is nothing to guard there yet. The fix for #182 restores the reset with

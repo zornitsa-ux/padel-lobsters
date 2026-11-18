@@ -1,3 +1,4 @@
+import type { Browser } from '@playwright/test'
 import { openAs } from './fixtures/auth'
 import {
   admin,
@@ -10,6 +11,7 @@ import {
   PLAYER_PASSWORD,
   registerPlayers,
   registrationOf,
+  sql,
 } from './fixtures/db'
 import { PLAYER } from './fixtures/seed'
 import { SESSION_FILES } from './fixtures/sessions'
@@ -188,6 +190,89 @@ test('edit the profile', async ({ browser }) => {
         return data?.tagline
       })
       .toBe('Vamos!')
+    expect(other.errors).toEqual([])
+  } finally {
+    await cleanUp(
+      () => other.context.close(),
+      () => deletePlayer({ id: player.id }),
+    )
+  }
+})
+
+/** A throwaway player with a Playtomic level, signed in in their own browser. */
+async function playerWithLevel({ browser }: { browser: Browser }) {
+  const player = await createPlayer()
+  const { error } = await admin
+    .from('players')
+    .update({ playtomic_level: 2.4, adjusted_level: 2.4 })
+    .eq('id', player.id)
+  if (error) throw new Error(`Could not set the level: ${error.message}`)
+  const other = await openAs({ browser, email: player.email, password: PLAYER_PASSWORD })
+  return { player, other }
+}
+
+test('a player with a level answers the five questions from Home', async ({ browser }) => {
+  const { player, other } = await playerWithLevel({ browser })
+  const { page } = other
+  try {
+    await page.goto('/home')
+    await page
+      .getByTestId('questions-card')
+      .getByRole('link', { name: 'Answer 5 questions' })
+      .click()
+    for (const answer of [
+      'More than 3 years',
+      'Once or twice a week',
+      'Some (1–10 lessons)',
+      'Casually',
+      'I’m comfortable off the back wall, but corners are hard',
+    ]) {
+      await page.getByRole('button', { name: answer, exact: true }).click()
+    }
+    await expect(page.getByText('5 of 5')).toBeVisible()
+    await page.getByRole('button', { name: 'Finish' }).click()
+
+    await expect(page.getByText(/that helps us put you in the right games/i)).toBeVisible()
+    await expect(page).toHaveURL(/\/home$/)
+    await expect(page.getByTestId('questions-card')).toHaveCount(0)
+    // Direct SQL: locally, service_role has no default grants on new tables.
+    const [row] = await sql`
+      select l.walls, l.start_source, l.start_mu, l.playtomic_level::float8 as playtomic_level,
+             p.mm_rating
+        from player_levelling l join players p on p.id = l.player_id
+       where l.player_id = ${player.id}`
+    expect({ ...row }).toEqual({
+      walls: 'back_wall_not_corners',
+      start_source: 'none',
+      start_mu: null,
+      playtomic_level: 2.4,
+      mm_rating: null,
+    })
+    expect(other.errors).toEqual([])
+  } finally {
+    await cleanUp(
+      () => other.context.close(),
+      () => deletePlayer({ id: player.id }),
+    )
+  }
+})
+
+test('"Not now" puts the five questions off on this device', async ({ browser }) => {
+  const { player, other } = await playerWithLevel({ browser })
+  const { page } = other
+  try {
+    await page.goto('/home')
+    await page.getByTestId('questions-card').getByRole('button', { name: 'Not now' }).click()
+    await expect(page.getByTestId('questions-card')).toHaveCount(0)
+    // The prompt waits on get_my_levelling; checking before it answers would prove nothing.
+    const levellingRead = page.waitForResponse((r) => r.url().includes('/rpc/get_my_levelling'))
+    await page.reload()
+    await levellingRead
+    await expect(page.getByText(`${player.firstName}!`)).toBeVisible()
+    await expect(page.getByTestId('questions-card')).toHaveCount(0)
+    const [{ count }] = await sql`
+      select count(*)::int as count from player_levelling where player_id = ${player.id}`
+    expect(count).toBe(0)
     expect(other.errors).toEqual([])
   } finally {
     await cleanUp(

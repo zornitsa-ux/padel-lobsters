@@ -56,3 +56,9 @@ this file records how the code carries them out.
   level are never gated. The five questions are data collection, asked of
   players who already have a level through a separate prompt that never blocks
   registering (S3c).
+- **D-17. The five questions for players with a level share the levelling
+  table and flow** (S3c). An answers-only row (`start_source` `none`) keeps
+  every answer in one place for the rerun, and the flow's `questions` mode
+  reuses the screens. Only a real start counts for the gate and the reset
+  guard. "Not now" on the Home prompt hides it on that device for good
+  (owner, 18 Nov): a `localStorage` flag per player, no server state.
