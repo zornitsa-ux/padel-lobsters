@@ -5,9 +5,11 @@ export const SIGNUP_HOOK_MESSAGES = {
   nameTooLong: 'Your name can be at most 100 characters.',
   levelInvalid: 'Enter your Playtomic level as a number, like 2.5.',
   placeholder: 'You’ve already been added to a Lobster team — ask an admin to invite you.',
+  sourceUnknown: 'Please pick how you found us from the list.',
+  sourceDetailTooLong: 'How you found us can be at most 100 characters.',
 } as const
 
-export type SignupField = 'name' | 'level'
+export type SignupField = 'name' | 'level' | 'source'
 
 export interface SignupErrorView {
   field: SignupField | null
@@ -19,6 +21,8 @@ const FIELD_BY_MESSAGE: Record<string, SignupField> = {
   [SIGNUP_HOOK_MESSAGES.nameTooLong]: 'name',
   [SIGNUP_HOOK_MESSAGES.levelInvalid]: 'level',
   [SIGNUP_HOOK_MESSAGES.placeholder]: 'name',
+  [SIGNUP_HOOK_MESSAGES.sourceUnknown]: 'source',
+  [SIGNUP_HOOK_MESSAGES.sourceDetailTooLong]: 'source',
 }
 
 export const GENERIC_SIGNUP_ERROR = 'Could not create your profile — please try again.'

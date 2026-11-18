@@ -107,6 +107,11 @@ describe('rating/guardrails (M1.4)', () => {
       expect(r.flags).toContain('drift')
     })
 
+    it('never flags drift for a player with no reported level', () => {
+      const r = apply({ proposedDelta: 0.3, priorMu: 1, playtomicLevel: 0 })
+      expect(r.flags).not.toContain('drift')
+    })
+
     it('measures drift with the post-cap mu, not the raw proposal', () => {
       // proposed +0.9 would land at 4.4, but applied is +0.3 ⇒ 3.8 ⇒ no drift
       const r = apply({ proposedDelta: 0.9, priorMu: 3.5, playtomicLevel: 3.0 })

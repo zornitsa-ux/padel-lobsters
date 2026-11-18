@@ -1,4 +1,5 @@
 import type { GuardrailResult, RatingFlag, RatingUpdate } from '../types'
+import { hasLevel } from '../../../../lib/level'
 
 // Blessed starting values (D-003); expected to move after live events.
 export const DELTA_CAP_PER_EVENT = 0.3
@@ -12,7 +13,8 @@ export const OSCILLATION_RUN = 3
  * - flaggedRemainder = proposedDelta - appliedDelta (no further rounding)
  * - 'over_cap' when clamping occurred
  * - 'drift' when |priorMu + appliedDelta - playtomicLevel| > DRIFT_THRESHOLD
- *   (strict; uses the post-cap mu)
+ *   (strict; uses the post-cap mu). No reported level (0), nothing to drift
+ *   from: never flagged (signup revamp D-15)
  * - 'oscillation' when the last OSCILLATION_RUN proposed deltas — i.e.
  *   the tail of `previousDeltas` (proposed Δ of prior events, oldest first)
  *   plus this event's proposedDelta — all have |Δ| > OSCILLATION_MIN_DELTA
@@ -40,7 +42,10 @@ export function applyGuardrails({
   }
 
   const postCapMu = update.priorMu + appliedDelta
-  if (Math.abs(postCapMu - playtomicLevel) > DRIFT_THRESHOLD) {
+  if (
+    hasLevel({ level: playtomicLevel }) &&
+    Math.abs(postCapMu - playtomicLevel) > DRIFT_THRESHOLD
+  ) {
     flags.push('drift')
   }
 

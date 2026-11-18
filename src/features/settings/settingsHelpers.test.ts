@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { LOBBY_PROMPTS } from './settingsHelpers'
+import { LOBBY_PROMPTS, refreshPromptText } from './settingsHelpers'
 
 // The prompt list is indexed by `activePrompt` and its label is persisted to
 // players.tagline_label, so both the ordering and the labels are load-bearing:
@@ -20,5 +20,12 @@ describe('LOBBY_PROMPTS', () => {
 
   it('keeps "War Cry" at index 2 — the default selection in Settings', () => {
     expect(LOBBY_PROMPTS[2].label).toContain('War Cry')
+  })
+})
+
+describe('refreshPromptText', () => {
+  it('names the level on file, or says there is none', () => {
+    expect(refreshPromptText({ level: 2.5 })).toMatch(/on file is 2\.5\.$/)
+    expect(refreshPromptText({ level: 0 })).toMatch(/haven't added a Playtomic level/)
   })
 })

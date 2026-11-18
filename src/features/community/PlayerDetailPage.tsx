@@ -26,6 +26,7 @@ import type { CommunityPlayer } from './playersSelectors'
 import type { InviteSent } from './InviteSentModal'
 import { describeInviteError } from '../players/inviteErrors'
 import type { EventNavigate } from '../events/eventHelpers'
+import { hasLevel } from '../../lib/level'
 
 const BACK_LINK = { to: '/community', label: 'Community' }
 
@@ -41,7 +42,6 @@ function PlayerHero({
   player: CommunityPlayer
   review: ReturnType<typeof corpReview>
 }) {
-  const level = player.playtomicLevel || 0
   return (
     <div className="card space-y-3">
       <div className="flex items-center gap-3">
@@ -51,9 +51,11 @@ function PlayerHero({
             {player.country && <FlagImg code={player.country} />}
             <span className="truncate">{player.name}</span>
           </p>
-          <div className="mt-1">
-            <LevelBadge level={level} />
-          </div>
+          {hasLevel({ level: player.playtomicLevel }) && (
+            <div className="mt-1">
+              <LevelBadge level={player.playtomicLevel} />
+            </div>
+          )}
         </div>
       </div>
       <div>

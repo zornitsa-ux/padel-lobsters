@@ -1,6 +1,7 @@
 -- ============================================================================
--- Native signup checks: the before_user_created hook (20261020130000) and the
--- confirmed-user trigger on auth.users (20261020140000).
+-- Native signup checks: the before_user_created hook and the confirmed-user
+-- trigger on auth.users (20261020130000, 20261020140000), plus the signup
+-- source they validate and store (20261118120000).
 --
 -- Plain script like the other files here: every check raises on failure and
 -- the transaction rolls back, leaving no fixtures behind.
@@ -35,6 +36,8 @@ declare
   c_long_msg  constant text := 'Your name can be at most 100 characters.';
   c_level_msg constant text := 'Enter your Playtomic level as a number, like 2.5.';
   c_ph_msg    constant text := 'You’ve already been added to a Lobster team — ask an admin to invite you.';
+  c_src_msg   constant text := 'Please pick how you found us from the list.';
+  c_detail_msg constant text := 'How you found us can be at most 100 characters.';
   v_full      jsonb;
   v_event     jsonb;
   v_res       jsonb;
@@ -202,6 +205,107 @@ begin
     raise exception 'CHECK 12 FAILED: collision not skipped';
   end if;
   raise notice 'CHECK 12 ok: email collision skipped';
+
+  -- CHECK 13: signup source (C-5): the four codes, absent or blank pass;
+  -- an unknown code and an over-long lobster/other detail are refused; a
+  -- detail with instagram/plaza_whatsapp is ignored
+  if pg_temp.hook_message('{"name":"A","signup_source":"lobster","signup_source_detail":"A friend"}') is not null
+     or pg_temp.hook_message('{"name":"A","signup_source":"instagram"}') is not null
+     or pg_temp.hook_message('{"name":"A","signup_source":"plaza_whatsapp"}') is not null
+     or pg_temp.hook_message('{"name":"A","signup_source":"other"}') is not null
+     or pg_temp.hook_message('{"name":"A","signup_source":" "}') is not null
+     or pg_temp.hook_message(jsonb_build_object('name', 'A', 'signup_source', 'other',
+          'signup_source_detail', ' ' || repeat('x', 100) || ' ')) is not null
+     or pg_temp.hook_message(jsonb_build_object('name', 'A', 'signup_source', 'instagram',
+          'signup_source_detail', repeat('x', 101))) is not null then
+    raise exception 'CHECK 13 FAILED: valid source refused';
+  end if;
+  if pg_temp.hook_message('{"name":"A","signup_source":"tiktok"}') is distinct from c_src_msg
+     or pg_temp.hook_message(jsonb_build_object('name', 'A', 'signup_source', 'lobster',
+          'signup_source_detail', repeat('x', 101))) is distinct from c_detail_msg
+     or pg_temp.hook_message('{"name":"","signup_source":"tiktok"}') is distinct from c_name_msg
+     or pg_temp.hook_message('{"name":"Hook Placeholder","signup_source":"tiktok"}') is distinct from c_src_msg then
+    raise exception 'CHECK 13 FAILED: source rejections';
+  end if;
+  raise notice 'CHECK 13 ok: source validation';
+
+  -- CHECK 14: confirming stores the source with a trimmed detail only for
+  -- lobster/other, and nothing when no source was given
+  v_id := gen_random_uuid();
+  perform pg_temp.insert_auth_user(v_id, 'src-lobster@test.invalid',
+    '{"name":"Src Lobster","signup_source":"lobster","signup_source_detail":"  A Friend  "}', true);
+  v_id2 := gen_random_uuid();
+  perform pg_temp.insert_auth_user(v_id2, 'src-insta@test.invalid',
+    '{"name":"Src Insta","signup_source":"instagram","signup_source_detail":"ignored"}', true);
+  if (select (source, detail) from public.player_signup_source where player_id = v_id)
+       is distinct from ('lobster'::text, 'A Friend'::text)
+     or (select (source, detail) from public.player_signup_source where player_id = v_id2)
+       is distinct from ('instagram'::text, null::text)
+     or exists (select 1 from public.player_signup_source s
+                  join public.players p on p.id = s.player_id
+                 where p.email in ('pending@test.invalid', 'confirmed@test.invalid')) then
+    raise exception 'CHECK 14 FAILED: stored source';
+  end if;
+  raise notice 'CHECK 14 ok: source stored';
+
+  -- CHECK 15: a source the table refuses (reaching the trigger without the
+  -- hook) still confirms the account, without a source row
+  v_id := gen_random_uuid();
+  perform pg_temp.insert_auth_user(v_id, 'src-bad@test.invalid',
+    jsonb_build_object('name', 'Src Bad', 'signup_source', 'other', 'signup_source_detail', repeat('x', 101)), false);
+  update auth.users set email_confirmed_at = now() where id = v_id;
+  v_id2 := gen_random_uuid();
+  perform pg_temp.insert_auth_user(v_id2, 'src-unknown@test.invalid',
+    '{"name":"Src Unknown","signup_source":"tiktok"}', true);
+  if not exists (select 1 from public.players where id = v_id)
+     or not exists (select 1 from public.players where id = v_id2)
+     or exists (select 1 from public.player_signup_source where player_id in (v_id, v_id2)) then
+    raise exception 'CHECK 15 FAILED: bad source broke confirmation or was stored';
+  end if;
+  raise notice 'CHECK 15 ok: bad source swallowed';
+
+  -- CHECK 16: re-firing for an existing player adds no source row; deleting
+  -- the player removes it; members can't read it
+  update auth.users set email_confirmed_at = null where email = 'src-insta@test.invalid';
+  update auth.users set email_confirmed_at = now(),
+         raw_user_meta_data = '{"name":"Src Insta","signup_source":"other","signup_source_detail":"x"}'
+   where email = 'src-insta@test.invalid';
+  if (select source from public.player_signup_source s join public.players p on p.id = s.player_id
+       where p.email = 'src-insta@test.invalid') is distinct from 'instagram' then
+    raise exception 'CHECK 16 FAILED: re-fire changed the source';
+  end if;
+  delete from public.players where email = 'src-insta@test.invalid';
+  if exists (select 1 from public.player_signup_source s
+               left join public.players p on p.id = s.player_id where p.id is null) then
+    raise exception 'CHECK 16 FAILED: no cascade';
+  end if;
+  if not (select relrowsecurity from pg_class where oid = 'public.player_signup_source'::regclass)
+     or has_table_privilege('anon', 'public.player_signup_source', 'select')
+     or has_table_privilege('authenticated', 'public.player_signup_source', 'insert') then
+    raise exception 'CHECK 16 FAILED: access';
+  end if;
+  raise notice 'CHECK 16 ok: idempotent, cascade, access';
+end;
+$$;
+
+-- CHECK 17: RLS lets an admin read the source and hides it from a member
+do $$
+declare
+  v_admin  integer;
+  v_member integer;
+begin
+  perform set_config('request.jwt.claims', '{"role":"authenticated","app_metadata":{"role":"admin"}}', true);
+  set local role authenticated;
+  select count(*) into v_admin from public.player_signup_source;
+  reset role;
+  perform set_config('request.jwt.claims', '{"role":"authenticated","app_metadata":{"role":"player"}}', true);
+  set local role authenticated;
+  select count(*) into v_member from public.player_signup_source;
+  reset role;
+  if v_admin < 1 or v_member <> 0 then
+    raise exception 'CHECK 17 FAILED: admin % member %', v_admin, v_member;
+  end if;
+  raise notice 'CHECK 17 ok: admin-read only';
 end;
 $$;
 

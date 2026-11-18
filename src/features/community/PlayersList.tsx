@@ -42,19 +42,16 @@ export default function PlayersList({
   }
   return (
     <ListCard>
-      {orderedForRender.map(({ p, isSelf }) => {
-        const level = p.playtomicLevel || 0
-        return (
-          <LinkRow
-            key={p.id}
-            to={`/community/${p.id}`}
-            highlighted={isSelf}
-            leading={<Avatar player={p} size="md" />}
-            title={<PlayerName player={p} name={displayName(p)} isSelf={isSelf} />}
-            trailing={<LevelBadge level={level} />}
-          />
-        )
-      })}
+      {orderedForRender.map(({ p, isSelf }) => (
+        <LinkRow
+          key={p.id}
+          to={`/community/${p.id}`}
+          highlighted={isSelf}
+          leading={<Avatar player={p} size="md" />}
+          title={<PlayerName player={p} name={displayName(p)} isSelf={isSelf} />}
+          trailing={<LevelBadge level={p.playtomicLevel} />}
+        />
+      ))}
     </ListCard>
   )
 }

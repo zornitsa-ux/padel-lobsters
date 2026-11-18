@@ -1,3 +1,5 @@
+import { knownLevel } from '../../lib/level'
+
 /** Playtomic level bands (owner, 2026-11-04): a teal ramp, darker as the level rises. */
 const LEVEL_BANDS = [
   { below: 2, className: 'bg-lob-line-strong text-lob-slate' },
@@ -11,13 +13,11 @@ const SIZES = {
   sm: 'text-xs px-1.5 py-0.5 rounded',
 } as const
 
-const levelBand = ({ level }: { level: number | null | undefined }): string => {
-  const value = level ?? 0
-  return (LEVEL_BANDS.find((band) => value < band.below) ?? LEVEL_BANDS[0]).className
-}
+const levelBand = ({ level }: { level: number }): string =>
+  (LEVEL_BANDS.find((band) => level < band.below) ?? LEVEL_BANDS[0]).className
 
 interface LevelBadgeProps {
-  /** Playtomic level, 0 to 7; a missing level shows 0.0 in the lowest band. */
+  /** Playtomic level, 0 to 7. No level (0 or missing) renders nothing (signup revamp D-14). */
   level: number | null | undefined
   /** md beside a name in a list or header; sm inline in a line of text. */
   size?: keyof typeof SIZES
@@ -25,9 +25,13 @@ interface LevelBadgeProps {
 
 /** A player's Playtomic level, one decimal, in its band's colour. */
 export function LevelBadge({ level, size = 'md' }: LevelBadgeProps) {
+  const value = knownLevel({ level })
+  if (value == null) return null
   return (
-    <span className={`inline-block font-bold tabular-nums ${SIZES[size]} ${levelBand({ level })}`}>
-      {(level || 0).toFixed(1)}
+    <span
+      className={`inline-block font-bold tabular-nums ${SIZES[size]} ${levelBand({ level: value })}`}
+    >
+      {value.toFixed(1)}
     </span>
   )
 }

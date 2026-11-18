@@ -4,7 +4,7 @@ import CountryPicker from '../../components/ui/CountryPicker'
 import { AvatarPicker } from '../../components/ui/AvatarPicker'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { PlaytomicLevelField, ProfileChoiceFields } from '../players/ProfileFields'
-import { LOBBY_PROMPTS, playerLevel, type ProfileForm } from './settingsHelpers'
+import { LOBBY_PROMPTS, playerLevel, refreshPromptText, type ProfileForm } from './settingsHelpers'
 import type { Player } from '../../lib/normalise'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
@@ -96,7 +96,7 @@ function PlaytomicPrompt({
       onClose={onDismiss}
       dismissible={false}
       title="Has your Playtomic level changed?"
-      description={`It's been a while. Your level on file is ${playerLevel(player).toFixed(1)}.`}
+      description={refreshPromptText({ level: playerLevel(player) })}
       footer={
         <ActionRow>
           <Button variant="neutral" onClick={onDismiss}>

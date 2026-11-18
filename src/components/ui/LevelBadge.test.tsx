@@ -14,17 +14,17 @@ describe('LevelBadge bands', () => {
     expect(levelBand({ level: 5 })).toContain('bg-lob-teal text-white')
     expect(levelBand({ level: 7 })).toContain('bg-lob-teal text-white')
   })
-
-  it('puts a missing level in the lowest band', () => {
-    expect(levelBand({ level: null })).toContain('bg-lob-line-strong')
-    expect(levelBand({ level: Number.NaN })).toContain('bg-lob-line-strong')
-  })
 })
 
 describe('LevelBadge', () => {
-  it('shows the level to one decimal, 0.0 when missing', () => {
+  it('shows the level to one decimal', () => {
     expect(propsOf(LevelBadge({ level: 3.45 })).children).toBe('3.5')
-    expect(propsOf(LevelBadge({ level: null })).children).toBe('0.0')
+  })
+
+  it('shows nothing for a player with no level', () => {
+    expect(LevelBadge({ level: 0 })).toBeNull()
+    expect(LevelBadge({ level: null })).toBeNull()
+    expect(LevelBadge({ level: Number.NaN })).toBeNull()
   })
 
   it('has a smaller size for a line of text', () => {

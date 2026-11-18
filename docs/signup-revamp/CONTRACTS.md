@@ -114,8 +114,13 @@ column comment in the migration lists the new value.
 | `signup_source`        | `lobster`, `instagram`, `plaza_whatsapp`, `other`                 |
 | `signup_source_detail` | free text, trimmed, ≤ 100 characters; only for `lobster`, `other` |
 
-Hook rejections (new, exact strings chosen in the PR): unknown
-`signup_source`; detail over 100 characters. A detail sent with
+Hook rejections (exact strings; the form shows them under the field):
+
+- unknown `signup_source`: `Please pick how you found us from the list.`
+- detail over 100 characters with `lobster`/`other`:
+  `How you found us can be at most 100 characters.`
+
+A blank `signup_source` counts as absent. A detail sent with
 `instagram`/`plaza_whatsapp` is dropped, not rejected.
 
 Table `public.player_signup_source`:

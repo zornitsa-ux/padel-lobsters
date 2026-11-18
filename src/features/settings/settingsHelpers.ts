@@ -5,6 +5,12 @@ export const GROUP_SETTINGS_PATH = '/admin/settings'
 
 export const playerLevel = (player: Player) => parseLevel(player.playtomicLevel) ?? 0
 
+// The 30-day "Has your Playtomic level changed?" prompt; no level shows none (D-14).
+export const refreshPromptText = ({ level }: { level: number }) =>
+  level > 0
+    ? `It's been a while. Your level on file is ${level.toFixed(1)}.`
+    : "It's been a while. You haven't added a Playtomic level yet."
+
 // The two admin-editable settings fields, held as form state in GroupSettingsPage and
 // rendered by AdminSection.
 export interface SettingsForm {

@@ -42,6 +42,7 @@ import { Chip } from '../../components/ui/Chip'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { Well } from '../../components/ui/Well'
 import { Tag } from '../../components/ui/Tag'
+import { levelOrNoLevelStart } from '../../lib/level'
 
 // A player slot the admin has tapped first in swap mode.
 interface SwapAnchor {
@@ -129,7 +130,10 @@ export default function Schedule({
       dstArr[playerIdx] = tmp
       // Recalculate levels
       const lvl = (ids: EntityId[]) =>
-        ids.reduce<number>((s, id) => s + (playerById.get(String(id))?.playtomicLevel || 0), 0)
+        ids.reduce<number>(
+          (s, id) => s + levelOrNoLevelStart({ level: playerById.get(String(id))?.playtomicLevel }),
+          0,
+        )
       srcMatch.team1Level = lvl(srcMatch.team1Ids || [])
       srcMatch.team2Level = lvl(srcMatch.team2Ids || [])
       dstMatch.team1Level = lvl(dstMatch.team1Ids || [])

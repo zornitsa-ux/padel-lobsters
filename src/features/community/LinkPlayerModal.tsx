@@ -9,6 +9,7 @@ import { Skeleton } from '../../components/ui/Skeleton'
 import { SearchInput } from '../../components/ui/SearchInput'
 import { useRevealPii } from './useRevealPii'
 import type { CommunityPlayer } from './playersSelectors'
+import { levelText } from '../../lib/level'
 
 // Least-exposure gate: the admin already knows who they're looking for
 // (the pending signup's name is right above the search box), so nothing
@@ -132,7 +133,7 @@ function CandidateRow({
       onClick={() => onConfirm(p)}
       leading={<Avatar player={p} size="sm" />}
       title={p.name ?? '?'}
-      subtitle={`Lv ${(p.playtomicLevel || 0).toFixed(1)}`}
+      subtitle={levelText({ level: p.playtomicLevel })}
       actions={
         <>
           {!pii.revealed && (

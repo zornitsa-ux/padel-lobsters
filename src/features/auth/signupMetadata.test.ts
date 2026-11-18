@@ -43,4 +43,26 @@ describe('buildSignupMetadata', () => {
       birthday: '',
     })
   })
+
+  it('adds the signup source only when chosen (C-5)', () => {
+    expect(buildSignupMetadata({ profile })).not.toHaveProperty('signup_source')
+    expect(
+      buildSignupMetadata({ profile, source: { source: 'lobster', detail: '  A Friend ' } }),
+    ).toMatchObject({ signup_source: 'lobster', signup_source_detail: 'A Friend' })
+  })
+
+  it('drops the detail for instagram and plaza_whatsapp, and when blank', () => {
+    const insta = buildSignupMetadata({ profile, source: { source: 'instagram', detail: 'x' } })
+    expect(insta.signup_source).toBe('instagram')
+    expect(insta).not.toHaveProperty('signup_source_detail')
+    expect(
+      buildSignupMetadata({ profile, source: { source: 'other', detail: '  ' } }),
+    ).not.toHaveProperty('signup_source_detail')
+  })
+
+  it('sends an empty level as 0', () => {
+    expect(
+      buildSignupMetadata({ profile: { ...profile, playtomicLevel: '' } }).playtomic_level,
+    ).toBe('0')
+  })
 })

@@ -3,6 +3,7 @@ import {
   SIGMA_PRIOR,
   SIGMA_FLOOR,
   SIGMA_INFLATION_PER_MONTH,
+  SIGMA_NO_LEVEL,
   initialRating,
   selfResetRating,
   inflateForInactivity,
@@ -13,6 +14,13 @@ describe('rating/model constants (D-003)', () => {
     expect(SIGMA_PRIOR).toBe(0.7)
     expect(SIGMA_FLOOR).toBe(0.15)
     expect(SIGMA_INFLATION_PER_MONTH).toBe(0.02)
+  })
+})
+
+describe('initialRating with no level (signup revamp D-15)', () => {
+  it('starts a level of 0 at NO_LEVEL_START with the guessed-start sigma', () => {
+    expect(initialRating({ playtomicLevel: 0 })).toEqual({ mu: 1, sigma: SIGMA_NO_LEVEL })
+    expect(SIGMA_NO_LEVEL).toBe(1)
   })
 })
 

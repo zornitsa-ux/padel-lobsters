@@ -138,7 +138,7 @@ export function ProfilePlayFields<T extends ProfileFieldValues>({
         value={form.playtomicLevel}
         onChange={(value) => setForm((f) => ({ ...f, playtomicLevel: value }))}
         error={levelError}
-        hint="We use it to build balanced matches, and it improves as you play."
+        hint="No level yet? Leave it empty: we'll ask a few quick questions before your first event."
       />
     </>
   )

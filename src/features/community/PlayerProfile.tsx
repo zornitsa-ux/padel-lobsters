@@ -18,6 +18,7 @@ import { TextButton } from '../../components/ui/TextButton'
 import { Chip, ChipGroup } from '../../components/ui/Chip'
 import { Well } from '../../components/ui/Well'
 import { Tag } from '../../components/ui/Tag'
+import { hasLevel } from '../../lib/level'
 
 const MONTH_ABBR = [
   'Jan',
@@ -162,11 +163,12 @@ export default function PlayerProfile({
         )}
       </div>
 
-      {/* Level row — compact */}
-      <div className="flex items-center gap-1.5 caption">
-        <span>Playtomic</span>
-        <LevelBadge level={p.playtomicLevel} size="sm" />
-      </div>
+      {hasLevel({ level: p.playtomicLevel }) && (
+        <div className="flex items-center gap-1.5 caption">
+          <span>Playtomic</span>
+          <LevelBadge level={p.playtomicLevel} size="sm" />
+        </div>
+      )}
 
       {/* Learned level — admin-only (mm_rating/mm_sigma, admin RPC) */}
       {isAdmin && learned && (

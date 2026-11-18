@@ -656,7 +656,8 @@ these before dispatching T2–T5, and workers don't change them (matchmaking-v2
   `localStorage` key.
 - **The `before_user_created` hook's rejection messages** (exact strings): the
   placeholder name, a missing or oversized name, and an invalid level. Also the
-  HTTP status the client maps them to.
+  HTTP status the client maps them to. Signup revamp S4 adds two for the
+  signup source (`docs/signup-revamp/CONTRACTS.md` C-5).
 - **Trigger semantics:** create a `players` row on the first confirmed
   `auth.users` state. It's a no-op if a player with that id already exists,
   which keeps it idempotent with `ensure_auth_user_for_player`'s raw inserts.

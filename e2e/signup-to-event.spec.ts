@@ -34,15 +34,19 @@ async function joinAsNewPlayer({
   eventId,
   email,
   cta,
+  beforeSubmit,
 }: {
   page: Page
   eventId: string
   email: string
   cta: RegExp
+  /** Changes to the filled-in form, e.g. leaving the level empty. */
+  beforeSubmit?: () => Promise<void>
 }): Promise<number> {
   await page.goto(`/events/${eventId}`)
   await page.getByRole('link', { name: cta }).click()
   await fillSignupForm({ page, email })
+  await beforeSubmit?.()
   await clearInbox({ to: email })
   const since = Date.now() - 1000
   await page.getByRole('button', { name: /join the lobsters/i }).click()
@@ -166,6 +170,44 @@ test('full event: "Join to get on the waitlist" lands on Join the waitlist', asy
     await expect
       .poll(async () => registrationOf({ eventId: event.id, playerId, columns: 'status' }))
       .toEqual({ status: 'waitlist' })
+  } finally {
+    await cleanUp(
+      () => deleteEvent({ id: event.id }),
+      () => deletePlayerByEmail({ email }),
+    )
+  }
+})
+
+test('new account without a level: says how they found us, sets a level, then registers', async ({
+  page,
+}) => {
+  const event = await createEvent()
+  const email = newEmail('nolevel')
+  try {
+    const since = await joinAsNewPlayer({
+      page,
+      eventId: event.id,
+      email,
+      cta: /join to play/i,
+      beforeSubmit: async () => {
+        await page.getByPlaceholder('e.g. 3.5').clear()
+        await page.getByRole('button', { name: 'An existing Lobster' }).click()
+        await page.getByPlaceholder('Their name').fill('  A Friend ')
+      },
+    })
+    await enterCode({ page, email, since })
+
+    await expectOnEventWithLevelling({ page, eventId: event.id })
+    const playerId = await playerIdByEmail({ email })
+    // Direct SQL: locally, service_role has no default grants on new tables.
+    const [source] = await sql`
+      select source, detail from player_signup_source where player_id = ${playerId}`
+    expect({ ...source }).toEqual({ source: 'lobster', detail: 'A Friend' })
+
+    await setLevel({ page })
+    await expectOnEventWithAction({ page, eventId: event.id, action: /register for this event/i })
+    await page.getByRole('button', { name: /register for this event/i }).click()
+    await expect(page.getByText(/you.re registered/i)).toBeVisible()
   } finally {
     await cleanUp(
       () => deleteEvent({ id: event.id }),
