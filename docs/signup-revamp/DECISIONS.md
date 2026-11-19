@@ -62,3 +62,11 @@ this file records how the code carries them out.
   reuses the screens. Only a real start counts for the gate and the reset
   guard. "Not now" on the Home prompt hides it on that device for good
   (owner, 18 Nov): a `localStorage` flag per player, no server state.
+- **D-18. Paths that leave a player with no level** (owner, 18 Nov). Self-signup
+  is held by the gate. A captain or admin who creates a new partner gives their
+  level (S6a): an unaccepted partner still plays, so the accept gate alone
+  wouldn't reach them. An admin registering a player with no level is asked
+  for it first (S6b). An admin may still add or invite a player without a
+  level: they're gated at sign-in. A captain picking an existing member with no
+  level is left to the accept gate; until they accept they play at
+  `NO_LEVEL_START`.

@@ -7,6 +7,7 @@ import {
   createPlayer,
   deleteEvent,
   deletePlayer,
+  deletePlayerByEmail,
   markLevelled,
   PLAYER_PASSWORD,
   registerPlayers,
@@ -137,6 +138,42 @@ test('sign up as a pair: the partner accepts the invite', async ({ page, browser
     await cleanUp(
       () => deleteEvent({ id: event.id }),
       () => deletePlayer({ id: partner.id }),
+    )
+  }
+})
+
+test('sign up as a pair with a new partner: their level is required and saved', async ({
+  page,
+}) => {
+  const event = await createEvent({ entryMode: 'team' })
+  const email = `e2e-partner-${Date.now()}@lobsters.test`
+  try {
+    await page.goto(`/events/${event.id}/info`)
+    await page.getByRole('button', { name: 'Sign up as a team' }).click()
+    await page.getByRole('button', { name: /isn't on padel lobsters/i }).click()
+    await page.getByRole('textbox', { name: 'Name' }).fill('Newpartner Tester')
+    await page.getByRole('textbox', { name: 'Email' }).fill(email)
+    await page.getByRole('checkbox').check()
+    const next = page.getByRole('button', { name: 'Continue' })
+    await expect(next).toBeDisabled()
+    await page.getByRole('textbox', { name: 'Playtomic level' }).fill('2,5')
+    await next.click()
+    await page
+      .getByRole('dialog', { name: 'Confirm your team' })
+      .getByRole('button', { name: 'Sign up' })
+      .click()
+
+    await expect
+      .poll(async () => {
+        const [row] = await sql`
+          select playtomic_level::float8 as level from players where email = ${email}`
+        return row?.level
+      })
+      .toBe(2.5)
+  } finally {
+    await cleanUp(
+      () => deleteEvent({ id: event.id }),
+      () => deletePlayerByEmail({ email }),
     )
   }
 })

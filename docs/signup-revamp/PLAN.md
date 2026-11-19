@@ -32,8 +32,10 @@ before their first played night.
 | S3c | Questions for everyone     | A Home prompt, never a gate, for players who have a level and haven't answered: the five questions, no Playtomic step. `complete_levelling` stores answers without touching the rating (`start_source` `none`); `get_my_levelling` says whether the prompt is open; the reset guard counts only real starts.                                                                                        |
 | S4  | Faster signup              | Playtomic level optional in `profileProblem` and the `ProfileFields` hint (all four callers). Level 0 shown as no level (`RegisteredSection`, community lists); `NO_LEVEL_START` in King of the Court seeding and `initialRating` (DESIGN §3.1). "How did you find us" on the signup form; migration: `player_signup_source` (C-5), hook validation, confirmed-user trigger insert.                 |
 | S5  | End-to-end tests           | Playwright: newcomer from a share link → signup without a level → levelling card → six steps → toast → Register; a player with a level answering the five questions from Home (S3c); gate refusal on a stale page. Tag the writing tests `@seed-write`.                                                                                                                                             |
+| S6a | New partner's level        | Migration: `private.create_partner_player` refuses a blank, 0 or > 7 level (`invalid_level`), for captains and admins alike. `NewPartnerForm`: the level is required, with a hint for partners not on Playtomic. A captain-created partner then has a level, so the levelling gate doesn't hold them when accepting.                                                                                |
+| S6b | Admin registers, no level  | The admin register forms (`AddPlayerCard`; `AdminAddTeamCard` for captain and partner) ask for the level of a player who has none, and save it before registering, through `admin_update_player`. That RPC regains its rating reset with the C-7 guards (#182).                                                                                                                                     |
 
-**Order:** S1 → S2 → S3 → S3b → S4; S3c after S3b. S5 grows with S2–S4 (each PR adds its own cases)
+**Order:** S1 → S2 → S3 → S3b → S4; S3c after S3b; S6a, S6b after S4. S5 grows with S2–S4 (each PR adds its own cases)
 and is finished last.
 
 - **S4 after S3, not before.** Once the level is optional, a player with no
@@ -131,3 +133,4 @@ and is finished last.
 | S3   | Same window as S2, after it | merge → `db push` → `db:grants:prod` |
 | S3c  | 16–26 Nov or after 29 Nov   | merge → `db push` → `db:grants:prod` |
 | S4   | After S3 is live            | merge → `db push` → `db:grants:prod` |
+| S6a  | 16–26 Nov or after 29 Nov   | merge → `db push` → `db:grants:prod` |

@@ -138,8 +138,9 @@ Players with a played night keep today's behaviour.
   registering the team (`register_team_for_tournament` inserts their own row).
   The partner's row is inserted active by the captain, so the partner is gated
   when accepting: `respond_to_team_invite` returns `needs_level` before
-  setting `accepted_at`. A captain-created partner finishes their account,
-  levels, then accepts.
+  setting `accepted_at`. A captain-created partner is given a level by the
+  captain (S6a, D-18), so the gate doesn't hold them; a partner created before
+  S6a without one finishes their account, levels, then accepts.
 - **Backstop trigger** `registrations_require_levelling`, BEFORE INSERT OR
   UPDATE on `registrations` (C-6): raises `needs_level` when the caller's own
   row becomes active, or when the caller accepts their own team row, and

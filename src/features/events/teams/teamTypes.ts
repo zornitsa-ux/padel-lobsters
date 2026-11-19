@@ -32,7 +32,7 @@ export interface TeamEntry {
 export interface NewPartnerInput {
   name: string
   email: string
-  playtomicLevel: number | null
+  playtomicLevel: number
 }
 
 export type PartnerChoice =

@@ -141,7 +141,7 @@ begin
 
   -- CHECK 4: a new partner needs consent
   select * into v_r from public.register_team_for_tournament(
-    v_t, v_p[7], null, '{"name": "New One", "email": "te-new1@test.invalid"}'::jsonb);
+    v_t, v_p[7], null, '{"name": "New One", "email": "te-new1@test.invalid", "playtomic_level": "2.5"}'::jsonb);
   if v_r.status <> 'consent_required'
      or exists (select 1 from public.players where email = 'te-new1@test.invalid') then
     raise exception 'CHECK 4 FAILED: %', v_r.status;
@@ -178,25 +178,41 @@ begin
   -- CHECK 6: email_in_use against players and auth.users; bad input rejected
   perform pg_temp.act(v_p[8], false);
   select * into v_r from public.register_team_for_tournament(
-    v_t, v_p[8], null, '{"name": "Dup", "email": "te-new1@TEST.invalid"}'::jsonb, true);
+    v_t, v_p[8], null, '{"name": "Dup", "email": "te-new1@TEST.invalid", "playtomic_level": "2.5"}'::jsonb, true);
   if v_r.status <> 'email_in_use' then raise exception 'CHECK 6a FAILED: %', v_r.status; end if;
   insert into auth.users(id, instance_id, aud, role, email)
   values (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'te-authonly@test.invalid');
   select * into v_r from public.register_team_for_tournament(
-    v_t, v_p[8], null, '{"name": "Dup", "email": "te-authonly@test.invalid"}'::jsonb, true);
+    v_t, v_p[8], null, '{"name": "Dup", "email": "te-authonly@test.invalid", "playtomic_level": "2.5"}'::jsonb, true);
   if v_r.status <> 'email_in_use' then raise exception 'CHECK 6b FAILED: %', v_r.status; end if;
   select * into v_r from public.register_team_for_tournament(
-    v_t, v_p[8], null, '{"name": "Dup", "email": "nope"}'::jsonb, true);
+    v_t, v_p[8], null, '{"name": "Dup", "email": "nope", "playtomic_level": "2.5"}'::jsonb, true);
   if v_r.status <> 'invalid_email' then raise exception 'CHECK 6c FAILED: %', v_r.status; end if;
   select * into v_r from public.register_team_for_tournament(
-    v_t, v_p[8], null, '{"name": "Dup", "email": "x@padelobsters.internal"}'::jsonb, true);
+    v_t, v_p[8], null, '{"name": "Dup", "email": "x@padelobsters.internal", "playtomic_level": "2.5"}'::jsonb, true);
   if v_r.status <> 'invalid_email' then raise exception 'CHECK 6d FAILED: %', v_r.status; end if;
   select * into v_r from public.register_team_for_tournament(
-    v_t, v_p[8], null, '{"name": "   ", "email": "te-x@test.invalid"}'::jsonb, true);
+    v_t, v_p[8], null, '{"name": "   ", "email": "te-x@test.invalid", "playtomic_level": "2.5"}'::jsonb, true);
   if v_r.status <> 'invalid_name' then raise exception 'CHECK 6e FAILED: %', v_r.status; end if;
   select * into v_r from public.register_team_for_tournament(
     v_t, v_p[8], null, '{"name": "Lv", "email": "te-x@test.invalid", "playtomic_level": "9"}'::jsonb, true);
   if v_r.status <> 'invalid_level' then raise exception 'CHECK 6f FAILED: %', v_r.status; end if;
+  -- Signup revamp S6a (20261118200000): the level is required, and 0 means no level.
+  select * into v_r from public.register_team_for_tournament(
+    v_t, v_p[8], null, '{"name": "Lv", "email": "te-x@test.invalid"}'::jsonb, true);
+  if v_r.status <> 'invalid_level' then raise exception 'CHECK 6g FAILED (no level): %', v_r.status; end if;
+  select * into v_r from public.register_team_for_tournament(
+    v_t, v_p[8], null, '{"name": "Lv", "email": "te-x@test.invalid", "playtomic_level": " "}'::jsonb, true);
+  if v_r.status <> 'invalid_level' then raise exception 'CHECK 6h FAILED (blank): %', v_r.status; end if;
+  select * into v_r from public.register_team_for_tournament(
+    v_t, v_p[8], null, '{"name": "Lv", "email": "te-x@test.invalid", "playtomic_level": "0"}'::jsonb, true);
+  if v_r.status <> 'invalid_level' then raise exception 'CHECK 6i FAILED (0): %', v_r.status; end if;
+  select * into v_r from public.register_team_for_tournament(
+    v_t, v_p[8], null, '{"name": "Lv", "email": "te-x@test.invalid", "playtomic_level": "abc"}'::jsonb, true);
+  if v_r.status <> 'invalid_level' then raise exception 'CHECK 6j FAILED (text): %', v_r.status; end if;
+  if exists (select 1 from public.players where email = 'te-x@test.invalid') then
+    raise exception 'CHECK 6k FAILED: a refused partner was created';
+  end if;
   raise notice 'CHECK 6 ok: email_in_use (players, auth.users) and input validation';
 
   -- CHECK 7: at most 3 new partners per person per day; admins exempt
@@ -205,7 +221,7 @@ begin
     perform pg_temp.act(v_p[7], false);
     v_t_ind := pg_temp.event(4, now() + interval '10 days');
     select * into v_r from public.register_team_for_tournament(
-      v_t_ind, v_p[7], null, json_build_object('name', 'Cap ' || i, 'email', 'te-cap' || i || '@test.invalid')::jsonb, true);
+      v_t_ind, v_p[7], null, json_build_object('name', 'Cap ' || i, 'email', 'te-cap' || i || '@test.invalid', 'playtomic_level', 2.5)::jsonb, true);
     if i < 3 and v_r.status <> 'registered' then raise exception 'CHECK 7a FAILED (%): %', i, v_r.status; end if;
     if i = 3 and v_r.status <> 'partner_cap_reached' then raise exception 'CHECK 7b FAILED: %', v_r.status; end if;
   end loop;
@@ -214,7 +230,7 @@ begin
   end if;
   perform pg_temp.act(v_admin, true);
   select * into v_r from public.register_team_for_tournament(
-    v_t_ind, v_p[7], null, '{"name": "Cap 3", "email": "te-cap3@test.invalid"}'::jsonb, true);
+    v_t_ind, v_p[7], null, '{"name": "Cap 3", "email": "te-cap3@test.invalid", "playtomic_level": "2.5"}'::jsonb, true);
   if v_r.status <> 'registered'
      or (select requested_by from public.partner_invites where player_id = v_r.partner_id) <> v_admin then
     raise exception 'CHECK 7d FAILED: %', v_r.status;
@@ -288,9 +304,9 @@ begin
   select * into v_r from public.change_team_partner(v_team1, v_p[2]);
   if v_r.status <> 'change_closed' then raise exception 'CHECK 12a FAILED: %', v_r.status; end if;
   perform pg_temp.act(v_admin, true);
-  select * into v_r from public.change_team_partner(v_team1, null, '{"name": "Late", "email": "te-late@test.invalid"}'::jsonb);
+  select * into v_r from public.change_team_partner(v_team1, null, '{"name": "Late", "email": "te-late@test.invalid", "playtomic_level": "2.5"}'::jsonb);
   if v_r.status <> 'consent_required' then raise exception 'CHECK 12b FAILED: %', v_r.status; end if;
-  select * into v_r from public.change_team_partner(v_team1, null, '{"name": "Late", "email": "te-late@test.invalid"}'::jsonb, true);
+  select * into v_r from public.change_team_partner(v_team1, null, '{"name": "Late", "email": "te-late@test.invalid", "playtomic_level": "2.5"}'::jsonb, true);
   if v_r.status <> 'changed'
      or not exists (select 1 from public.partner_invites where player_id = v_r.partner_id and tournament_id = v_t_soon) then
     raise exception 'CHECK 12c FAILED: %', v_r.status;
@@ -642,7 +658,7 @@ begin
   v_t2 := pg_temp.event(8, now() + interval '10 days');
   perform pg_temp.act(v_p[11], false);
   select * into v_r from public.register_team_for_tournament(
-    v_t, v_p[11], null, '{"name": "Scoped One", "email": "te-scoped@test.invalid"}'::jsonb, true);
+    v_t, v_p[11], null, '{"name": "Scoped One", "email": "te-scoped@test.invalid", "playtomic_level": "2.5"}'::jsonb, true);
   if v_r.status <> 'registered' then raise exception 'CHECK 26a FAILED: %', v_r.status; end if;
   v_new := v_r.partner_id;
   perform pg_temp.act(v_p[12], false);
@@ -684,11 +700,18 @@ begin
   if v_r.status <> 'ok' then raise exception 'CHECK 28c FAILED: %', v_r.status; end if;
   select * into v_r from public.acknowledge_my_account();
   if v_r.status <> 'not_needed' then raise exception 'CHECK 28d FAILED: %', v_r.status; end if;
-  -- S3: a captain-created partner is new, so they level before accepting (DESIGN §2.5).
+  -- Signup revamp S6a: the captain gave the new partner's level, so the levelling gate
+  -- doesn't hold them (an existing member with no level is gated: CHECK 31).
+  if private.needs_levelling(v_new)
+     or (select playtomic_level from public.players where id = v_new) <> 2.5 then
+    raise exception 'CHECK 28h FAILED: new partner without the level given';
+  end if;
+  -- A partner created before S6a, with no level, is still gated on accepting.
+  update public.players set playtomic_level = 0, adjusted_level = 0 where id = v_new;
   select * into v_r from public.respond_to_team_invite(
     (select team_id from public.registrations where tournament_id = v_t and player_id = v_new), true);
-  if v_r.status <> 'needs_level' then raise exception 'CHECK 28h FAILED: %', v_r.status; end if;
-  perform pg_temp.level(v_new);
+  if v_r.status <> 'needs_level' then raise exception 'CHECK 28i FAILED: %', v_r.status; end if;
+  update public.players set playtomic_level = 2.5, adjusted_level = 2.5 where id = v_new;
   select * into v_r from public.respond_to_team_invite(
     (select team_id from public.registrations where tournament_id = v_t and player_id = v_new), true);
   if v_r.status <> 'accepted' then raise exception 'CHECK 28e FAILED: %', v_r.status; end if;
