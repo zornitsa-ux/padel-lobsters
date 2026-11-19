@@ -134,3 +134,4 @@ and is finished last.
 | S3c  | 16–26 Nov or after 29 Nov   | merge → `db push` → `db:grants:prod` |
 | S4   | After S3 is live            | merge → `db push` → `db:grants:prod` |
 | S6a  | 16–26 Nov or after 29 Nov   | merge → `db push` → `db:grants:prod` |
+| S6b  | Any day (admin-only)        | merge → `db push` → `db:grants:prod` |

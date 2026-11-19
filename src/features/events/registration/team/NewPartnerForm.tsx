@@ -1,7 +1,8 @@
-import { useId, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { FormError } from '../../../../components/ui/FormError'
 import { useFieldError } from '../../../../components/ui/useFieldError'
-import { PARTNER_CONSENT_LABEL, partnerLevelProblem, type NewPartnerDraft } from './teamHelpers'
+import LevelField from '../LevelField'
+import { PARTNER_CONSENT_LABEL, type NewPartnerDraft } from './teamHelpers'
 
 interface NewPartnerFormProps {
   draft: NewPartnerDraft
@@ -18,11 +19,7 @@ export default function NewPartnerForm({
   emailErrorAction,
 }: NewPartnerFormProps) {
   const set = (patch: Partial<NewPartnerDraft>) => onChange({ ...draft, ...patch })
-  // Blank waits quietly: Continue stays disabled and the hint says what to enter.
-  const levelError = draft.level.trim() ? partnerLevelProblem({ level: draft.level }) : ''
-  const hintId = useId()
   const email = useFieldError({ message: emailError })
-  const level = useFieldError({ message: levelError })
 
   return (
     <div className="space-y-3">
@@ -54,26 +51,11 @@ export default function NewPartnerForm({
         </label>
         <FormError id={email.errorId} message={emailError} action={emailErrorAction} />
       </div>
-      <div className="space-y-1">
-        <label className="block text-xs font-semibold text-lob-muted">
-          Playtomic level
-          <input
-            inputMode="decimal"
-            required
-            className="input py-2 text-sm mt-1"
-            value={draft.level}
-            onChange={(e) => set({ level: e.target.value })}
-            aria-describedby={levelError ? undefined : hintId}
-            {...level.fieldProps}
-          />
-        </label>
-        <FormError id={level.errorId} message={levelError} polite />
-        {!levelError && (
-          <p id={hintId} className="caption">
-            Not on Playtomic? Your best guess, e.g. 2.0. They can change it later.
-          </p>
-        )}
-      </div>
+      <LevelField
+        value={draft.level}
+        onChange={(level) => set({ level })}
+        hint="Not on Playtomic? Your best guess, e.g. 2.0. They can change it later."
+      />
       <label className="flex items-start gap-2 text-xs text-lob-slate">
         <input
           type="checkbox"

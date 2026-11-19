@@ -70,3 +70,11 @@ this file records how the code carries them out.
   level: they're gated at sign-in. A captain picking an existing member with no
   level is left to the accept gate; until they accept they play at
   `NO_LEVEL_START`.
+- **D-19. The admin register forms ask for a level only when none is recorded**
+  (S6b), by D-16's rule: no Playtomic level and no levelling start. Admins read
+  the starts from `player_levelling`; until they load, only the Playtomic level
+  counts, which at worst asks for a level the player has (C-7 keeps their
+  start). The level is saved through `admin_update_player` after the on-behalf
+  confirm, which names it, and before the registration; if the save fails,
+  nobody is registered. The captain's own team signup doesn't ask for a member
+  partner's level (D-18).

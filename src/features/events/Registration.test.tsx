@@ -20,6 +20,8 @@ const mockUseApp = vi.fn()
 
 const mockRegisterPlayer = vi.fn()
 vi.mock('../levelling/useMyLevelling', () => import('../../test/levellingMock'))
+vi.mock('../levelling/useAdminLevelCheck', () => import('../../test/adminLevelMock'))
+vi.mock('./registration/useSaveLevels', () => import('../../test/adminLevelMock'))
 vi.mock('../../context/useApp', () => ({ useApp: () => mockUseApp() }))
 vi.mock('./useTournaments', () => ({
   useUpdateTournament: () => ({ mutateAsync: vi.fn() }),

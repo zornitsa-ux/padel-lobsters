@@ -359,6 +359,69 @@ begin
   perform pg_temp.check(v_err = 'denied', '10d: private helpers closed');
   raise notice 'CHECK 10 ok: RLS and grants';
 
+  -- ── 11. admin_update_player resets like a self edit (C-7, #182) ──────────
+  -- 1 no level · 2 levelled, no night · 3 levelled, played since · 4 level 2.0
+  with ins as (
+    insert into public.players (name, status, playtomic_level, adjusted_level, adjustment)
+    select 'Levelling Admin P' || g, 'active',
+           case g when 4 then 2.0 else 0 end, case g when 4 then 2.0 else 0 end, 0
+      from generate_series(1, 4) g
+    returning id, name
+  )
+  select array_agg(id order by name) into v_p from ins;
+  perform pg_temp.check(pg_temp.complete(v_p[2], pg_temp.answers('back_wall_not_corners')) = 'ok', '11 setup: P2 levels');
+  perform pg_temp.check(pg_temp.complete(v_p[3], pg_temp.answers('back_wall_not_corners')) = 'ok', '11 setup: P3 levels');
+  insert into public.rating_events (kind, player_id, prior_mu, prior_sigma, proposed_delta, applied_delta, breakdown)
+  values ('tournament', v_p[3], 2.0, 1.0, 0.2, 0.2, '[]');
+
+  perform pg_temp.act_as(v_p[1]);
+  v_err := null;
+  begin
+    perform public.admin_update_player(v_p[1], '{"playtomic_level": 2.5}');
+  exception when others then v_err := sqlerrm;
+  end;
+  perform pg_temp.check(v_err like 'unauthorized%', '11a: members refused');
+
+  perform pg_temp.act_as(v_p[1], 'admin');
+  perform pg_temp.check(public.admin_update_player(v_p[1], '{"playtomic_level": "2.5"}'), '11b: saved');
+  select * into v_row from public.rating_events where player_id = v_p[1] and kind = 'admin_edit';
+  perform pg_temp.check(
+    (select playtomic_level = 2.5 and adjusted_level = 2.5 and mm_rating = 2.5 and mm_sigma = 0.7
+       from public.players where id = v_p[1])
+    and v_row.prior_mu = 0 and v_row.prior_sigma = 0.7 and v_row.applied_delta = 2.5,
+    '11c: no level to 2.5 resets, prior 0');
+  perform pg_temp.check(not private.needs_levelling(v_p[1]), '11d: through the gate');
+
+  perform public.admin_update_player(v_p[1], '{"playtomic_level": 2.5, "name": "Levelling Admin P1"}');
+  perform public.admin_update_player(v_p[1], '{"phone": "0600000000"}');
+  perform pg_temp.check(
+    (select count(*) = 1 from public.rating_events where player_id = v_p[1] and kind = 'admin_edit'),
+    '11e: same level or no level key, no reset');
+
+  perform public.admin_update_player(v_p[1], '{"playtomic_level": 0}');
+  perform pg_temp.check(
+    (select playtomic_level = 0 and mm_rating = 2.5 from public.players where id = v_p[1])
+    and (select count(*) = 1 from public.rating_events where player_id = v_p[1] and kind = 'admin_edit'),
+    '11f: no reset to 0');
+
+  perform public.admin_update_player(v_p[2], '{"playtomic_level": 3.0}');
+  perform pg_temp.check(
+    (select playtomic_level = 3.0 and mm_rating = 2.0 and mm_sigma = 1.0 from public.players where id = v_p[2])
+    and not exists (select 1 from public.rating_events where player_id = v_p[2] and kind = 'admin_edit'),
+    '11g: levelled start stands');
+
+  perform public.admin_update_player(v_p[3], '{"playtomic_level": 3.0}');
+  perform pg_temp.check(
+    (select mm_rating = 3.0 and mm_sigma = 0.7 from public.players where id = v_p[3])
+    and exists (select 1 from public.rating_events where player_id = v_p[3] and kind = 'admin_edit'),
+    '11h: played night resets');
+
+  perform public.admin_update_player(v_p[4], '{"playtomic_level": 2.2, "adjustment": 1}');
+  perform pg_temp.check(
+    (select adjustment = 0 and adjusted_level = 2.2 and mm_rating = 2.2 from public.players where id = v_p[4]),
+    '11i: adjustment not written');
+  raise notice 'CHECK 11 ok: admin level edit';
+
   raise notice 'levelling: all checks passed';
 end $$;
 

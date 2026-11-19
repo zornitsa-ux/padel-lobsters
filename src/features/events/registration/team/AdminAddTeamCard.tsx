@@ -7,6 +7,10 @@ import type { NormalisedTournament } from '../../tournamentQueries'
 import type { DisplayName, GetPlayer } from '../utils'
 import PartnerChoiceForm from './PartnerChoiceForm'
 import PlayerPicker from '../PlayerPicker'
+import LevelField from '../LevelField'
+import { isLevelGiven, levelConfirmLine, noLevelHint } from '../levelHelpers'
+import { useSaveLevels, type LevelToSave } from '../useSaveLevels'
+import { useAdminLevelCheck } from '../../../levelling/useAdminLevelCheck'
 import TeamNotices from './TeamNotices'
 import { addTeamConfirmLines, eligiblePlayers } from './teamHelpers'
 import { useTeamSignup, type TeamSignupResult } from './useTeamSignup'
@@ -35,6 +39,11 @@ export default function AdminAddTeamCard({
   const [open, setOpen] = useState(false)
   const [captainId, setCaptainId] = useState('')
   const [captainChosen, setCaptainChosen] = useState(false)
+  const [captainLevel, setCaptainLevel] = useState('')
+  const needsLevel = useAdminLevelCheck()
+  const saveLevels = useSaveLevels()
+  const captain = getPlayer(captainId)
+  const captainLevelAsked = needsLevel(captain)
   const [notices, setNotices] = useState<string[]>([])
   const signup = useTeamSignup({
     tournamentId: tournament.id,
@@ -49,16 +58,32 @@ export default function AdminAddTeamCard({
   })
   const confirmOnBehalf = useConfirmOnBehalf()
   const [confirming, setConfirming] = useState(false)
-  const confirmAndSubmit = async ({ choice }: { choice: PartnerChoice }) => {
-    const captain = getPlayer(captainId)
+  const confirmAndSubmit = async ({
+    choice,
+    memberLevel,
+  }: {
+    choice: PartnerChoice
+    memberLevel?: string
+  }) => {
     if (!captain || confirming) return
+    const levels: (LevelToSave & { label: string })[] = [
+      ...(captainLevelAsked
+        ? [{ playerId: captain.id, level: captainLevel, label: "Captain's level" }]
+        : []),
+      ...(memberLevel !== undefined && choice.kind === 'member'
+        ? [{ playerId: choice.playerId, level: memberLevel, label: "Partner's level" }]
+        : []),
+    ]
     setConfirming(true)
     const ok = await confirmOnBehalf({
       title: 'Add this team?',
-      lines: addTeamConfirmLines({ captain, choice, getPlayer, displayName }),
+      lines: [
+        ...addTeamConfirmLines({ captain, choice, getPlayer, displayName }),
+        ...levels.map(levelConfirmLine),
+      ],
       confirmLabel: 'Add team',
     })
-    if (ok) await signup.submit({ choice })
+    if (ok && (await saveLevels({ levels }))) await signup.submit({ choice })
     setConfirming(false)
   }
   const available = useMemo(() => eligiblePlayers({ players, regs }), [players, regs])
@@ -69,9 +94,13 @@ export default function AdminAddTeamCard({
 
   const reset = () => {
     setOpen(false)
-    setCaptainId('')
+    pickCaptain('')
     setCaptainChosen(false)
     signup.clearError()
+  }
+  function pickCaptain(id: string) {
+    setCaptainId(id)
+    setCaptainLevel('')
   }
 
   if (isEventOver({ tournament })) return null
@@ -98,7 +127,7 @@ export default function AdminAddTeamCard({
     <div className="card space-y-3">
       <div className="flex items-center justify-between">
         <p className="font-semibold text-lob-slate">
-          {captainChosen ? `Partner for ${getPlayer(captainId)?.name ?? ''}` : 'Select captain'}
+          {captainChosen ? `Partner for ${captain?.name ?? ''}` : 'Select captain'}
         </p>
         <IconButton onClick={reset} aria-label="Close" variant="ghost">
           <X />
@@ -112,6 +141,7 @@ export default function AdminAddTeamCard({
           newPartnerLabel="Their partner isn't on Padel Lobsters →"
           busy={signup.busy || confirming}
           error={signup.error}
+          memberNeedsLevel={needsLevel}
           onSubmit={(args) => void confirmAndSubmit(args)}
           onCancel={() => {
             setCaptainChosen(false)
@@ -123,10 +153,21 @@ export default function AdminAddTeamCard({
           <PlayerPicker
             players={available}
             selectedId={captainId}
-            onSelect={setCaptainId}
+            onSelect={pickCaptain}
             displayName={displayName}
           />
-          <Button onClick={() => setCaptainChosen(true)} disabled={!captainId} fullWidth>
+          {captain && captainLevelAsked && (
+            <LevelField
+              value={captainLevel}
+              onChange={setCaptainLevel}
+              hint={noLevelHint({ name: displayName(captain) })}
+            />
+          )}
+          <Button
+            onClick={() => setCaptainChosen(true)}
+            disabled={!captainId || (captainLevelAsked && !isLevelGiven({ level: captainLevel }))}
+            fullWidth
+          >
             Next
           </Button>
         </>
