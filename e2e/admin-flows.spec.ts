@@ -3,7 +3,9 @@ import {
   admin,
   cleanUp,
   createEvent,
+  createPlayer,
   deleteEvent,
+  deletePlayer,
   registerPlayers,
   registrationOf,
   sql,
@@ -143,6 +145,47 @@ test('add a player for someone else: the confirm and the payment sheet name them
     await expect(page.getByRole('heading', { name: 'Registered (1/16)' })).toBeVisible()
   } finally {
     await deleteEvent({ id: event.id })
+  }
+})
+
+test('register a player with no level: the level is asked for, saved, and resets their rating', async ({
+  page,
+}) => {
+  const event = await createEvent()
+  const member = await createPlayer()
+  const name = `${member.firstName} Tester`
+  try {
+    await page.goto(`/events/${event.id}/info`)
+    await page.getByRole('button', { name: 'Register a Player' }).click()
+    await page.getByRole('textbox', { name: 'Search players' }).fill(member.firstName)
+    await page.getByRole('button', { name }).click()
+    const register = page.getByRole('button', { name: 'Register Player' })
+    await expect(page.getByText(`${name} has no level yet`)).toBeVisible()
+    await expect(register).toBeDisabled()
+    await page.getByRole('textbox', { name: 'Playtomic level' }).fill('2,5')
+    await register.click()
+
+    const dialog = await confirmDialog({
+      page,
+      title: 'Add this player?',
+      lines: [`Player: ${name}`, 'Level: 2.5, saved to their profile', `Event: ${event.name}`],
+    })
+    await dialog.getByRole('button', { name: 'Add player' }).click()
+
+    await expect
+      .poll(() => registrationOf({ eventId: event.id, playerId: member.id, columns: 'status' }))
+      .toMatchObject({ status: 'registered' })
+    const [saved] = await sql`
+      select p.playtomic_level::float8 as level, p.mm_rating::float8 as mm_rating,
+             (select count(*)::int from rating_events e
+               where e.player_id = p.id and e.kind = 'admin_edit') as resets
+        from players p where p.id = ${member.id}`
+    expect({ ...saved }).toEqual({ level: 2.5, mm_rating: 2.5, resets: 1 })
+  } finally {
+    await cleanUp(
+      () => deleteEvent({ id: event.id }),
+      () => deletePlayer({ id: member.id }),
+    )
   }
 })
 

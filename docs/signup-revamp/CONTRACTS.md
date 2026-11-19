@@ -167,13 +167,13 @@ the current page as the return path; a pending transfer stays pending.
 
 ## C-7. Reset guards
 
-In `update_my_profile`, `record_mm_reset` is skipped when:
+In `update_my_profile` and `admin_update_player` (S6b, #182), `record_mm_reset`
+is skipped when:
 
 - the new level is 0 (the RPC `coalesce`s a null level to the old one, so
   clearing the field sends 0), or
 - the player has a `player_levelling` row with a start (not `none`) and no
   played night (`private.levelling_start_stands`).
 
-`admin_update_player` has called no reset since `20260815160000` (#182), so
-there is nothing to guard there yet. The fix for #182 restores the reset with
-these same guards.
+`admin_update_player` logs kind `admin_edit`. It no longer writes
+`adjustment`; `adjusted_level` mirrors the level, as in `update_my_profile`.

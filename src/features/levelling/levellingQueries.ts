@@ -56,3 +56,16 @@ export const NEEDS_LEVEL = 'needs_level'
 export function isNeedsLevel({ error }: { error: unknown }): boolean {
   return errorCode(error) === 'P0001' && errorMessage(error, '') === NEEDS_LEVEL
 }
+
+/**
+ * Players with a levelling start (not answers only). Admins only: members read no rows.
+ * Unpaged: PostgREST caps a read at 1000 rows, years away at ~12 newcomers a month.
+ */
+export async function fetchLevelledPlayerIds(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('player_levelling')
+    .select('player_id')
+    .neq('start_source', 'none')
+  if (error) throw error
+  return (data ?? []).map((row) => row.player_id)
+}

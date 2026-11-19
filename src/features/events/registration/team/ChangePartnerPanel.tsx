@@ -4,10 +4,13 @@ import { registrationMessage } from '../../registrationStatusMessages'
 import { CHANGE_PARTNER_MESSAGES } from '../../teams/teamStatusMessages'
 import { useTeamActions } from '../../teams/useTeams'
 import type { PartnerChoice } from '../../teams/teamTypes'
-import type { DisplayName } from '../utils'
+import type { DisplayName, GetPlayer } from '../utils'
 import { useConfirmOnBehalf } from '../../../../lib/confirmOnBehalf'
 import PartnerChoiceForm from './PartnerChoiceForm'
 import { partnerConfirmLine } from './teamHelpers'
+import { levelConfirmLine } from '../levelHelpers'
+import { useSaveLevels } from '../useSaveLevels'
+import { useAdminLevelCheck } from '../../../levelling/useAdminLevelCheck'
 
 interface ChangePartnerPanelProps {
   tournamentId: string
@@ -31,23 +34,37 @@ export default function ChangePartnerPanel({
   const confirmOnBehalf = useConfirmOnBehalf()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const needsLevel = useAdminLevelCheck()
+  const saveLevels = useSaveLevels()
+  const getPlayer: GetPlayer = (id) => candidates.find((p) => p.id === id)
 
-  const submit = async ({ choice }: { choice: PartnerChoice }) => {
+  const submit = async ({
+    choice,
+    memberLevel = '',
+  }: {
+    choice: PartnerChoice
+    memberLevel?: string
+  }) => {
     if (onBehalfOf !== undefined) {
+      // Set when the form asked for the picked member's level (S6b).
+      const levelFor =
+        memberLevel && choice.kind === 'member' ? getPlayer(choice.playerId) : undefined
       const ok = await confirmOnBehalf({
         title: 'Change partner?',
         lines: [
           `Team: ${onBehalfOf}`,
-          partnerConfirmLine({
-            label: 'New partner',
-            choice,
-            getPlayer: (id) => candidates.find((p) => p.id === id),
-            displayName,
-          }),
+          partnerConfirmLine({ label: 'New partner', choice, getPlayer, displayName }),
+          ...(levelFor ? [levelConfirmLine({ label: "Partner's level", level: memberLevel })] : []),
         ],
         confirmLabel: 'Change partner',
       })
       if (!ok) return
+      const saved =
+        !levelFor ||
+        (await saveLevels({
+          levels: [{ playerId: levelFor.id, name: displayName(levelFor), level: memberLevel }],
+        }))
+      if (!saved) return
     }
     setBusy(true)
     setError('')
@@ -66,6 +83,7 @@ export default function ChangePartnerPanel({
         submitLabel="Change partner"
         busy={busy}
         error={error}
+        memberNeedsLevel={onBehalfOf !== undefined ? needsLevel : undefined}
         onSubmit={(args) => void submit(args)}
         onCancel={onClose}
       />

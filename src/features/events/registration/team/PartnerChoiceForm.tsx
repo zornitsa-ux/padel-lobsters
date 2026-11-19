@@ -6,6 +6,8 @@ import type { PartnerChoice } from '../../teams/teamTypes'
 import type { DisplayName } from '../utils'
 import NewPartnerForm from './NewPartnerForm'
 import PlayerPicker from '../PlayerPicker'
+import { NoLevelField } from '../LevelField'
+import { isLevelGiven } from '../levelHelpers'
 import { choiceToDraft, draftToChoice, isDraftComplete } from './teamHelpers'
 import { ActionRow } from '../../../../components/ui/ActionRow'
 import { Button } from '../../../../components/ui/Button'
@@ -20,7 +22,9 @@ interface PartnerChoiceFormProps {
   initialChoice?: PartnerChoice | null
   busy?: boolean
   error?: string
-  onSubmit: (args: { choice: PartnerChoice }) => void
+  /** Admin forms: a picked member with no level must be given one (S6b). */
+  memberNeedsLevel?: (args: { player: Player | undefined }) => boolean
+  onSubmit: (args: { choice: PartnerChoice; memberLevel?: string }) => void
   onCancel: () => void
 }
 
@@ -32,6 +36,7 @@ export default function PartnerChoiceForm({
   initialChoice = null,
   busy = false,
   error = '',
+  memberNeedsLevel,
   onSubmit,
   onCancel,
 }: PartnerChoiceFormProps) {
@@ -45,10 +50,19 @@ export default function PartnerChoiceForm({
   const [emailProblem, setEmailProblem] = useState<'' | 'invalid_email' | 'email_in_use'>('')
   const [checking, setChecking] = useState(false)
   const [memberSearch, setMemberSearch] = useState('')
+  const [memberLevel, setMemberLevel] = useState('')
   const checkEmail = useCheckNewPartnerEmail()
 
   const isNew = mode === 'new'
-  const ready = isNew ? isDraftComplete({ draft }) && !emailProblem : selectedId !== ''
+  const picked = candidates.find((p) => p.id === selectedId)
+  const levelAsked = !!picked && !!memberNeedsLevel?.({ player: picked })
+  const ready = isNew
+    ? isDraftComplete({ draft }) && !emailProblem
+    : selectedId !== '' && (!levelAsked || isLevelGiven({ level: memberLevel }))
+  const pickMember = (id: string) => {
+    setSelectedId(id)
+    setMemberLevel('')
+  }
 
   const submitNew = async () => {
     setChecking(true)
@@ -62,7 +76,11 @@ export default function PartnerChoiceForm({
   }
   const submit = () => {
     if (isNew) void submitNew()
-    else onSubmit({ choice: { kind: 'member', playerId: selectedId } })
+    else
+      onSubmit({
+        choice: { kind: 'member', playerId: selectedId },
+        ...(levelAsked ? { memberLevel } : {}),
+      })
   }
   const searchMembers = ({ search }: { search: string }) => {
     setMemberSearch(search)
@@ -97,10 +115,17 @@ export default function PartnerChoiceForm({
           <PlayerPicker
             players={candidates}
             selectedId={selectedId}
-            onSelect={setSelectedId}
+            onSelect={pickMember}
             displayName={displayName}
             initialSearch={memberSearch}
           />
+          {picked && levelAsked && (
+            <NoLevelField
+              name={displayName(picked)}
+              value={memberLevel}
+              onChange={setMemberLevel}
+            />
+          )}
           <TextButton size="sm" onClick={() => setMode('new')}>
             {newPartnerLabel}
           </TextButton>

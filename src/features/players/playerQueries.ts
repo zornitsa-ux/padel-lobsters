@@ -209,7 +209,7 @@ export async function updatePlayer(id: string, data: PlayerInput, role: string) 
   }
 
   if (role === 'admin') {
-    const { error } = await supabase.rpc('admin_update_player', {
+    const { data: updated, error } = await supabase.rpc('admin_update_player', {
       input_target_id: id,
       input_payload: payload,
     })
@@ -217,6 +217,8 @@ export async function updatePlayer(id: string, data: PlayerInput, role: string) 
       console.error('admin_update_player error:', error)
       throw error
     }
+    // False: no player with this id, so nothing was saved.
+    if (updated === false) throw new Error('Player not found.')
   } else {
     const { error } = await supabase.rpc('update_my_profile', {
       input_payload: payload,

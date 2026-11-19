@@ -4,6 +4,8 @@ import type { DisplayName } from './utils'
 import { Button } from '../../../components/ui/Button'
 import { IconButton } from '../../../components/ui/IconButton'
 import PlayerPicker from './PlayerPicker'
+import { NoLevelField } from './LevelField'
+import { isLevelGiven } from './levelHelpers'
 
 interface AddPlayerCardProps {
   isCompleted: boolean
@@ -14,6 +16,10 @@ interface AddPlayerCardProps {
   /** Selected player id, or '' when none is picked. */
   selectedPlayer: string
   onSelectPlayer: (id: string) => void
+  /** Whether to ask for a player's level before registering them (S6b). */
+  needsLevel: (args: { player: Player | undefined }) => boolean
+  level: string
+  onLevelChange: (level: string) => void
   onAdd: () => void
   saving: boolean
   registeredCount: number
@@ -29,6 +35,9 @@ export default function AddPlayerCard({
   availablePlayers,
   selectedPlayer,
   onSelectPlayer,
+  needsLevel,
+  level,
+  onLevelChange,
   onAdd,
   saving,
   registeredCount,
@@ -36,6 +45,9 @@ export default function AddPlayerCard({
   displayName,
 }: AddPlayerCardProps) {
   if (isCompleted) return null
+  const picked = availablePlayers.find((p) => p.id === selectedPlayer)
+  const levelAsked = needsLevel({ player: picked })
+  const levelMissing = levelAsked && !isLevelGiven({ level })
 
   if (!showAdd) {
     return (
@@ -62,7 +74,11 @@ export default function AddPlayerCard({
         emptyLabel="All players already registered"
       />
 
-      <Button onClick={onAdd} disabled={!selectedPlayer || saving} fullWidth>
+      {picked && levelAsked && (
+        <NoLevelField name={displayName(picked)} value={level} onChange={onLevelChange} />
+      )}
+
+      <Button onClick={onAdd} disabled={!selectedPlayer || levelMissing || saving} fullWidth>
         {saving
           ? 'Adding...'
           : registeredCount >= maxPlayers

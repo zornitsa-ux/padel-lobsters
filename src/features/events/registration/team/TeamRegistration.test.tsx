@@ -19,6 +19,8 @@ const m = vi.hoisted(() => ({
 }))
 
 vi.mock('../../../levelling/useMyLevelling', () => import('../../../../test/levellingMock'))
+vi.mock('../../../levelling/useAdminLevelCheck', () => import('../../../../test/adminLevelMock'))
+vi.mock('../useSaveLevels', () => import('../../../../test/adminLevelMock'))
 vi.mock('../../../../context/useApp', () => ({ useApp: () => m.useApp() }))
 vi.mock('../../useTournaments', () => ({
   useUpdateTournament: () => ({ mutateAsync: vi.fn() }),
@@ -69,6 +71,7 @@ vi.mock('../../../settings/useSettings', () => ({
 
 const Registration = (await import('../../Registration')).default
 const ChangePartnerPanel = (await import('./ChangePartnerPanel')).default
+const adminLevel = await import('../../../../test/adminLevelMock')
 
 const player = (id: string, name: string, status = 'active') => ({
   id,
@@ -86,6 +89,8 @@ const players = [
   player('p6', 'Nico Lee'),
   player('p7', 'Nico Stone'),
   player('ghost', 'Pia', 'placeholder'),
+  { ...player('q1', 'Quinn'), playtomicLevel: 0 },
+  { ...player('q2', 'Rosa'), playtomicLevel: 0 },
 ]
 
 const reg = (
@@ -168,6 +173,7 @@ const fillNewPartner = ({ level = '2,5' }: { level?: string } = {}) => {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  adminLevel.resetAdminLevelMock()
   m.teams = [team('tm1', 'p2', '2026-10-01T10:00:00Z')]
   m.invites = []
   registrations = [reg('r1', 'p2', 'tm1', 'registered'), reg('r2', 'p3', 'tm1', 'registered')]
@@ -594,7 +600,7 @@ describe('admin team actions', () => {
       <ChangePartnerPanel
         tournamentId="t1"
         teamId="tm1"
-        candidates={[{ id: 'p1', name: 'Bob' } as never]}
+        candidates={[{ id: 'p1', name: 'Bob', playtomicLevel: 3 } as never]}
         onBehalfOf=""
         displayName={(p) => p.name}
         onClose={vi.fn()}
@@ -753,5 +759,141 @@ describe('individual events', () => {
 
     expect(screen.getByRole('button', { name: /register for this event/i })).not.toBeNull()
     expect(screen.queryByRole('button', { name: /sign up as a team/i })).toBeNull()
+  })
+})
+
+describe('admin adds a team with a player who has no level (S6b)', () => {
+  const levelField = () => screen.queryByRole('textbox', { name: 'Playtomic level' })
+  const button = (name: string) => screen.getByRole('button', { name }) as HTMLButtonElement
+  const pickCaptain = (name: RegExp) => {
+    renderInfo({ isAdmin: true })
+    fireEvent.click(screen.getByRole('button', { name: /add team/i }))
+    fireEvent.click(screen.getByRole('button', { name }))
+  }
+
+  beforeEach(() => {
+    m.registerTeam.mockResolvedValue({ status: 'registered', teamId: 'tm9', partnerId: 'p1' })
+  })
+
+  it("asks for the captain's level before moving on, then saves it before adding the team", async () => {
+    pickCaptain(/quinn/i)
+    expect(screen.getByText(/Quinn has no level yet/)).not.toBeNull()
+    expect(button('Next').disabled).toBe(true)
+    fireEvent.change(levelField()!, { target: { value: '2' } })
+    fireEvent.click(button('Next'))
+    fireEvent.click(screen.getByRole('button', { name: /bob/i }))
+    expect(levelField()).toBeNull()
+    fireEvent.click(button('Add team'))
+
+    await waitFor(() => expect(m.registerTeam).toHaveBeenCalled())
+    expect(m.confirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringMatching(
+          /Captain: Quinn\nPartner: Bob\nCaptain's level: 2, saved to their profile/,
+        ),
+      }),
+    )
+    expect(adminLevel.saveLevels).toHaveBeenCalledWith({
+      levels: [expect.objectContaining({ playerId: 'q1', level: '2' })],
+    })
+    expect(adminLevel.saveLevels.mock.invocationCallOrder[0]).toBeLessThan(
+      m.registerTeam.mock.invocationCallOrder[0],
+    )
+  })
+
+  it("asks for a member partner's level", async () => {
+    pickCaptain(/alma/i)
+    expect(levelField()).toBeNull()
+    fireEvent.click(button('Next'))
+    fireEvent.click(screen.getByRole('button', { name: /rosa/i }))
+    expect(screen.getByText(/Rosa has no level yet/)).not.toBeNull()
+    expect(button('Add team').disabled).toBe(true)
+    fireEvent.change(levelField()!, { target: { value: '1.5' } })
+    fireEvent.click(button('Add team'))
+
+    await waitFor(() => expect(m.registerTeam).toHaveBeenCalled())
+    expect(adminLevel.saveLevels).toHaveBeenCalledWith({
+      levels: [expect.objectContaining({ playerId: 'q2', level: '1.5' })],
+    })
+  })
+
+  it("adds no team when a level can't be saved", async () => {
+    adminLevel.saveLevels.mockResolvedValue(false)
+    pickCaptain(/quinn/i)
+    fireEvent.change(levelField()!, { target: { value: '2' } })
+    fireEvent.click(button('Next'))
+    fireEvent.click(screen.getByRole('button', { name: /bob/i }))
+    fireEvent.click(button('Add team'))
+
+    await waitFor(() => expect(adminLevel.saveLevels).toHaveBeenCalled())
+    expect(m.registerTeam).not.toHaveBeenCalled()
+  })
+
+  it("doesn't ask a captain signing up their own team for a member partner's level", () => {
+    renderInfo()
+    fireEvent.click(screen.getByRole('button', { name: /sign up as a team/i }))
+    fireEvent.click(screen.getByRole('button', { name: /rosa/i }))
+    expect(levelField()).toBeNull()
+    expect(button('Continue').disabled).toBe(false)
+  })
+})
+
+describe('admin changes a partner to a member with no level (S6b)', () => {
+  const rosa = { id: 'q2', name: 'Rosa', status: 'active', playtomicLevel: 0 } as never
+  const renderPanel = ({ onBehalfOf }: { onBehalfOf?: string }) =>
+    render(
+      <ChangePartnerPanel
+        tournamentId="t1"
+        teamId="tm1"
+        candidates={[rosa]}
+        onBehalfOf={onBehalfOf}
+        displayName={(p) => p.name}
+        onClose={vi.fn()}
+      />,
+    )
+  const levelField = () => screen.queryByRole('textbox', { name: 'Playtomic level' })
+  const submit = () => screen.getByRole('button', { name: 'Change partner' }) as HTMLButtonElement
+
+  beforeEach(() => m.changeTeamPartner.mockResolvedValue({ status: 'changed' }))
+
+  it('asks for the level, names it in the confirmation and saves it first', async () => {
+    renderPanel({ onBehalfOf: 'Alma & Bob' })
+    fireEvent.click(screen.getByRole('button', { name: /rosa/i }))
+    expect(submit().disabled).toBe(true)
+    fireEvent.change(levelField()!, { target: { value: '1,5' } })
+    fireEvent.click(submit())
+
+    await waitFor(() => expect(m.changeTeamPartner).toHaveBeenCalled())
+    expect(m.confirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringMatching(
+          /Team: Alma & Bob\nNew partner: Rosa\nPartner's level: 1.5, saved to their profile/,
+        ),
+      }),
+    )
+    expect(adminLevel.saveLevels).toHaveBeenCalledWith({
+      levels: [{ playerId: 'q2', name: 'Rosa', level: '1,5' }],
+    })
+    expect(adminLevel.saveLevels.mock.invocationCallOrder[0]).toBeLessThan(
+      m.changeTeamPartner.mock.invocationCallOrder[0],
+    )
+  })
+
+  it("changes nothing when the level can't be saved", async () => {
+    adminLevel.saveLevels.mockResolvedValue(false)
+    renderPanel({ onBehalfOf: 'Alma & Bob' })
+    fireEvent.click(screen.getByRole('button', { name: /rosa/i }))
+    fireEvent.change(levelField()!, { target: { value: '2' } })
+    fireEvent.click(submit())
+
+    await waitFor(() => expect(adminLevel.saveLevels).toHaveBeenCalled())
+    expect(m.changeTeamPartner).not.toHaveBeenCalled()
+  })
+
+  it("doesn't ask a captain changing their own partner", () => {
+    renderPanel({})
+    fireEvent.click(screen.getByRole('button', { name: /rosa/i }))
+    expect(levelField()).toBeNull()
+    expect(submit().disabled).toBe(false)
   })
 })

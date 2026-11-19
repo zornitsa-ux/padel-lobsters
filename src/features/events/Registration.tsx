@@ -35,6 +35,9 @@ import { useToast } from '../../lib/toastBus'
 import { paymentChangeConfirm } from './paymentChangeConfirm'
 import RegistrationPaymentSheetModal from './registration/RegistrationPaymentSheetModal'
 import AddPlayerCard from './registration/AddPlayerCard'
+import { useSaveLevels } from './registration/useSaveLevels'
+import { levelConfirmLine } from './registration/levelHelpers'
+import { useAdminLevelCheck } from '../levelling/useAdminLevelCheck'
 import JoinEventCard from './registration/JoinEventCard'
 import ShareEventButton from './ShareEventButton'
 import { useSelfRegister } from './registration/useSelfRegister'
@@ -105,6 +108,13 @@ export default function Registration({
 
   const [showAdd, setShowAdd] = useState(false)
   const [selectedPlayer, setSelectedPlayer] = useState('')
+  const [addLevel, setAddLevel] = useState('')
+  const pickPlayer = (id: string) => {
+    setSelectedPlayer(id)
+    setAddLevel('')
+  }
+  const needsLevel = useAdminLevelCheck()
+  const saveLevels = useSaveLevels()
   const [saving, setSaving] = useState(false)
   const [cancelledExpanded, setCancelledExpanded] = useState(false)
 
@@ -249,14 +259,26 @@ export default function Registration({
   const handleAdd = async () => {
     const player = getPlayer(selectedPlayer)
     if (!player) return
+    const levelGiven = needsLevel({ player })
     const ok = await confirmOnBehalf({
       title: 'Add this player?',
-      lines: [`Player: ${displayName(player)}`, `Event: ${tournament.name}`],
+      lines: [
+        `Player: ${displayName(player)}`,
+        ...(levelGiven ? [levelConfirmLine({ label: 'Level', level: addLevel })] : []),
+        `Event: ${tournament.name}`,
+      ],
       confirmLabel: 'Add player',
     })
     if (!ok) return
     setSaving(true)
     try {
+      if (
+        levelGiven &&
+        !(await saveLevels({
+          levels: [{ playerId: player.id, name: displayName(player), level: addLevel }],
+        }))
+      )
+        return
       const { regId, status } = await registerPlayer(tournament.id, selectedPlayer)
       // Anything but a sign-up leaves the picker open with the reason on
       // screen — closing it would look exactly like a successful add.
@@ -277,7 +299,7 @@ export default function Registration({
         setPaymentSheet({ regId, playerId: selectedPlayer, paymentStatus: 'unpaid' })
         setTikkieClicked(false)
       }
-      setSelectedPlayer('')
+      pickPlayer('')
       setShowAdd(false)
     } finally {
       setSaving(false)
@@ -572,7 +594,10 @@ export default function Registration({
           onClose={() => setShowAdd(false)}
           availablePlayers={availablePlayers}
           selectedPlayer={selectedPlayer}
-          onSelectPlayer={setSelectedPlayer}
+          onSelectPlayer={pickPlayer}
+          needsLevel={needsLevel}
+          level={addLevel}
+          onLevelChange={setAddLevel}
           onAdd={handleAdd}
           saving={saving}
           registeredCount={registered.length}

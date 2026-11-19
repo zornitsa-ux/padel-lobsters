@@ -7,7 +7,6 @@ import {
   choiceToDraft,
   draftToChoice,
   isDraftComplete,
-  partnerLevelProblem,
   rosterLine,
 } from './teamHelpers'
 import type { TeamEntry } from '../../teams/teamTypes'
@@ -21,18 +20,14 @@ describe('new partner draft', () => {
   })
 
   it('needs a level above 0 and up to 7, with a comma decimal', () => {
-    expect(partnerLevelProblem({ level: '3,5' })).toBe('')
-    expect(partnerLevelProblem({ level: '7' })).toBe('')
-    expect(partnerLevelProblem({ level: '0' })).not.toBe('')
-    expect(partnerLevelProblem({ level: 'abc' })).not.toBe('')
-    expect(partnerLevelProblem({ level: '9' })).not.toBe('')
     expect(isDraftComplete({ draft: { ...filled, level: '3,5' } })).toBe(true)
     expect(isDraftComplete({ draft: { ...filled, level: 'abc' } })).toBe(false)
     expect(isDraftComplete({ draft: { ...filled, level: '0' } })).toBe(false)
+    expect(isDraftComplete({ draft: { ...filled, level: '9' } })).toBe(false)
   })
 
   it('refuses a blank level', () => {
-    expect(partnerLevelProblem({ level: '  ' })).not.toBe('')
+    expect(isDraftComplete({ draft: { ...filled, level: '  ' } })).toBe(false)
     expect(isDraftComplete({ draft: { ...filled, level: '' } })).toBe(false)
   })
 })
