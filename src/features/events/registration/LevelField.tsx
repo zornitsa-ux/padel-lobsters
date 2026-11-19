@@ -2,6 +2,7 @@ import { useId } from 'react'
 import { FormError } from '../../../components/ui/FormError'
 import { useFieldError } from '../../../components/ui/useFieldError'
 import { givenLevelProblem } from '../../../lib/parseLevel'
+import { noLevelHint } from './levelHelpers'
 
 interface LevelFieldProps {
   value: string
@@ -44,4 +45,17 @@ export default function LevelField({
       )}
     </div>
   )
+}
+
+/** For an admin registering someone who has no level (S6b): the field, with a hint naming them. */
+export function NoLevelField({
+  name,
+  value,
+  onChange,
+}: {
+  name: string
+  value: string
+  onChange: (value: string) => void
+}) {
+  return <LevelField value={value} onChange={onChange} hint={noLevelHint({ name })} />
 }

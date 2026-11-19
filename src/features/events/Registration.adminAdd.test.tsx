@@ -152,7 +152,7 @@ describe('admin adds a player who has no level (S6b)', () => {
       }),
     )
     expect(adminLevel.saveLevels).toHaveBeenCalledWith({
-      levels: [{ playerId: 'p3', level: '2,5' }],
+      levels: [{ playerId: 'p3', name: 'Cleo Park', level: '2,5' }],
     })
     expect(adminLevel.saveLevels.mock.invocationCallOrder[0]).toBeLessThan(
       mockRegisterPlayer.mock.invocationCallOrder[0],

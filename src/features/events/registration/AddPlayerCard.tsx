@@ -4,8 +4,8 @@ import type { DisplayName } from './utils'
 import { Button } from '../../../components/ui/Button'
 import { IconButton } from '../../../components/ui/IconButton'
 import PlayerPicker from './PlayerPicker'
-import LevelField from './LevelField'
-import { isLevelGiven, noLevelHint } from './levelHelpers'
+import { NoLevelField } from './LevelField'
+import { isLevelGiven } from './levelHelpers'
 
 interface AddPlayerCardProps {
   isCompleted: boolean
@@ -16,8 +16,8 @@ interface AddPlayerCardProps {
   /** Selected player id, or '' when none is picked. */
   selectedPlayer: string
   onSelectPlayer: (id: string) => void
-  /** The picked player has no level: ask for it before registering (S6b). */
-  levelNeeded: boolean
+  /** Whether to ask for a player's level before registering them (S6b). */
+  needsLevel: (args: { player: Player | undefined }) => boolean
   level: string
   onLevelChange: (level: string) => void
   onAdd: () => void
@@ -35,7 +35,7 @@ export default function AddPlayerCard({
   availablePlayers,
   selectedPlayer,
   onSelectPlayer,
-  levelNeeded,
+  needsLevel,
   level,
   onLevelChange,
   onAdd,
@@ -46,7 +46,8 @@ export default function AddPlayerCard({
 }: AddPlayerCardProps) {
   if (isCompleted) return null
   const picked = availablePlayers.find((p) => p.id === selectedPlayer)
-  const levelMissing = levelNeeded && !isLevelGiven({ level })
+  const levelAsked = needsLevel({ player: picked })
+  const levelMissing = levelAsked && !isLevelGiven({ level })
 
   if (!showAdd) {
     return (
@@ -73,12 +74,8 @@ export default function AddPlayerCard({
         emptyLabel="All players already registered"
       />
 
-      {picked && levelNeeded && (
-        <LevelField
-          value={level}
-          onChange={onLevelChange}
-          hint={noLevelHint({ name: displayName(picked) })}
-        />
+      {picked && levelAsked && (
+        <NoLevelField name={displayName(picked)} value={level} onChange={onLevelChange} />
       )}
 
       <Button onClick={onAdd} disabled={!selectedPlayer || levelMissing || saving} fullWidth>

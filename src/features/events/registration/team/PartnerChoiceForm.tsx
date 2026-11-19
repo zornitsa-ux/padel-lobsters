@@ -6,8 +6,8 @@ import type { PartnerChoice } from '../../teams/teamTypes'
 import type { DisplayName } from '../utils'
 import NewPartnerForm from './NewPartnerForm'
 import PlayerPicker from '../PlayerPicker'
-import LevelField from '../LevelField'
-import { isLevelGiven, noLevelHint } from '../levelHelpers'
+import { NoLevelField } from '../LevelField'
+import { isLevelGiven } from '../levelHelpers'
 import { choiceToDraft, draftToChoice, isDraftComplete } from './teamHelpers'
 import { ActionRow } from '../../../../components/ui/ActionRow'
 import { Button } from '../../../../components/ui/Button'
@@ -23,7 +23,7 @@ interface PartnerChoiceFormProps {
   busy?: boolean
   error?: string
   /** Admin forms: a picked member with no level must be given one (S6b). */
-  memberNeedsLevel?: (player: Player | undefined) => boolean
+  memberNeedsLevel?: (args: { player: Player | undefined }) => boolean
   onSubmit: (args: { choice: PartnerChoice; memberLevel?: string }) => void
   onCancel: () => void
 }
@@ -55,7 +55,7 @@ export default function PartnerChoiceForm({
 
   const isNew = mode === 'new'
   const picked = candidates.find((p) => p.id === selectedId)
-  const levelAsked = !!picked && !!memberNeedsLevel?.(picked)
+  const levelAsked = !!picked && !!memberNeedsLevel?.({ player: picked })
   const ready = isNew
     ? isDraftComplete({ draft }) && !emailProblem
     : selectedId !== '' && (!levelAsked || isLevelGiven({ level: memberLevel }))
@@ -120,10 +120,10 @@ export default function PartnerChoiceForm({
             initialSearch={memberSearch}
           />
           {picked && levelAsked && (
-            <LevelField
+            <NoLevelField
+              name={displayName(picked)}
               value={memberLevel}
               onChange={setMemberLevel}
-              hint={noLevelHint({ name: displayName(picked) })}
             />
           )}
           <TextButton size="sm" onClick={() => setMode('new')}>

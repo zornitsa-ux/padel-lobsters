@@ -19,7 +19,8 @@ export function useAdminLevelCheck() {
     select: toSet,
   })
   return useCallback(
-    (player: Player | null | undefined) => !!player && hasNoLevel({ player, levelledIds }),
+    ({ player }: { player: Player | null | undefined }) =>
+      !!player && hasNoLevel({ player, levelledIds }),
     [levelledIds],
   )
 }

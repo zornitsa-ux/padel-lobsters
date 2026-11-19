@@ -420,6 +420,11 @@ begin
   perform pg_temp.check(
     (select adjustment = 0 and adjusted_level = 2.2 and mm_rating = 2.2 from public.players where id = v_p[4]),
     '11i: adjustment not written');
+  update public.players set adjusted_level = 2.7 where id = v_p[4];
+  perform public.admin_update_player(v_p[4], '{"phone": "0600000001"}');
+  perform pg_temp.check(
+    (select adjusted_level = 2.7 from public.players where id = v_p[4]),
+    '11j: other edits leave adjusted_level');
   raise notice 'CHECK 11 ok: admin level edit';
 
   raise notice 'levelling: all checks passed';

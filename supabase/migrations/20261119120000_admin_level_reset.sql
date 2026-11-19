@@ -8,7 +8,8 @@
 -- - a level change calls record_mm_reset(..., 'admin_edit') with the C-7
 --   guards update_my_profile uses: no reset to 0, and a levelled player's
 --   start stands until their first played night;
--- - adjustment is no longer written; adjusted_level mirrors the level (D-002).
+-- - adjustment is no longer written; a level edit sets adjusted_level to the
+--   level (D-002, D-018). Other edits leave it as it is.
 -- The email-clear guard is kept as it was.
 -- ============================================================================
 
@@ -56,7 +57,7 @@ begin
       phone = case when input_payload ? 'phone' then nullif(btrim(input_payload->>'phone'), '') else p.phone end,
       notes = case when input_payload ? 'notes' then nullif(btrim(input_payload->>'notes'), '') else p.notes end,
       playtomic_level = v_new_level,
-      adjusted_level = v_new_level,
+      adjusted_level = case when input_payload ? 'playtomic_level' then v_new_level else p.adjusted_level end,
       playtomic_username = case when input_payload ? 'playtomic_username' then nullif(btrim(input_payload->>'playtomic_username'), '') else p.playtomic_username end,
       gender = case when input_payload ? 'gender' then nullif(btrim(input_payload->>'gender'), '') else p.gender end,
       status = case when input_payload ? 'status' then nullif(btrim(input_payload->>'status'), '') else p.status end,

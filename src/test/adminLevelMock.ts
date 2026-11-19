@@ -15,6 +15,8 @@ export function resetAdminLevelMock() {
   saveLevels.mockResolvedValue(true)
 }
 
-export const useAdminLevelCheck = () => (player: Player | null | undefined) =>
-  !!player && hasNoLevel({ player, levelledIds })
+export const useAdminLevelCheck =
+  () =>
+  ({ player }: { player: Player | null | undefined }) =>
+    !!player && hasNoLevel({ player, levelledIds })
 export const useSaveLevels = () => saveLevels

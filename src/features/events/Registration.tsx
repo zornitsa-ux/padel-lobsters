@@ -259,7 +259,7 @@ export default function Registration({
   const handleAdd = async () => {
     const player = getPlayer(selectedPlayer)
     if (!player) return
-    const levelGiven = needsLevel(player)
+    const levelGiven = needsLevel({ player })
     const ok = await confirmOnBehalf({
       title: 'Add this player?',
       lines: [
@@ -272,7 +272,12 @@ export default function Registration({
     if (!ok) return
     setSaving(true)
     try {
-      if (levelGiven && !(await saveLevels({ levels: [{ playerId: player.id, level: addLevel }] })))
+      if (
+        levelGiven &&
+        !(await saveLevels({
+          levels: [{ playerId: player.id, name: displayName(player), level: addLevel }],
+        }))
+      )
         return
       const { regId, status } = await registerPlayer(tournament.id, selectedPlayer)
       // Anything but a sign-up leaves the picker open with the reason on
@@ -590,7 +595,7 @@ export default function Registration({
           availablePlayers={availablePlayers}
           selectedPlayer={selectedPlayer}
           onSelectPlayer={pickPlayer}
-          levelNeeded={needsLevel(getPlayer(selectedPlayer))}
+          needsLevel={needsLevel}
           level={addLevel}
           onLevelChange={setAddLevel}
           onAdd={handleAdd}

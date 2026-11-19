@@ -7,12 +7,12 @@ import type { NormalisedTournament } from '../../tournamentQueries'
 import type { DisplayName, GetPlayer } from '../utils'
 import PartnerChoiceForm from './PartnerChoiceForm'
 import PlayerPicker from '../PlayerPicker'
-import LevelField from '../LevelField'
-import { isLevelGiven, levelConfirmLine, noLevelHint } from '../levelHelpers'
+import { NoLevelField } from '../LevelField'
+import { isLevelGiven, levelConfirmLine } from '../levelHelpers'
 import { useSaveLevels, type LevelToSave } from '../useSaveLevels'
 import { useAdminLevelCheck } from '../../../levelling/useAdminLevelCheck'
 import TeamNotices from './TeamNotices'
-import { addTeamConfirmLines, eligiblePlayers } from './teamHelpers'
+import { addTeamConfirmLines, eligiblePlayers, playerNameOf } from './teamHelpers'
 import { useTeamSignup, type TeamSignupResult } from './useTeamSignup'
 import { useConfirmOnBehalf } from '../../../../lib/confirmOnBehalf'
 import type { PartnerChoice } from '../../teams/teamTypes'
@@ -43,7 +43,7 @@ export default function AdminAddTeamCard({
   const needsLevel = useAdminLevelCheck()
   const saveLevels = useSaveLevels()
   const captain = getPlayer(captainId)
-  const captainLevelAsked = needsLevel(captain)
+  const captainLevelAsked = needsLevel({ player: captain })
   const [notices, setNotices] = useState<string[]>([])
   const signup = useTeamSignup({
     tournamentId: tournament.id,
@@ -68,10 +68,24 @@ export default function AdminAddTeamCard({
     if (!captain || confirming) return
     const levels: (LevelToSave & { label: string })[] = [
       ...(captainLevelAsked
-        ? [{ playerId: captain.id, level: captainLevel, label: "Captain's level" }]
+        ? [
+            {
+              playerId: captain.id,
+              name: displayName(captain),
+              level: captainLevel,
+              label: "Captain's level",
+            },
+          ]
         : []),
       ...(memberLevel !== undefined && choice.kind === 'member'
-        ? [{ playerId: choice.playerId, level: memberLevel, label: "Partner's level" }]
+        ? [
+            {
+              playerId: choice.playerId,
+              name: playerNameOf({ playerId: choice.playerId, getPlayer, displayName }),
+              level: memberLevel,
+              label: "Partner's level",
+            },
+          ]
         : []),
     ]
     setConfirming(true)
@@ -157,10 +171,10 @@ export default function AdminAddTeamCard({
             displayName={displayName}
           />
           {captain && captainLevelAsked && (
-            <LevelField
+            <NoLevelField
+              name={displayName(captain)}
               value={captainLevel}
               onChange={setCaptainLevel}
-              hint={noLevelHint({ name: displayName(captain) })}
             />
           )}
           <Button

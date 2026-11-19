@@ -600,7 +600,7 @@ describe('admin team actions', () => {
       <ChangePartnerPanel
         tournamentId="t1"
         teamId="tm1"
-        candidates={[{ id: 'p1', name: 'Bob' } as never]}
+        candidates={[{ id: 'p1', name: 'Bob', playtomicLevel: 3 } as never]}
         onBehalfOf=""
         displayName={(p) => p.name}
         onClose={vi.fn()}
@@ -835,5 +835,65 @@ describe('admin adds a team with a player who has no level (S6b)', () => {
     fireEvent.click(screen.getByRole('button', { name: /rosa/i }))
     expect(levelField()).toBeNull()
     expect(button('Continue').disabled).toBe(false)
+  })
+})
+
+describe('admin changes a partner to a member with no level (S6b)', () => {
+  const rosa = { id: 'q2', name: 'Rosa', status: 'active', playtomicLevel: 0 } as never
+  const renderPanel = ({ onBehalfOf }: { onBehalfOf?: string }) =>
+    render(
+      <ChangePartnerPanel
+        tournamentId="t1"
+        teamId="tm1"
+        candidates={[rosa]}
+        onBehalfOf={onBehalfOf}
+        displayName={(p) => p.name}
+        onClose={vi.fn()}
+      />,
+    )
+  const levelField = () => screen.queryByRole('textbox', { name: 'Playtomic level' })
+  const submit = () => screen.getByRole('button', { name: 'Change partner' }) as HTMLButtonElement
+
+  beforeEach(() => m.changeTeamPartner.mockResolvedValue({ status: 'changed' }))
+
+  it('asks for the level, names it in the confirmation and saves it first', async () => {
+    renderPanel({ onBehalfOf: 'Alma & Bob' })
+    fireEvent.click(screen.getByRole('button', { name: /rosa/i }))
+    expect(submit().disabled).toBe(true)
+    fireEvent.change(levelField()!, { target: { value: '1,5' } })
+    fireEvent.click(submit())
+
+    await waitFor(() => expect(m.changeTeamPartner).toHaveBeenCalled())
+    expect(m.confirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringMatching(
+          /Team: Alma & Bob\nNew partner: Rosa\nPartner's level: 1.5, saved to their profile/,
+        ),
+      }),
+    )
+    expect(adminLevel.saveLevels).toHaveBeenCalledWith({
+      levels: [{ playerId: 'q2', name: 'Rosa', level: '1,5' }],
+    })
+    expect(adminLevel.saveLevels.mock.invocationCallOrder[0]).toBeLessThan(
+      m.changeTeamPartner.mock.invocationCallOrder[0],
+    )
+  })
+
+  it("changes nothing when the level can't be saved", async () => {
+    adminLevel.saveLevels.mockResolvedValue(false)
+    renderPanel({ onBehalfOf: 'Alma & Bob' })
+    fireEvent.click(screen.getByRole('button', { name: /rosa/i }))
+    fireEvent.change(levelField()!, { target: { value: '2' } })
+    fireEvent.click(submit())
+
+    await waitFor(() => expect(adminLevel.saveLevels).toHaveBeenCalled())
+    expect(m.changeTeamPartner).not.toHaveBeenCalled()
+  })
+
+  it("doesn't ask a captain changing their own partner", () => {
+    renderPanel({})
+    fireEvent.click(screen.getByRole('button', { name: /rosa/i }))
+    expect(levelField()).toBeNull()
+    expect(submit().disabled).toBe(false)
   })
 })

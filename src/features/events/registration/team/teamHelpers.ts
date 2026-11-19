@@ -1,4 +1,5 @@
-import { givenLevelProblem, parseLevel } from '../../../../lib/parseLevel'
+import { parseLevel } from '../../../../lib/parseLevel'
+import { isLevelGiven } from '../levelHelpers'
 import type { Player } from '../../../../lib/normalise'
 import type { NormalisedRegistration } from '../../registrationQueries'
 import type { EventTeam, NewPartnerInput, PartnerChoice, TeamEntry } from '../../teams/teamTypes'
@@ -21,15 +22,12 @@ export interface NewPartnerDraft {
 
 export const EMPTY_DRAFT: NewPartnerDraft = { name: '', email: '', level: '', consent: false }
 
-/** Required (signup revamp S6a): above 0, since 0 means "no level", and up to 7. */
-export const partnerLevelProblem = ({ level }: { level: string }): string =>
-  givenLevelProblem({ value: level, blank: "Enter the partner's Playtomic level." })
-
 export const isDraftComplete = ({ draft }: { draft: NewPartnerDraft }): boolean =>
   draft.consent &&
   draft.name.trim() !== '' &&
   draft.email.trim() !== '' &&
-  partnerLevelProblem({ level: draft.level }) === ''
+  // Required (S6a): above 0, since 0 means "no level", and up to 7.
+  isLevelGiven({ level: draft.level })
 
 export const draftToChoice = ({ draft }: { draft: NewPartnerDraft }): PartnerChoice => {
   const partner: NewPartnerInput = {
