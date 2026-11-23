@@ -3,7 +3,7 @@ import { LogOut, Settings as SettingsIcon, Shield } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { useMyProfile, usePlayerActions, useAvatarUpload } from '../players/usePlayers'
 import { isE164 } from '../../lib/whatsapp'
-import { levelProblem } from '../../lib/parseLevel'
+import { ownLevelProblem } from '../../lib/parseLevel'
 import { errorMessage } from '../../lib/errors'
 import { processAvatar } from '../../lib/processAvatar'
 import { ownAvatarFilename } from '../players/playerQueries'
@@ -149,7 +149,10 @@ export default function Settings() {
       setProfileError('Phone must start with + and the country code (e.g. +31612345678).')
       return
     }
-    const levelError = levelProblem({ value: profileForm.playtomicLevel, min: 0.5 })
+    const levelError = ownLevelProblem({
+      value: profileForm.playtomicLevel,
+      hasLevel: (myPlayer?.playtomicLevel ?? 0) > 0,
+    })
     if (levelError) {
       setProfileError(levelError)
       return

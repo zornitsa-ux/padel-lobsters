@@ -164,3 +164,29 @@ describe('Settings — avatar upload', () => {
     expect(uploadMock).not.toHaveBeenCalled()
   })
 })
+
+// #190 review: a player with a level can change it, but not remove it (D-16).
+describe('Settings — own level', () => {
+  const openAndSetLevel = (value: string) => {
+    renderSettings()
+    fireEvent.click(
+      within(screen.getByRole('region', { name: 'My Lobster Profile' })).getByRole('button', {
+        name: 'Edit profile',
+      }),
+    )
+    fireEvent.change(screen.getByPlaceholderText('e.g. 3.5'), { target: { value } })
+    fireEvent.click(screen.getByRole('button', { name: /save profile/i }))
+  }
+
+  it.each(['', '0'])('refuses %j for a player who has a level', async (value) => {
+    openAndSetLevel(value)
+    expect(await screen.findByText(/not remove it|above 0 and up to 7/)).toBeTruthy()
+    expect(updatePlayerMock).not.toHaveBeenCalled()
+  })
+
+  it('saves a level under 0.5', async () => {
+    openAndSetLevel('0.3')
+    await waitFor(() => expect(updatePlayerMock).toHaveBeenCalledTimes(1))
+    expect(updatePlayerMock.mock.calls[0][1].playtomicLevel).toBe('0.3')
+  })
+})
