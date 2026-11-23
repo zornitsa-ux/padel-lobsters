@@ -47,8 +47,11 @@ export function levelRefusalMessage({ error }: { error: unknown }): string | nul
   return LEVEL_REFUSALS[errorMessage(error, '')] ?? null
 }
 
+/** A level the database refused, with the reason in words. */
+export class LevelRefusal extends Error {}
+
 /** The error to show: a level refusal in words, anything else unchanged. */
 export function withLevelMessage({ error }: { error: unknown }): unknown {
   const message = levelRefusalMessage({ error })
-  return message ? new Error(message) : error
+  return message ? new LevelRefusal(message) : error
 }

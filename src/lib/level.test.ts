@@ -4,6 +4,7 @@ import {
   INVALID_LEVEL_MESSAGE,
   knownLevel,
   LEVEL_REQUIRED_MESSAGE,
+  LevelRefusal,
   levelOrNoLevelStart,
   levelRefusalMessage,
   levelText,
@@ -30,7 +31,7 @@ describe('levelRefusalMessage', () => {
 describe('withLevelMessage', () => {
   it('turns a level refusal into an Error with the message', () => {
     const shown = withLevelMessage({ error: { code: 'P0001', message: 'level_required' } })
-    expect(shown).toBeInstanceOf(Error)
+    expect(shown).toBeInstanceOf(LevelRefusal)
     expect((shown as Error).message).toBe(LEVEL_REQUIRED_MESSAGE)
   })
 

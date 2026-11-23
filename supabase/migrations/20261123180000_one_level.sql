@@ -86,6 +86,21 @@ revoke all on function private.level_to_store(text, text, numeric) from public, 
 
 -- ── Column ──────────────────────────────────────────────────────────────────
 
+-- Production was clean when checked (23 Nov). A row saved since through the
+-- old paths stops the push here, to be fixed by hand: rewriting a level
+-- silently could gate a player.
+do $$
+declare
+  v_bad integer;
+begin
+  select count(*) into v_bad from public.players
+   where playtomic_level is null or playtomic_level < 0 or playtomic_level > 7
+      or playtomic_level <> round(playtomic_level, 2);
+  if v_bad > 0 then
+    raise exception 'S7: % players have a level outside the rule; fix them before pushing', v_bad;
+  end if;
+end $$;
+
 alter table public.players
   alter column playtomic_level set not null,
   add constraint players_playtomic_level_range check (

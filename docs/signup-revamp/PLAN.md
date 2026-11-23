@@ -164,6 +164,10 @@ v_old_level)` becomes "absent key: unchanged; null: `level_required` if a
     recorded).
 - One message set: "Playtomic level must be a number above 0 and up to 7, with
   at most 2 decimals, e.g. 2.45." plus each policy's blank message.
+- Writes send the typed text, not `parseLevel(…) ?? 0`, so unreadable input
+  gets the server's `invalid_level` rather than `level_required` (`updatePlayer`,
+  `addPlayer`, `buildPlayerEditPatch`, signup metadata). Safe once S7 is live:
+  the old RPCs cast the text to numeric.
 - `hasLevel(level)` replaces the inline `> 0` checks (about 30 files), so S9
   changes one function.
 - One level input component (label, hint, error, `inputMode="decimal"`) for
