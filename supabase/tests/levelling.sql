@@ -180,7 +180,7 @@ begin
 
   -- ── 6. Playtomic start: as entered, σ 0.7, no cap ─────────────────────────
   perform pg_temp.check(
-    pg_temp.complete(v_p[12], pg_temp.answers('corners', 1.0) || '{"prefilled": true}') = 'ok', '6a');
+    pg_temp.complete(v_p[12], pg_temp.answers('corners', 1.0) || '{"prefilled": "yes"}') = 'ok', '6a');
   perform pg_temp.check(pg_temp.complete(v_p[13], pg_temp.answers('lets_go', 6.5)) = 'ok', '6b');
   select * into v_row from public.players where id = v_p[12];
   perform pg_temp.check(

@@ -35,7 +35,7 @@ call() {
   psql_ <<SQL
 begin;
 select set_config('request.jwt.claims', '{"sub": "$player_id", "app_metadata": {"role": "member"}}', true);
-select status from public.complete_levelling('{"years_playing": "under_1y", "frequency": "few_per_month", "lessons": "none", "racket_sports": "none", "walls": "corners", "playtomic_level": null, "prefilled": false}');
+select status from public.complete_levelling('{"years_playing": "under_1y", "frequency": "few_per_month", "lessons": "none", "racket_sports": "none", "walls": "corners", "playtomic_level": null}');
 select pg_sleep($hold);
 commit;
 SQL
