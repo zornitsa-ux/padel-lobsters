@@ -99,6 +99,17 @@ describe('finish your account', () => {
     expect(screen.queryByText(/leave it empty/i)).toBeNull()
   })
 
+  it('stops naming the captain once the player changes the level', () => {
+    renderPage()
+    fireEvent.change(screen.getByPlaceholderText('e.g. 3.5'), { target: { value: '2.45' } })
+
+    expect(screen.queryByText(/cara diaz entered it for you/i)).toBeNull()
+    expect(screen.getByText(/your matches are built from it/i)).not.toBeNull()
+
+    fireEvent.change(screen.getByPlaceholderText('e.g. 3.5'), { target: { value: '3,50' } })
+    expect(screen.getByText(/cara diaz entered it for you/i)).not.toBeNull()
+  })
+
   it('needs the acknowledgement before it can be submitted', () => {
     renderPage()
     const submit = screen.getByRole('button', { name: /finish and see your invite/i })

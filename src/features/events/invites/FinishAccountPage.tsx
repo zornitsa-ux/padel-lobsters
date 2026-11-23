@@ -16,7 +16,7 @@ import {
   type ProfileFieldValues,
 } from '../../players/profileForm'
 import { errorMessage } from '../../../lib/errors'
-import { hasLevel, levelPolicy } from '../../../lib/level'
+import { hasLevel, knownLevel, levelPolicy, parseLevel } from '../../../lib/level'
 import {
   useAcknowledgeMyAccount,
   useMyAccountSetup,
@@ -139,11 +139,11 @@ export default function FinishAccountPage() {
         <ProfilePlayFields
           form={form}
           setForm={setForm}
-          levelHint={
-            hasLevel({ level: profile.data?.playtomicLevel })
-              ? `${setup.requestedByName} entered it for you. Change it if it's not right.`
-              : NO_LEVEL_YET_HINT
-          }
+          levelHint={finishLevelHint({
+            recorded: profile.data?.playtomicLevel,
+            typed: form.playtomicLevel,
+            captainName: setup.requestedByName,
+          })}
         />
         <ProfileContactFields form={form} setForm={setForm} />
       </div>
@@ -181,6 +181,23 @@ export default function FinishAccountPage() {
       />
     </form>
   )
+}
+
+// Names the captain only while the field still holds the level they entered.
+function finishLevelHint({
+  recorded,
+  typed,
+  captainName,
+}: {
+  recorded: number | null | undefined
+  typed: string
+  captainName: string
+}): string {
+  if (!hasLevel({ level: recorded })) return NO_LEVEL_YET_HINT
+  if (parseLevel({ value: typed }) === knownLevel({ level: recorded })) {
+    return `${captainName} entered it for you. Change it if it's not right.`
+  }
+  return 'Your matches are built from it.'
 }
 
 function NotPlayingCard({
