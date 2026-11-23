@@ -242,3 +242,40 @@ Players with a played night keep today's behaviour.
   second PR fixes the comment.
 - **Growth G5** (paused): "how did you find us" is the self-reported take on
   attribution. `?src=`/`?ref=` stay unbuilt.
+
+## 6. One definition of a level (S7–S9)
+
+Levels were checked in about fifteen places with five different rules, and the
+database had none on `players.playtomic_level` (#190). One definition, one
+policy per input, three layers of enforcement.
+
+### 6.1 The definition
+
+- **A level** is a number above 0, up to 7, with at most 2 decimals
+  (owner, 23 Nov: refuse more, don't round). A decimal comma is accepted.
+- **No level** is a state, not a level. Stored as 0 until S9 (the column is
+  NOT NULL from S7), then null. Code asks `hasLevel`, never compares with 0.
+
+### 6.2 Policies
+
+Each input declares one:
+
+| Policy     | Blank            | Used by                                                                            |
+| ---------- | ---------------- | ---------------------------------------------------------------------------------- |
+| `required` | refused          | new partner (S6a), admin register forms (S6b), levelling's Playtomic step if typed |
+| `optional` | allowed          | signup, admin add or invite; Settings and the admin editor with no level recorded  |
+| `keep`     | refused, as is 0 | Settings and the admin editor once a level is recorded                             |
+
+Nobody can clear a recorded level, admins included (owner, 23 Nov): it can be
+changed, never returned to no level.
+
+### 6.3 Enforcement
+
+1. **Database:** a CHECK on `players.playtomic_level`, so no path can store a
+   bad value.
+2. **Server:** `private.parse_level` (C-8) in every RPC and the signup hook;
+   `update_my_profile` enforces `keep`.
+3. **Client:** one `levelProblem({ value, policy })` and one level input.
+
+`supabase/tests/level_cases.json` holds the cases both the unit test and the
+database test check, so the two can't disagree.

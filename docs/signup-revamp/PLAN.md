@@ -35,8 +35,11 @@ before their first played night.
 | S6a | New partner's level        | Migration: `private.create_partner_player` refuses a blank, 0 or > 7 level (`invalid_level`), for captains and admins alike. `NewPartnerForm`: the level is required, with a hint for partners not on Playtomic. A captain-created partner then has a level, so the levelling gate doesn't hold them when accepting.                                                                                                                                                                                                                                            |
 | S6b | Admin registers, no level  | The admin register forms (`AddPlayerCard`; `AdminAddTeamCard` for captain and partner; `ChangePartnerPanel` on behalf) ask for the level of a player who has none, and save it before registering, through `admin_update_player`. That RPC regains its rating reset with the C-7 guards (#182).                                                                                                                                                                                                                                                                 |
 | S6c | Every spot, whoever writes | No spot in an event without a level, whoever registers the player (D-18). `resolve_team_partner` refuses an existing partner with no level (`partner_needs_level`); `register_for_tournament` and `register_team_for_tournament` refuse an admin registering a player or captain with no level (`player_needs_level`, `captain_needs_level`); the backstop trigger checks every row, not only the caller's own; `admin_force_accept_transfer` and `admin_transfer_registration` return `recipient_needs_level`. The team forms name the partner in the refusal. |
+| S7  | One level, database        | Migration: `private.parse_level(text)` and a CHECK on `players.playtomic_level` (DESIGN §6, C-8). Every write path parses through it: the signup hook, `create_player_for_confirmed_user`, `update_my_profile`, `admin_update_player`, `admin_add_player`, `create_partner_player`, `complete_levelling`. `update_my_profile` refuses to clear a recorded level (`level_required`). DB test reads the shared cases file.                                                                                                                                        |
+| S8  | One level, client          | `src/lib/level.ts`: `parseLevel`, `hasLevel`, `levelProblem({ value, policy })` with policies `required`, `optional`, `keep` (DESIGN §6.2), replacing `levelProblem`, `givenLevelProblem` and `ownLevelProblem`. One level input component for the five forms. Unit test reads the shared cases file.                                                                                                                                                                                                                                                           |
+| S9  | "No level" stored as null  | Migration: `players.playtomic_level` null for no level instead of 0 (default null, existing 0 → null), `players_public` and every SQL reader; client reads `hasLevel` only. Last task (owner, 23 Nov). Overlaps Matchmaking V2 M4.3.                                                                                                                                                                                                                                                                                                                            |
 
-**Order:** S1 → S2 → S3 → S3b → S4; S3c after S3b; S6a, S6b after S4; S6c after S6b. S5 grows with S2–S4 (each PR adds its own cases)
+**Order:** S1 → S2 → S3 → S3b → S4; S3c after S3b; S6a, S6b after S4; S6c after S6b; S7 → S8 → S9 last. S5 grows with S2–S4 (each PR adds its own cases)
 and is finished last.
 
 - **S4 after S3, not before.** Once the level is optional, a player with no
@@ -125,15 +128,71 @@ and is finished last.
 - Tests: `levelling.sql` (answers only, prompt state, cleared level after
   answering, reset guard); `levelling_parallel.sh` for the answers-only path.
 
+### S7
+
+- **Shared cases first.** `supabase/tests/level_cases.json`: input text,
+  then the expected result for each policy (a value, `invalid`, or `blank`).
+  Cover at least `""`, `"  "`, `"0"`, `"0.3"`, `"2,5"`, `"2.45"`, `"2.455"`,
+  `"7"`, `"7.01"`, `"abc"`, `"-1"`, `"1e2"`. S8's unit test reads the same
+  file, so the client and the database can't drift.
+- **`private.parse_level`** (C-8) returns a level, or null for "no level"
+  (blank, or `0`, which today's client sends for blank), or raises
+  `invalid_level`. Until S9, 0 stays the stored "no level", so S7 works with
+  the current client and ships before S8. `parse_metadata_level`'s silent 0 for
+  garbage goes: the signup hook rejects it instead.
+- **Each path applies its policy to null** (C-8 table): `optional` stores 0,
+  `required` returns `invalid_level`, `keep` returns `level_required` when a
+  level is recorded. An absent key leaves the level unchanged everywhere.
+  Nobody clears a recorded level, admins included (D-21): `update_my_profile`
+  and `admin_update_player` both apply `keep`, so their `coalesce(…,
+v_old_level)` becomes "absent key: unchanged; null: `level_required` if a
+  level is recorded, else 0".
+- **Column:** `players.playtomic_level` becomes NOT NULL with the CHECK
+  `players_playtomic_level_range` (C-8), so "no level" has one representation
+  until S9. Rehearse on a production copy.
+- Map `invalid_level` and `level_required` to the client's level messages on
+  every caller that doesn't already.
+
+### S8
+
+- `src/lib/level.ts` replaces `src/lib/parseLevel.ts`. Policies:
+  - `required`: a level must be given (new partner, admin register forms,
+    levelling's Playtomic step when typed).
+  - `optional`: blank allowed (signup, admin add or invite, and Settings or
+    the admin editor for a player with no level).
+  - `keep`: blank and 0 refused (Settings and the admin editor once a level is
+    recorded).
+- One message set: "Playtomic level must be a number above 0 and up to 7, with
+  at most 2 decimals, e.g. 2.45." plus each policy's blank message.
+- `hasLevel(level)` replaces the inline `> 0` checks (about 30 files), so S9
+  changes one function.
+- One level input component (label, hint, error, `inputMode="decimal"`) for
+  `ProfileFields`, `LevelField`, `PlaytomicStep`, `NewPartnerForm` and the admin
+  `PlayerForm`; their visual differences become props. Check the gallery.
+
+### S9
+
+- Migration: default null, `update players set playtomic_level = null where
+playtomic_level = 0`, the CHECK without the `= 0` branch, `players_public`
+  rebuilt, and every SQL reader that compares with 0 (`needs_levelling`, the
+  RPCs in S7, C-7's reset guard, `rating_events.prior_mu`'s coalesce).
+- Client: `hasLevel` and `normalise.ts` read null; `NO_LEVEL_START` (King of the
+  Court seeding, the matcher) applies to null. `adjusted_level` mirrors it until
+  Matchmaking V2 M4.3 drops it; do S9 with M4.3 if both are in flight.
+- Rehearse on a production copy: parity diff limited to the 0 → null change.
+
 ## Release
 
-| Task | Window                      | Steps                                |
-| ---- | --------------------------- | ------------------------------------ |
-| S1   | Any day outside the freeze  | merge → `db push` → `db:grants:prod` |
-| S2   | 16–26 Nov or after 29 Nov   | merge (Vercel deploys)               |
-| S3   | Same window as S2, after it | merge → `db push` → `db:grants:prod` |
-| S3c  | 16–26 Nov or after 29 Nov   | merge → `db push` → `db:grants:prod` |
-| S4   | After S3 is live            | merge → `db push` → `db:grants:prod` |
-| S6a  | 16–26 Nov or after 29 Nov   | merge → `db push` → `db:grants:prod` |
-| S6b  | Any day (admin-only)        | merge → `db push` → `db:grants:prod` |
-| S6c  | 16–26 Nov or after 29 Nov   | merge → `db push` → `db:grants:prod` |
+| Task | Window                          | Steps                                |
+| ---- | ------------------------------- | ------------------------------------ |
+| S1   | Any day outside the freeze      | merge → `db push` → `db:grants:prod` |
+| S2   | 16–26 Nov or after 29 Nov       | merge (Vercel deploys)               |
+| S3   | Same window as S2, after it     | merge → `db push` → `db:grants:prod` |
+| S3c  | 16–26 Nov or after 29 Nov       | merge → `db push` → `db:grants:prod` |
+| S4   | After S3 is live                | merge → `db push` → `db:grants:prod` |
+| S6a  | 16–26 Nov or after 29 Nov       | merge → `db push` → `db:grants:prod` |
+| S6b  | Any day (admin-only)            | merge → `db push` → `db:grants:prod` |
+| S6c  | 16–26 Nov or after 29 Nov       | merge → `db push` → `db:grants:prod` |
+| S7   | After 29 Nov (signup, Settings) | merge → `db push` → `db:grants:prod` |
+| S8   | After S7 is live                | merge (Vercel deploys)               |
+| S9   | After S8, outside a freeze      | merge → `db push` → `db:grants:prod` |

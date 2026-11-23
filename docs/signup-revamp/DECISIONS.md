@@ -91,3 +91,15 @@ this file records how the code carries them out.
   (Register shown, then `needs_level` from the server) stays covered by the
   database tests and the client's `needs_level` handling; it gets no
   end-to-end test.
+- **D-21. One definition of a level, enforced in the database** (owner,
+  23 Nov). A level is above 0, up to 7, with at most 2 decimals; more decimals
+  are refused, not rounded. Every input declares a policy (`required`,
+  `optional`, `keep`). Nobody can clear a recorded level, admins included: it
+  can be changed, never returned to no level (this replaces D-20's 0 to 7 for
+  the admin editor).
+  The database holds the rule (CHECK and `parse_level`), and one shared cases
+  file keeps the client and SQL rules equal (DESIGN §6).
+- **D-22. "No level" moves from 0 to null last** (owner, 23 Nov). The cleaner
+  model, but it touches the matcher, King of the Court seeding and every
+  reader. After S8, `hasLevel` is the only place that knows, so S9 is one
+  migration plus that function.
