@@ -166,6 +166,11 @@ BEFORE INSERT OR UPDATE on `public.registrations`, function
   - a team row is accepted: `TG_OP = 'UPDATE'`, `old.accepted_at is null` and
     `new.accepted_at is not null`.
 
+S6c: `admin_force_accept_transfer` and `admin_transfer_registration` catch
+the raised `needs_level` for the recipient and return `recipient_needs_level`
+(the force-accepted offer stays pending; the immediate transfer leaves no
+offer behind).
+
 Client: the RPC wrappers pass the raised `needs_level` through instead of
 collapsing it to `error` (`registerPlayer` in `registrationQueries.ts` drops
 the error today; the transfer and team wrappers likewise). The transfer

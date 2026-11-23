@@ -6,7 +6,7 @@ import type { PartnerChoice } from '../../teams/teamTypes'
 import type { DisplayName, GetPlayer } from '../utils'
 import { useConfirmOnBehalf } from '../../../../lib/confirmOnBehalf'
 import PartnerChoiceForm from './PartnerChoiceForm'
-import { choicePartnerName, partnerConfirmLine } from './teamHelpers'
+import { partnerConfirmLine } from './teamHelpers'
 import { levelConfirmLine } from '../levelHelpers'
 import { useSaveLevels } from '../useSaveLevels'
 import { useAdminLevelCheck } from '../../../levelling/useAdminLevelCheck'
@@ -36,6 +36,11 @@ export default function ChangePartnerPanel({
   const needsLevel = useAdminLevelCheck()
   const saveLevels = useSaveLevels()
   const getPlayer: GetPlayer = (id) => candidates.find((p) => p.id === id)
+  const partnerLabel = ({ choice }: { choice: PartnerChoice }) => {
+    if (choice.kind === 'new') return choice.partner.name
+    const player = getPlayer(choice.playerId)
+    return player ? displayName(player) : ''
+  }
 
   const submit = async ({
     choice,
@@ -75,7 +80,8 @@ export default function ChangePartnerPanel({
         teamStatusMessage({
           map: CHANGE_PARTNER_MESSAGES,
           status,
-          partnerName: choicePartnerName({ choice, getPlayer }),
+          partnerName: partnerLabel({ choice }),
+          forAdmin: onBehalfOf !== undefined,
         }),
       )
   }

@@ -42,6 +42,7 @@ export function useTeamSignup({
           map: REGISTER_TEAM_MESSAGES,
           status,
           partnerName: choicePartnerName({ choice, getPlayer }),
+          forAdmin: !viewerIsCaptain,
         }),
       )
       return false

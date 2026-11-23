@@ -35,6 +35,8 @@ const FORCE_ACCEPT_ERRORS: Record<string, string> = {
   transfers_closed: 'Transfers for this event have closed.',
   to_already_registered: 'The recipient is already registered for this event.',
   from_not_registered: 'The sender is no longer registered — the transfer can’t be completed.',
+  recipient_needs_level:
+    'The recipient has no level yet. Add it on their page in Community, then try again. The offer stays open.',
 }
 
 const CANCEL_ERRORS: Record<string, string> = {

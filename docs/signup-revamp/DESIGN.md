@@ -148,7 +148,8 @@ Players with a played night keep today's behaviour.
 - **Every spot, whoever writes it (S6c, D-18).** A captain can't pick an
   existing member with no level as partner, and an admin can't register a
   player, captain or partner with no level: the RPCs return
-  `partner_needs_level`, `captain_needs_level` or `player_needs_level`. The
+  `partner_needs_level`, `captain_needs_level` or `player_needs_level`, and an
+  admin transfer to a recipient with no level returns `recipient_needs_level`. The
   admin forms ask for the level first (S6b), so admins rarely see these.
 - **Not gated:**
   - service-role and migration writes (`auth.uid()` is null);

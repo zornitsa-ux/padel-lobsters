@@ -12,7 +12,9 @@
 --     or captain who needs levelling when an admin registers them
 --     (player_needs_level, captain_needs_level);
 --   - the backstop trigger checks every row that becomes active, not only the
---     caller's own.
+--     caller's own;
+--   - admin_force_accept_transfer and admin_transfer_registration turn the
+--     trigger's needs_level for the recipient into recipient_needs_level.
 -- Writes with no caller (service role, migrations) and rows already active
 -- (waitlist promotion, payment updates) still pass, as in S3.
 -- ============================================================================
@@ -267,3 +269,135 @@ end
 $function$;
 
 revoke all on function private.registrations_require_levelling() from public, anon, authenticated;
+
+-- ── 4. Admin transfers to a recipient with no level ─────────────────────────
+-- Bodies as in 20260923101407_sync_matches_and_transfer_cutoff.sql, plus the
+-- recipient_needs_level status. A recipient already on the waitlist is
+-- promoted, not inserted, so the gate doesn't hold them (DESIGN §2.5).
+
+create or replace function public.admin_force_accept_transfer(input_transfer_id uuid)
+returns table(status text)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_xfer public.registration_transfers%rowtype;
+  v_closed boolean;
+  v_result text;
+  v_err text;
+begin
+  set local statement_timeout = '30s';
+  perform set_config('app.audit_source', 'admin_force_accept_transfer', true);
+  perform public.require_admin();
+  select * into v_xfer from public.registration_transfers where id = input_transfer_id for update;
+  if not found then return query select 'not_found'::text; return; end if;
+  if v_xfer.status <> 'pending' then return query select 'not_pending'::text; return; end if;
+
+  v_closed := public.tournament_transfers_closed(v_xfer.tournament_id);
+  if coalesce(v_closed, true) then
+    update public.registration_transfers
+       set status = 'auto_closed', closed_reason = 'transfers_closed', closed_at = now()
+     where id = v_xfer.id;
+    return query select 'transfers_closed'::text; return;
+  end if;
+
+  -- The levelling gate (C-6) raises for a recipient with no level; the offer
+  -- stays pending so they can level and accept it themselves.
+  begin
+    v_result := public.apply_registration_transfer(v_xfer.id);
+  exception when sqlstate 'P0001' then
+    get stacked diagnostics v_err = message_text;
+    if v_err <> 'needs_level' then raise; end if;
+    return query select 'recipient_needs_level'::text; return;
+  end;
+  if v_result <> 'accepted' then
+    if v_result in ('to_already_registered', 'from_not_registered') then
+      update public.registration_transfers
+         set status = 'auto_closed', closed_reason = v_result, closed_at = now()
+       where id = v_xfer.id;
+    end if;
+    return query select v_result; return;
+  end if;
+
+  update public.registration_transfers
+     set status = 'accepted', responded_at = now(), closed_reason = 'admin_force_accept', closed_at = now()
+   where id = v_xfer.id;
+  return query select 'accepted'::text;
+end
+$function$;
+
+create or replace function public.admin_transfer_registration(
+  input_tournament_id uuid,
+  input_from_player_id uuid,
+  input_to_player_id uuid
+)
+returns table(status text)
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'extensions'
+as $function$
+declare
+  v_tournament_status text;
+  v_new_id uuid;
+  v_result text;
+  v_err text;
+begin
+  set local statement_timeout = '30s';
+  perform set_config('app.audit_source', 'admin_transfer_registration', true);
+  perform public.require_admin();
+
+  if input_from_player_id is null or input_to_player_id is null
+     or input_from_player_id = input_to_player_id then
+    return query select 'invalid_target'::text; return;
+  end if;
+
+  select t.status into v_tournament_status
+    from public.tournaments t where t.id = input_tournament_id;
+  if v_tournament_status = 'completed' then
+    return query select 'tournament_completed'::text; return;
+  end if;
+
+  if not exists (
+    select 1 from public.players p
+     where p.id = input_to_player_id and coalesce(p.status, 'active') = 'active'
+  ) then
+    return query select 'invalid_target'::text; return;
+  end if;
+
+  if not exists (
+    select 1 from public.registrations r
+     where r.tournament_id = input_tournament_id
+       and r.player_id = input_from_player_id
+       and r.status = 'registered'
+  ) then
+    return query select 'not_registered'::text; return;
+  end if;
+
+  -- The levelling gate (C-6) raises for a recipient with no level; the block
+  -- rolls back the offer with it, so nothing is left behind.
+  begin
+    insert into public.registration_transfers (tournament_id, from_player_id, to_player_id, status)
+    values (input_tournament_id, input_from_player_id, input_to_player_id, 'pending')
+    returning id into v_new_id;
+
+    v_result := public.apply_registration_transfer(v_new_id);
+  exception when sqlstate 'P0001' then
+    get stacked diagnostics v_err = message_text;
+    if v_err <> 'needs_level' then raise; end if;
+    return query select 'recipient_needs_level'::text; return;
+  end;
+  if v_result <> 'accepted' then
+    update public.registration_transfers
+       set status = 'auto_closed', closed_reason = v_result, closed_at = now()
+     where id = v_new_id;
+    return query select v_result; return;
+  end if;
+
+  update public.registration_transfers
+     set status = 'accepted', responded_at = now(),
+         closed_reason = 'admin_transfer', closed_at = now()
+   where id = v_new_id;
+  return query select 'accepted'::text;
+end
+$function$;

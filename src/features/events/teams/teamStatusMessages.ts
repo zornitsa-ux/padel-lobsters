@@ -37,8 +37,15 @@ export const PARTNER_DECLINED_NOTICE = (partnerName: string) =>
 
 // Every spot in an event needs a level (signup revamp S6c), so a member with
 // none can't be picked until they set it.
-export function partnerNeedsLevelMessage({ partnerName }: { partnerName: string }) {
+export function partnerNeedsLevelMessage({
+  partnerName,
+  forAdmin = false,
+}: {
+  partnerName: string
+  forAdmin?: boolean
+}) {
   const who = partnerName || 'That player'
+  if (forAdmin) return `${who} has no level yet. Enter their level, then try again.`
   return `${who} hasn't set a level yet, so they can't be picked as a partner. Ask them to set it in the app, or pick someone else.`
 }
 
@@ -47,12 +54,14 @@ export function teamStatusMessage({
   map,
   status,
   partnerName,
+  forAdmin = false,
 }: {
   map: Partial<Record<string, string>>
   status: string
   partnerName: string
+  forAdmin?: boolean
 }) {
-  if (status === 'partner_needs_level') return partnerNeedsLevelMessage({ partnerName })
+  if (status === 'partner_needs_level') return partnerNeedsLevelMessage({ partnerName, forAdmin })
   return registrationMessage({ map, status })
 }
 

@@ -24,6 +24,16 @@ describe('teamStatusMessage', () => {
     expect(message).toMatch(/^That player hasn't set a level yet/)
   })
 
+  it('tells an admin to enter the level', () => {
+    const message = teamStatusMessage({
+      map: CHANGE_PARTNER_MESSAGES,
+      status: 'partner_needs_level',
+      partnerName: 'Sam',
+      forAdmin: true,
+    })
+    expect(message).toBe('Sam has no level yet. Enter their level, then try again.')
+  })
+
   it('reads any other status from the map', () => {
     expect(
       teamStatusMessage({

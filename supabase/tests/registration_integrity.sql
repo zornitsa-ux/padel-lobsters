@@ -636,6 +636,26 @@ begin
   end if;
   raise notice 'CHECK 15d ok — a transfer to a recipient who needs levelling is refused, nothing moves';
 
+  -- 15d2. An admin can't push it through either (S6c): force-accept and an
+  -- immediate transfer return recipient_needs_level; the offer stays pending,
+  -- no new offer is left behind, and the sender keeps their spot.
+  perform set_config('request.jwt.claims', json_build_object(
+    'sub', v_players[6], 'app_metadata', json_build_object('role', 'admin'))::text, true);
+  select f.status into v_status from public.admin_force_accept_transfer(v_xfer_id) f;
+  if v_status <> 'recipient_needs_level'
+     or (select status from public.registration_transfers where id = v_xfer_id) <> 'pending' then
+    raise exception 'CHECK 15d2 FAILED: force accept returned %', v_status;
+  end if;
+  select a.status into v_status from public.admin_transfer_registration(v_t4, v_gp[1], v_gp[4]) a;
+  if v_status <> 'recipient_needs_level'
+     or (select count(*) from public.registration_transfers where tournament_id = v_t4) <> 1
+     or exists (select 1 from public.registrations where tournament_id = v_t4 and player_id = v_gp[4])
+     or not exists (select 1 from public.registrations
+                     where tournament_id = v_t4 and player_id = v_gp[1] and status = 'registered') then
+    raise exception 'CHECK 15d2 FAILED: immediate transfer returned %', v_status;
+  end if;
+  raise notice 'CHECK 15d2 ok — an admin transfer to a recipient who needs levelling is refused, nothing moves';
+
   -- 15e. Waitlist promotion isn't gated: a player who needs levelling sits on
   -- the waitlist (written with no caller, as a pre-S6c row), then a cancel
   -- promotes them.
@@ -649,6 +669,10 @@ begin
   select c.promoted_player_id into v_promoted from public.cancel_registration(v_reg) c;
   if v_promoted is distinct from v_gp[3] then
     raise exception 'CHECK 15e FAILED: expected the waitlister promoted, got %', v_promoted;
+  end if;
+  if (select count(*) from public.registrations
+       where tournament_id = v_t4 and status = 'registered') <> 2 then
+    raise exception 'CHECK 15e FAILED: expected the event full again after the promotion';
   end if;
   perform set_config('request.jwt.claims', '', true);
   insert into public.registrations (tournament_id, player_id, status)
