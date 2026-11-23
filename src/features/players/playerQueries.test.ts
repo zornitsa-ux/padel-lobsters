@@ -88,3 +88,21 @@ describe('player write payloads', () => {
     expect(payloadOf(0)).not.toHaveProperty('adjustment')
   })
 })
+
+describe('player write level refusals (C-8)', () => {
+  const refuse = (message: string) =>
+    mockRpc.mockResolvedValue({ data: null, error: { code: 'P0001', message } })
+
+  it('shows level_required in words on a profile save', async () => {
+    refuse('level_required')
+    await expect(updatePlayer('p1', profile, 'player')).rejects.toThrow(
+      /can be changed, but not removed/,
+    )
+  })
+
+  it('shows invalid_level in words on an admin edit and an admin add', async () => {
+    refuse('invalid_level')
+    await expect(updatePlayer('p1', profile, 'admin')).rejects.toThrow(/at most 2 decimals/)
+    await expect(addPlayer(profile)).rejects.toThrow(/at most 2 decimals/)
+  })
+})

@@ -1,3 +1,5 @@
+import { errorCode, errorMessage } from './errors'
+
 // A Playtomic level of 0 means none was given (signup revamp D-5, D-14).
 export const knownLevel = ({ level }: { level: number | null | undefined }): number | null =>
   level != null && level > 0 ? level : null
@@ -23,4 +25,33 @@ export const levelText = ({
 }): string | undefined => {
   const value = knownLevel({ level })
   return value == null ? undefined : `${prefix} ${value.toFixed(1)}`
+}
+
+// One definition of a level (docs/signup-revamp DESIGN §6). The database
+// refuses anything else (C-8); these are its refusals in words.
+
+export const INVALID_LEVEL_MESSAGE =
+  'Playtomic level must be a number above 0 and up to 7, with at most 2 decimals, e.g. 2.45.'
+
+export const LEVEL_REQUIRED_MESSAGE =
+  'Enter a Playtomic level. A level can be changed, but not removed.'
+
+const LEVEL_REFUSALS: Record<string, string> = {
+  invalid_level: INVALID_LEVEL_MESSAGE,
+  level_required: LEVEL_REQUIRED_MESSAGE,
+}
+
+/** The message for a database level refusal, or null for any other error. */
+export function levelRefusalMessage({ error }: { error: unknown }): string | null {
+  if (errorCode(error) !== 'P0001') return null
+  return LEVEL_REFUSALS[errorMessage(error, '')] ?? null
+}
+
+/** A level the database refused, with the reason in words. */
+export class LevelRefusal extends Error {}
+
+/** The error to show: a level refusal in words, anything else unchanged. */
+export function withLevelMessage({ error }: { error: unknown }): unknown {
+  const message = levelRefusalMessage({ error })
+  return message ? new LevelRefusal(message) : error
 }

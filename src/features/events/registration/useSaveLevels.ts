@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useApp } from '../../../context/useApp'
 import { usePlayerActions } from '../../players/usePlayers'
 import { useToast } from '../../../lib/toastBus'
+import { LevelRefusal } from '../../../lib/level'
 
 export interface LevelToSave {
   playerId: string
@@ -24,10 +25,11 @@ export function useSaveLevels() {
       for (const { playerId, name, level } of levels) {
         try {
           await updatePlayer(playerId, { playtomicLevel: level })
-        } catch {
+        } catch (err) {
+          const reason = err instanceof LevelRefusal ? ` ${err.message}` : ''
           showToast({
             variant: 'error',
-            message: `Couldn't save ${name}'s level, so nobody was registered.`,
+            message: `Couldn't save ${name}'s level, so nobody was registered.${reason}`,
           })
           return false
         }

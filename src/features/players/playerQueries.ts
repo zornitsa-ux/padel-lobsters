@@ -4,6 +4,7 @@ import { normalisePlayers, type Player } from '../../lib/normalise'
 import { fetchMyProfile as fetchMyProfileRpc } from '../../api/auth'
 import type { Json } from '../../lib/database.types'
 import { parseLevel } from '../../lib/parseLevel'
+import { withLevelMessage } from '../../lib/level'
 import { playerPublicRowSchema, myProfileRowSchema, playerPiiRowSchema } from './playerSchemas'
 
 export type { Player }
@@ -164,7 +165,7 @@ export async function addPlayer(data: PlayerInput) {
   })
   if (error) {
     console.error('admin_add_player error:', error)
-    throw error
+    throw withLevelMessage({ error })
   }
   const inserted = Array.isArray(rows) ? rows[0] : rows
   return inserted || null
@@ -215,7 +216,7 @@ export async function updatePlayer(id: string, data: PlayerInput, role: string) 
     })
     if (error) {
       console.error('admin_update_player error:', error)
-      throw error
+      throw withLevelMessage({ error })
     }
     // False: no player with this id, so nothing was saved.
     if (updated === false) throw new Error('Player not found.')
@@ -225,7 +226,7 @@ export async function updatePlayer(id: string, data: PlayerInput, role: string) 
     })
     if (error) {
       console.error('update_my_profile error:', error)
-      throw error
+      throw withLevelMessage({ error })
     }
   }
 }

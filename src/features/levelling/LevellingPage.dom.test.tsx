@@ -130,6 +130,26 @@ describe('LevellingPage', () => {
     expect(m.showToast).not.toHaveBeenCalled()
   })
 
+  it('says what a level is when the server refuses the level', async () => {
+    completeLevelling.mockResolvedValue('invalid_level')
+    renderFlow()
+    answerFiveQuestions()
+    tap('No, or I’m not sure')
+    tap('Finish')
+    expect(await screen.findByText(/at most 2 decimals/)).toBeTruthy()
+    expect(m.showToast).not.toHaveBeenCalled()
+  })
+
+  it('stays put on a status it doesn’t know', async () => {
+    completeLevelling.mockResolvedValue('something_new')
+    renderFlow()
+    answerFiveQuestions()
+    tap('No, or I’m not sure')
+    tap('Finish')
+    expect(await screen.findByText(/couldn’t save your answers/)).toBeTruthy()
+    expect(m.showToast).not.toHaveBeenCalled()
+  })
+
   it('asks before closing, and keeps the answers for the session', async () => {
     m.confirm.mockResolvedValue(true)
     const first = renderFlow()

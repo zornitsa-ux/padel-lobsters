@@ -7,6 +7,7 @@ import { usePlayer } from '../players/usePlayers'
 import { Button } from '../../components/ui/Button'
 import { Spinner } from '../../components/ui/Spinner'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { INVALID_LEVEL_MESSAGE } from '../../lib/level'
 import { StepHeader } from '../../components/ui/StepHeader'
 import {
   canFinish,
@@ -19,7 +20,7 @@ import {
   type LevellingState,
 } from './levellingFlow'
 import { QUESTIONS } from './levellingQuestions'
-import type { MyLevelling } from './levellingQueries'
+import type { CompleteLevellingStatus, MyLevelling } from './levellingQueries'
 import { clearDraft, readDraft, saveDraft } from './levellingDraft'
 import { returnPathFrom } from './levellingRoutes'
 import { useCompleteLevelling, useMyLevelling } from './useMyLevelling'
@@ -27,6 +28,7 @@ import QuestionStep from './QuestionStep'
 import PlaytomicStep from './PlaytomicStep'
 
 const SAVE_ERROR = 'We couldn’t save your answers. Please try again.'
+const DONE_STATUSES = new Set<CompleteLevellingStatus>(['ok', 'already_levelled', 'not_needed'])
 
 const FINISHED: Record<LevellingMode, string> = {
   level: 'You’re all set and ready to register for an event.',
@@ -130,7 +132,11 @@ function LevellingFlow({
     if (!payload) return
     setError('')
     const status = await complete.mutateAsync({ payload }).catch(() => 'error' as const)
-    if (status === 'error' || status === 'invalid_answers') {
+    if (status === 'invalid_level') {
+      setError(INVALID_LEVEL_MESSAGE)
+      return
+    }
+    if (!DONE_STATUSES.has(status)) {
       setError(SAVE_ERROR)
       return
     }

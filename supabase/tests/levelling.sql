@@ -97,8 +97,6 @@ begin
   perform pg_temp.check(private.needs_levelling(v_p[2]), '1d: no level, seed row');
   perform pg_temp.check(private.needs_levelling(v_p[3]), '1e: no level, tournament row');
   perform pg_temp.check(private.needs_levelling(v_p[5]), '1f: no level, completed team event');
-  update public.players set playtomic_level = null where id = v_p[6];
-  perform pg_temp.check(private.needs_levelling(v_p[6]), '1g: a null level is no level');
   raise notice 'CHECK 1 ok: needs_levelling';
 
   -- ── 2. get_my_levelling ───────────────────────────────────────────────────
@@ -141,8 +139,9 @@ begin
   perform pg_temp.check(pg_temp.complete(v_p[7], '[]') = 'invalid_answers', '4a: not an object');
   perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers() - 'lessons') = 'invalid_answers', '4b: missing key');
   perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers('sometimes')) = 'invalid_answers', '4c: unknown code');
-  perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers(input_level => 0)) = 'invalid_answers', '4d: level 0');
-  perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers(input_level => 7.5)) = 'invalid_answers', '4e: level over 7');
+  perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers(input_level => 0)) = 'invalid_level', '4d: level 0');
+  perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers(input_level => 7.5)) = 'invalid_level', '4e: level over 7');
+  perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers(input_level => 2.455)) = 'invalid_level', '4e2: three decimals');
   perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers() || '{"playtomic_level": "2"}') = 'invalid_answers', '4f: level as text');
   perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers() || '{"prefilled": "yes"}') = 'invalid_answers', '4g: prefilled as text');
   perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers() || '{"walls": 2}') = 'invalid_answers', '4h: code as number');
@@ -239,13 +238,6 @@ begin
   perform pg_temp.check(not v_row.needs_levelling and not v_row.questions_open, '8m: prompt closed');
   perform pg_temp.check(pg_temp.complete(v_p[1], pg_temp.answers()) = 'already_levelled', '8n: once only');
   perform pg_temp.check(not private.levelling_start_stands(v_p[1]), '8o: answers are not a start');
-  -- A level on file outside the column's range (players has no check) is stored as null.
-  update public.players set playtomic_level = 7.5 where id = v_p[13];
-  delete from public.player_levelling where player_id = v_p[13];
-  perform pg_temp.check(pg_temp.complete(v_p[13], pg_temp.answers()) = 'ok', '8p: level over 7 on file');
-  perform pg_temp.check(
-    (select playtomic_level is null and start_source = 'none' from public.player_levelling where player_id = v_p[13]),
-    '8q: stored without the level');
   raise notice 'CHECK 8a ok: answers only';
 
   -- ── 8b. No level but a played night: levels, keeps the learned rating ─────
@@ -281,15 +273,23 @@ begin
     and exists (select 1 from public.rating_events where player_id = v_p[1] and kind = 'self_reset'),
     '9b: answers only, resets');
 
-  -- Clearing the level never resets to 0.
-  perform public.update_my_profile('{"playtomic_level": 0}');
+  -- A recorded level can't be cleared (C-8 keep): refused, nothing changes.
+  begin
+    perform public.update_my_profile('{"playtomic_level": 0}');
+    v_err := null;
+  exception when raise_exception then
+    v_err := sqlerrm;
+  end;
   perform pg_temp.check(
-    (select playtomic_level = 0 and mm_rating = 2.8 from public.players where id = v_p[1])
+    v_err = 'level_required'
+    and (select playtomic_level = 2.8 and mm_rating = 2.8 from public.players where id = v_p[1])
     and (select count(*) from public.rating_events where player_id = v_p[1] and kind = 'self_reset') = 1,
-    '9c: no reset to 0');
+    '9c: clearing refused');
 
-  -- Cleared after answering: the answers-only row is no level, so the gate
-  -- holds them, and levelling replaces the row with a start.
+  -- Cleared after answering (only by a data fix since S7): the answers-only
+  -- row is no level, so the gate holds them, and levelling replaces the row
+  -- with a start.
+  update public.players set playtomic_level = 0 where id = v_p[1];
   perform pg_temp.check(private.needs_levelling(v_p[1]), '9i: answers only is no level');
   select * into v_row from public.get_my_levelling();
   perform pg_temp.check(v_row.needs_levelling and not v_row.questions_open, '9j: gated, no prompt');
@@ -311,13 +311,12 @@ begin
   perform pg_temp.check(
     (select mm_rating = 2.4 from public.players where id = v_p[9]),
     '9d: played night resets');
-  -- A null level and no mm_rating: the prior falls back to 0 (prior_mu is NOT NULL).
-  update public.players set playtomic_level = null where id = v_p[7];
+  -- No level and no mm_rating: the prior falls back to 0 (prior_mu is NOT NULL).
   perform pg_temp.act_as(v_p[7]);
   perform public.update_my_profile('{"playtomic_level": 2.0}');
   perform pg_temp.check(
     (select prior_mu = 0 from public.rating_events where player_id = v_p[7] and kind = 'self_reset'),
-    '9e: null prior');
+    '9e: no-level prior');
 
   perform pg_temp.check(private.levelling_start_stands(v_p[8]), '9f: levelled, no night');
   perform pg_temp.check(not private.levelling_start_stands(v_p[9]), '9g: levelled, played since');
@@ -398,11 +397,18 @@ begin
     (select count(*) = 1 from public.rating_events where player_id = v_p[1] and kind = 'admin_edit'),
     '11e: same level or no level key, no reset');
 
-  perform public.admin_update_player(v_p[1], '{"playtomic_level": 0}');
+  -- Admins can't clear a recorded level either (D-21).
+  begin
+    perform public.admin_update_player(v_p[1], '{"playtomic_level": 0}');
+    v_err := null;
+  exception when raise_exception then
+    v_err := sqlerrm;
+  end;
   perform pg_temp.check(
-    (select playtomic_level = 0 and mm_rating = 2.5 from public.players where id = v_p[1])
+    v_err = 'level_required'
+    and (select playtomic_level = 2.5 and mm_rating = 2.5 from public.players where id = v_p[1])
     and (select count(*) = 1 from public.rating_events where player_id = v_p[1] and kind = 'admin_edit'),
-    '11f: no reset to 0');
+    '11f: clearing refused');
 
   perform public.admin_update_player(v_p[2], '{"playtomic_level": 3.0}');
   perform pg_temp.check(

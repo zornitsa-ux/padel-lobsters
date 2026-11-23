@@ -1,0 +1,123 @@
+{
+  "about": "One definition of a level (docs/signup-revamp DESIGN §6, C-8). Read by supabase/tests/level.sh and by the client's unit test. `level` is what parsing gives: a number, null for no level, or \"invalid\". `required`, `optional` and `keep` are each policy's outcome: a number, \"no_level\", \"blank\" (nothing given where a level is needed) or \"invalid\". `keep` is for a player who already has a level; with none, keep behaves as optional.",
+  "cases": [
+    { "input": "", "level": null, "required": "blank", "optional": "no_level", "keep": "blank" },
+    { "input": "   ", "level": null, "required": "blank", "optional": "no_level", "keep": "blank" },
+    { "input": "0", "level": null, "required": "blank", "optional": "no_level", "keep": "blank" },
+    { "input": "0.0", "level": null, "required": "blank", "optional": "no_level", "keep": "blank" },
+    {
+      "input": "0,00",
+      "level": null,
+      "required": "blank",
+      "optional": "no_level",
+      "keep": "blank"
+    },
+    {
+      "input": "0.000",
+      "level": "invalid",
+      "required": "invalid",
+      "optional": "invalid",
+      "keep": "invalid"
+    },
+    { "input": "0.01", "level": 0.01, "required": 0.01, "optional": 0.01, "keep": 0.01 },
+    { "input": "0.3", "level": 0.3, "required": 0.3, "optional": 0.3, "keep": 0.3 },
+    { "input": "1", "level": 1, "required": 1, "optional": 1, "keep": 1 },
+    { "input": "2,5", "level": 2.5, "required": 2.5, "optional": 2.5, "keep": 2.5 },
+    { "input": " 3.5 ", "level": 3.5, "required": 3.5, "optional": 3.5, "keep": 3.5 },
+    { "input": "2.50", "level": 2.5, "required": 2.5, "optional": 2.5, "keep": 2.5 },
+    { "input": "2.45", "level": 2.45, "required": 2.45, "optional": 2.45, "keep": 2.45 },
+    { "input": "7", "level": 7, "required": 7, "optional": 7, "keep": 7 },
+    { "input": "7.00", "level": 7, "required": 7, "optional": 7, "keep": 7 },
+    {
+      "input": "2.455",
+      "level": "invalid",
+      "required": "invalid",
+      "optional": "invalid",
+      "keep": "invalid"
+    },
+    {
+      "input": "0.001",
+      "level": "invalid",
+      "required": "invalid",
+      "optional": "invalid",
+      "keep": "invalid"
+    },
+    {
+      "input": "7.01",
+      "level": "invalid",
+      "required": "invalid",
+      "optional": "invalid",
+      "keep": "invalid"
+    },
+    {
+      "input": "8",
+      "level": "invalid",
+      "required": "invalid",
+      "optional": "invalid",
+      "keep": "invalid"
+    },
+    {
+      "input": "abc",
+      "level": "invalid",
+      "required": "invalid",
+      "optional": "invalid",
+      "keep": "invalid"
+    },
+    {
+      "input": "-1",
+      "level": "invalid",
+      "required": "invalid",
+      "optional": "invalid",
+      "keep": "invalid"
+    },
+    {
+      "input": "+2",
+      "level": "invalid",
+      "required": "invalid",
+      "optional": "invalid",
+      "keep": "invalid"
+    },
+    {
+      "input": "1e2",
+      "level": "invalid",
+      "required": "invalid",
+      "optional": "invalid",
+      "keep": "invalid"
+    },
+    {
+      "input": "3.",
+      "level": "invalid",
+      "required": "invalid",
+      "optional": "invalid",
+      "keep": "invalid"
+    },
+    {
+      "input": ".5",
+      "level": "invalid",
+      "required": "invalid",
+      "optional": "invalid",
+      "keep": "invalid"
+    },
+    {
+      "input": "2.5.1",
+      "level": "invalid",
+      "required": "invalid",
+      "optional": "invalid",
+      "keep": "invalid"
+    },
+    {
+      "input": "2,5,0",
+      "level": "invalid",
+      "required": "invalid",
+      "optional": "invalid",
+      "keep": "invalid"
+    },
+    {
+      "input": "2 5",
+      "level": "invalid",
+      "required": "invalid",
+      "optional": "invalid",
+      "keep": "invalid"
+    }
+  ]
+}
