@@ -80,3 +80,11 @@ this file records how the code carries them out.
   confirm, which names it, and before the registration; if a save fails,
   nobody is registered (levels saved before it stay). A captain's own signup or
   partner change doesn't ask for a member partner's level (D-18).
+- **D-20. One level range, and no end-to-end test for a stale page** (owner,
+  23 Nov). Every form takes a Playtomic level from 0 to 7, and levelling and
+  new partners take one above 0 (`levelProblem` in `parseLevel.ts`). Settings'
+  old 0.5 minimum, from when signup required a level, refused profile saves
+  for players with a level levelling had accepted (#190). The stale-page case
+  (Register shown, then `needs_level` from the server) stays covered by the
+  database tests and the client's `needs_level` handling; it gets no
+  end-to-end test.

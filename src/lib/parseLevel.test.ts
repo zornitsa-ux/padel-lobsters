@@ -26,9 +26,10 @@ describe('levelProblem', () => {
     expect(levelProblem({ value })).toBe('Playtomic level must be a number from 0 to 7, e.g. 3.5.')
   })
 
-  it('holds a minimum', () => {
-    expect(levelProblem({ value: '0.4', min: 0.5 })).toContain('from 0.5 to 7')
-    expect(levelProblem({ value: '0.5', min: 0.5 })).toBe('')
+  // #190: a level levelling accepts (above 0) is never refused on a later profile save.
+  it.each(['0.1', '0.3', '0.49'])('takes %j, as levelling does', (value) => {
+    expect(levelProblem({ value })).toBe('')
+    expect(levelProblem({ value, aboveMin: true })).toBe('')
   })
 })
 

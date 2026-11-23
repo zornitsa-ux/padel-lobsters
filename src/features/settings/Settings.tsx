@@ -149,7 +149,7 @@ export default function Settings() {
       setProfileError('Phone must start with + and the country code (e.g. +31612345678).')
       return
     }
-    const levelError = levelProblem({ value: profileForm.playtomicLevel, min: 0.5 })
+    const levelError = levelProblem({ value: profileForm.playtomicLevel })
     if (levelError) {
       setProfileError(levelError)
       return
