@@ -789,7 +789,7 @@ describe('admin adds a team with a player who has no level (S6b)', () => {
     expect(m.confirm).toHaveBeenCalledWith(
       expect.objectContaining({
         message: expect.stringMatching(
-          /Captain: Quinn\nPartner: Bob\nCaptain's level: 2, saved to their profile/,
+          /Captain: Quinn\nPartner: Bob\nCaptain's level: 2.0, saved to their profile/,
         ),
       }),
     )

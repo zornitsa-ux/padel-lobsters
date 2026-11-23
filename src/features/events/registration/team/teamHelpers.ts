@@ -1,3 +1,4 @@
+import { typedLevel } from '../../../../lib/level'
 import { isLevelGiven } from '../levelHelpers'
 import type { Player } from '../../../../lib/normalise'
 import type { NormalisedRegistration } from '../../registrationQueries'
@@ -32,7 +33,7 @@ export const draftToChoice = ({ draft }: { draft: NewPartnerDraft }): PartnerCho
   const partner: NewPartnerInput = {
     name: draft.name.trim(),
     email: draft.email.trim(),
-    playtomicLevel: draft.level,
+    playtomicLevel: typedLevel({ value: draft.level }),
   }
   return { kind: 'new', partner, consent: draft.consent }
 }

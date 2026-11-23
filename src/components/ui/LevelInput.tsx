@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from 'react'
 import { FormError } from './FormError'
+import { useFieldError } from './useFieldError'
 import { Well } from './Well'
 
 interface LevelInputProps {
@@ -34,9 +35,11 @@ export function LevelInput({
   placeholder = 'e.g. 2.5',
 }: LevelInputProps) {
   const inputId = useId()
-  const errorId = useId()
   const hintId = useId()
-  const describedBy = [error && errorId, hint && hintId].filter(Boolean).join(' ')
+  const { errorId, fieldProps } = useFieldError({
+    message: error,
+    describedBy: hint ? hintId : undefined,
+  })
   const field = (
     <div className="space-y-1">
       <label className="label" htmlFor={inputId}>
@@ -51,8 +54,7 @@ export function LevelInput({
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy || undefined}
+        {...fieldProps}
       />
       <FormError id={errorId} message={error} polite={live} />
       {hint && (

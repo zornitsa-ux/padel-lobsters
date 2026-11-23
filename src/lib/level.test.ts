@@ -145,6 +145,7 @@ describe('givenLevel', () => {
 describe('typedLevel', () => {
   it('sends the text as typed and never "null"', () => {
     expect(typedLevel({ value: '2,5' })).toBe('2,5')
+    expect(typedLevel({ value: ' 2.5\u00a0' })).toBe('2.5')
     expect(typedLevel({ value: 3.25 })).toBe('3.25')
     expect(typedLevel({ value: null })).toBe('')
     expect(typedLevel({ value: undefined })).toBe('')

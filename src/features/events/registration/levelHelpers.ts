@@ -1,4 +1,4 @@
-import { givenLevel, levelProblem } from '../../../lib/level'
+import { formatLevel, givenLevel, levelProblem } from '../../../lib/level'
 
 /** The hint when an admin gives the level of a player who has none (S6b). */
 export const noLevelHint = ({ name }: { name: string }) =>
@@ -9,5 +9,7 @@ export const isLevelGiven = ({ level }: { level: string }) =>
   levelProblem({ value: level, policy: 'required' }) === ''
 
 /** The confirm line for a level an admin gives before registering someone (S6b). */
-export const levelConfirmLine = ({ label, level }: { label: string; level: string }) =>
-  `${label}: ${givenLevel({ value: level }) ?? level}, saved to their profile`
+export const levelConfirmLine = ({ label, level }: { label: string; level: string }) => {
+  const given = givenLevel({ value: level })
+  return `${label}: ${given == null ? level : formatLevel({ level: given })}, saved to their profile`
+}

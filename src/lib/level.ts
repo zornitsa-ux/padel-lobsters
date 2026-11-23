@@ -140,7 +140,8 @@ export const typedLevelProblem = ({
 
 /**
  * A level as the write RPCs take it: the text as typed, so the server's
- * level_to_store gives the refusal. Missing becomes '' (no level), never "null".
+ * level_to_store gives the refusal. Trimmed here, so the server never meets
+ * whitespace the client's check let through. Missing becomes '' (no level), never "null".
  */
 export const typedLevel = ({ value }: { value: string | number | null | undefined }): string =>
-  value == null ? '' : String(value)
+  value == null ? '' : String(value).trim()
