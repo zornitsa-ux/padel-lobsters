@@ -194,18 +194,34 @@ is skipped when:
 
 ### `private.parse_level(input_text text) returns numeric`
 
-- Trims, replaces one decimal comma with a point. Blank → null.
-- Matches `^[0-9]+(\.[0-9]{1,2})?$` and `> 0` and `<= 7`, else raises
+- Trims, replaces one decimal comma with a point.
+- Blank, or a value equal to 0 (`0`, `0.0`): null, meaning "no level". The
+  client sends 0 for blank until S9.
+- Otherwise matches `^[0-9]+(\.[0-9]{1,2})?$` and is `<= 7`, else raises
   `invalid_level` (P0001).
 - `IMMUTABLE`, revoked from all client roles.
 
-### CHECK `players_playtomic_level_range`
+### What each path does with null (no level)
 
-`playtomic_level = 0 or (playtomic_level > 0 and playtomic_level <= 7 and
-playtomic_level = round(playtomic_level, 2))`. S9 drops the `= 0` branch and
-the column becomes nullable for no level.
+| Path                                                                 | Policy     | Null                                            |
+| -------------------------------------------------------------------- | ---------- | ----------------------------------------------- |
+| Signup hook, `create_player_for_confirmed_user`, `admin_add_player`  | `optional` | stores 0                                        |
+| `create_partner_player`, `complete_levelling` (when the key is sent) | `required` | `invalid_level`                                 |
+| `update_my_profile`                                                  | `keep`     | `level_required` if a level is recorded, else 0 |
+| `admin_update_player`                                                | `keep`     | `level_required` if a level is recorded, else 0 |
+
+A key that isn't sent leaves the level unchanged on every update path.
+
+### Column `players.playtomic_level`
+
+NOT NULL, default 0, CHECK `players_playtomic_level_range`: `playtomic_level
+= 0 or (playtomic_level > 0 and playtomic_level <= 7 and playtomic_level =
+round(playtomic_level, 2))`. S9 drops NOT NULL and the `= 0` branch, and
+stores null for no level.
 
 ### Statuses
 
-- `invalid_level`: any write path given a level outside 6.1.
-- `level_required`: `update_my_profile` asked to clear a recorded level.
+- `invalid_level`: a value that isn't a level (6.1), or null on a `required`
+  path.
+- `level_required`: `update_my_profile` or `admin_update_player` asked to
+  clear a recorded level, whether sent as blank or 0.

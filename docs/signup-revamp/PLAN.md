@@ -135,29 +135,33 @@ and is finished last.
   Cover at least `""`, `"  "`, `"0"`, `"0.3"`, `"2,5"`, `"2.45"`, `"2.455"`,
   `"7"`, `"7.01"`, `"abc"`, `"-1"`, `"1e2"`. S8's unit test reads the same
   file, so the client and the database can't drift.
-- **`private.parse_level`** (C-8) trims, takes a decimal comma, and returns a
-  numeric or raises `invalid_level`; blank returns null. Callers decide what
-  null means by their policy. `parse_metadata_level`'s silent 0 for garbage
-  goes: the signup hook rejects it instead.
-- **CHECK** `players_playtomic_level_range`: `playtomic_level = 0 or
-(playtomic_level > 0 and playtomic_level <= 7 and scale <= 2)`. Production
-  had no row outside it on 23 Nov (153 players: 8 at 0, the rest in range, none
-  with more than 2 decimals). Rehearse on a production copy anyway.
-- **`update_my_profile`** returns `level_required` when the payload clears a
-  recorded level (blank or 0 while `playtomic_level > 0`). `admin_update_player`
-  may clear (admins keep the power). The client already refuses it (D-20), so
-  no message changes.
-- Map `invalid_level` to the client's level message on every caller that
-  doesn't already.
+- **`private.parse_level`** (C-8) returns a level, or null for "no level"
+  (blank, or `0`, which today's client sends for blank), or raises
+  `invalid_level`. Until S9, 0 stays the stored "no level", so S7 works with
+  the current client and ships before S8. `parse_metadata_level`'s silent 0 for
+  garbage goes: the signup hook rejects it instead.
+- **Each path applies its policy to null** (C-8 table): `optional` stores 0,
+  `required` returns `invalid_level`, `keep` returns `level_required` when a
+  level is recorded. An absent key leaves the level unchanged everywhere.
+  Nobody clears a recorded level, admins included (D-21): `update_my_profile`
+  and `admin_update_player` both apply `keep`, so their `coalesce(…,
+v_old_level)` becomes "absent key: unchanged; null: `level_required` if a
+  level is recorded, else 0".
+- **Column:** `players.playtomic_level` becomes NOT NULL with the CHECK
+  `players_playtomic_level_range` (C-8), so "no level" has one representation
+  until S9. Rehearse on a production copy.
+- Map `invalid_level` and `level_required` to the client's level messages on
+  every caller that doesn't already.
 
 ### S8
 
 - `src/lib/level.ts` replaces `src/lib/parseLevel.ts`. Policies:
   - `required`: a level must be given (new partner, admin register forms,
     levelling's Playtomic step when typed).
-  - `optional`: blank allowed (signup, admin add or invite, the admin editor,
-    Settings for a player with no level).
-  - `keep`: blank and 0 refused (Settings for a player with a level).
+  - `optional`: blank allowed (signup, admin add or invite, and Settings or
+    the admin editor for a player with no level).
+  - `keep`: blank and 0 refused (Settings and the admin editor once a level is
+    recorded).
 - One message set: "Playtomic level must be a number above 0 and up to 7, with
   at most 2 decimals, e.g. 2.45." plus each policy's blank message.
 - `hasLevel(level)` replaces the inline `> 0` checks (about 30 files), so S9
