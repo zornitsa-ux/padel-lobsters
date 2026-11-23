@@ -1,3 +1,4 @@
+import { hasLevel } from '../../lib/level'
 import type { Player } from '../../lib/normalise'
 
 /**
@@ -11,4 +12,4 @@ export const hasNoLevel = ({
 }: {
   player: Pick<Player, 'id' | 'playtomicLevel'>
   levelledIds: ReadonlySet<string> | undefined
-}): boolean => !(player.playtomicLevel > 0) && !levelledIds?.has(player.id)
+}): boolean => !hasLevel({ level: player.playtomicLevel }) && !levelledIds?.has(player.id)

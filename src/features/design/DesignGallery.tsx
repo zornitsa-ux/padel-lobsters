@@ -77,6 +77,8 @@ import { LevelBadge } from '../../components/ui/LevelBadge'
 import { GenderLegendEntries } from '../matchmaking/ui/genderMarks'
 import { Well } from '../../components/ui/Well'
 import { PlaytomicLevelField } from '../players/ProfileFields'
+import { LevelInput } from '../../components/ui/LevelInput'
+import { typedLevelProblem } from '../../lib/level'
 
 // Dev-only (`/design`). Each design-system step adds its components here.
 
@@ -422,6 +424,33 @@ function SearchInputSection() {
   )
 }
 
+function LevelInputSection() {
+  const [level, setLevel] = useState('3.5')
+  const [typed, setTyped] = useState('2.455')
+  return (
+    <GallerySection title="LevelInput">
+      <Row label="inset: on its own in a profile form (PlaytomicLevelField)" block>
+        <PlaytomicLevelField
+          value={level}
+          onChange={setLevel}
+          hint="We use it to build balanced matches, and it improves as you play."
+        />
+      </Row>
+      <Row label="Bare, live: inside another form's flow, checked as you type" block>
+        <LevelInput
+          label="Playtomic level"
+          value={typed}
+          onChange={setTyped}
+          error={typedLevelProblem({ value: typed, policy: 'required' })}
+          hint="Not on Playtomic? Your best guess, e.g. 2.0."
+          live
+          required
+        />
+      </Row>
+    </GallerySection>
+  )
+}
+
 function DecorativeSection() {
   return (
     <GallerySection title="Podium, medals, levels and gender marks">
@@ -439,8 +468,8 @@ function DecorativeSection() {
         <Trophy size={16} className="text-lob-silver" />
         <Trophy size={16} className="text-lob-bronze" />
       </Row>
-      <Row label="LevelBadge: under 2, 2–3.9, 4–4.9, 5 and up; sm">
-        {[1.5, 2.6, 4.3, 5.2].map((level) => (
+      <Row label="LevelBadge: under 2, 2–3.9, 4–4.9, 5 and up, as written (2.45); sm">
+        {[1.5, 2.45, 4.3, 5.2].map((level) => (
           <LevelBadge key={level} level={level} />
         ))}
         <LevelBadge level={3.4} size="sm" />
@@ -898,7 +927,6 @@ function SectionListSection() {
 }
 
 function WellSection() {
-  const [level, setLevel] = useState('3.5')
   return (
     <GallerySection title="Well">
       <Row label="Flat inset inside a card: no border, no shadow (a StatGrid here)" block>
@@ -910,13 +938,6 @@ function WellSection() {
             <StatTile label="Set +/−" value="+4" />
           </StatGrid>
         </Well>
-      </Row>
-      <Row label="PlaytomicLevelField (players feature): one field in a Well" block>
-        <PlaytomicLevelField
-          value={level}
-          onChange={setLevel}
-          hint="We use it to build balanced matches, and it improves as you play."
-        />
       </Row>
     </GallerySection>
   )
@@ -1411,6 +1432,7 @@ export default function DesignGallery() {
       <IconButtonSection />
       <StatusSection />
       <SearchInputSection />
+      <LevelInputSection />
       <DecorativeSection />
       <FormErrorSection />
       <ChoiceSection />

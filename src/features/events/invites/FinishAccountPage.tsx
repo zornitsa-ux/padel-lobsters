@@ -7,6 +7,7 @@ import {
   ProfileContactFields,
   ProfileNameFields,
   ProfilePlayFields,
+  NO_LEVEL_YET_HINT,
 } from '../../players/ProfileFields'
 import {
   formFromPlayer,
@@ -15,6 +16,7 @@ import {
   type ProfileFieldValues,
 } from '../../players/profileForm'
 import { errorMessage } from '../../../lib/errors'
+import { hasLevel, knownLevel, levelPolicy, parseLevel } from '../../../lib/level'
 import {
   useAcknowledgeMyAccount,
   useMyAccountSetup,
@@ -76,7 +78,10 @@ export default function FinishAccountPage() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const problem = profileProblem({ form })
+    const problem = profileProblem({
+      form,
+      levelPolicy: levelPolicy({ recorded: profile.data?.playtomicLevel }),
+    })
     if (problem) {
       setError(problem)
       return
@@ -131,7 +136,15 @@ export default function FinishAccountPage() {
 
       <div className="card space-y-4">
         <ProfileNameFields form={form} setForm={setForm} />
-        <ProfilePlayFields form={form} setForm={setForm} />
+        <ProfilePlayFields
+          form={form}
+          setForm={setForm}
+          levelHint={finishLevelHint({
+            recorded: profile.data?.playtomicLevel,
+            typed: form.playtomicLevel,
+            captainName: setup.requestedByName,
+          })}
+        />
         <ProfileContactFields form={form} setForm={setForm} />
       </div>
 
@@ -168,6 +181,23 @@ export default function FinishAccountPage() {
       />
     </form>
   )
+}
+
+// Names the captain only while the field still holds the level they entered.
+function finishLevelHint({
+  recorded,
+  typed,
+  captainName,
+}: {
+  recorded: number | null | undefined
+  typed: string
+  captainName: string
+}): string {
+  if (!hasLevel({ level: recorded })) return NO_LEVEL_YET_HINT
+  if (parseLevel({ value: typed }) === knownLevel({ level: recorded })) {
+    return `${captainName} entered it for you. Change it if it's not right.`
+  }
+  return 'Your matches are built from it.'
 }
 
 function NotPlayingCard({

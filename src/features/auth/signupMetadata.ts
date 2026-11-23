@@ -1,4 +1,4 @@
-import { parseLevel } from '../../lib/parseLevel'
+import { typedLevel } from '../../lib/level'
 import { NO_SIGNUP_SOURCE, signupSourceMetadata, type SignupSourceAnswer } from './signupSource'
 
 export interface SignupProfile {
@@ -26,7 +26,7 @@ export function buildSignupMetadata({
   return {
     name: profile.name.trim(),
     phone: profile.phone.trim(),
-    playtomic_level: String(parseLevel(profile.playtomicLevel) ?? 0),
+    playtomic_level: typedLevel({ value: profile.playtomicLevel }),
     playtomic_username: '',
     gender: profile.gender,
     is_left_handed: String(profile.isLeftHanded),

@@ -103,3 +103,5 @@ this file records how the code carries them out.
   model, but it touches the matcher, King of the Court seeding and every
   reader. After S8, `hasLevel` is the only place that knows, so S9 is one
   migration plus that function.
+- **D-23. A level shows as written** (owner, 23 Nov). With 2 decimals allowed,
+  a level such as 2.45 shows as 2.45 everywhere, never rounded to one decimal.

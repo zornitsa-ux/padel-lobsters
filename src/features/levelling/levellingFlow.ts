@@ -1,4 +1,4 @@
-import { givenLevelProblem, parseLevel } from '../../lib/parseLevel'
+import { givenLevel, hasLevel, levelProblem } from '../../lib/level'
 import { QUESTIONS, TOTAL_STEPS, type QuestionKey } from './levellingQuestions'
 
 export type PlaytomicChoice = 'yes' | 'no' | null
@@ -48,7 +48,7 @@ export function initialLevellingState({
   levelOnFile: number | null
   mode?: LevellingMode
 }): LevellingState {
-  const prefilled = mode === 'level' && levelOnFile != null && levelOnFile > 0
+  const prefilled = mode === 'level' && hasLevel({ level: levelOnFile })
   return {
     mode,
     step: 0,
@@ -77,11 +77,6 @@ export function levellingReducer(state: LevellingState, action: LevellingAction)
   }
 }
 
-/** Why the typed level can't be sent, or '' when it can. 0 means "no level" in the app. */
-export function playtomicProblem({ text }: { text: string }): string {
-  return givenLevelProblem({ value: text, blank: 'Enter your level, e.g. 2.5.' })
-}
-
 const allAnswered = (answers: LevellingState['answers']) =>
   QUESTIONS.every(({ key }) => answers[key] !== undefined)
 
@@ -90,7 +85,7 @@ export function canFinish(state: LevellingState): boolean {
   if (state.mode === 'questions') return true
   const { choice, text } = state.playtomic
   if (choice === null) return false
-  return choice === 'no' || playtomicProblem({ text }) === ''
+  return choice === 'no' || levelProblem({ value: text, policy: 'required' }) === ''
 }
 
 /** Null until every step is valid. */
@@ -103,7 +98,7 @@ export function toPayload(state: LevellingState): LevellingPayload | null {
     ...answers,
     playtomic_level:
       state.mode === 'level' && state.playtomic.choice === 'yes'
-        ? parseLevel(state.playtomic.text)
+        ? givenLevel({ value: state.playtomic.text })
         : null,
     prefilled: state.prefilled,
   }

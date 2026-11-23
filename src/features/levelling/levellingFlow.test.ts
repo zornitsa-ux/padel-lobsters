@@ -5,7 +5,6 @@ import {
   isFinalStep,
   levellingReducer,
   PLAYTOMIC_STEP,
-  playtomicProblem,
   toPayload,
   totalSteps,
   type LevellingAction,
@@ -116,13 +115,20 @@ describe('levellingReducer', () => {
   })
 })
 
-describe('playtomicProblem', () => {
+describe('the typed Playtomic level', () => {
+  const withLevel = (text: string) =>
+    run(fresh(), [
+      ...answerAll,
+      { type: 'choosePlaytomic', choice: 'yes' },
+      { type: 'typePlaytomic', text },
+    ])
+
   it.each(['0.1', '2,5', ' 3.25 ', '7'])('takes %j', (text) => {
-    expect(playtomicProblem({ text })).toBe('')
+    expect(canFinish(withLevel(text))).toBe(true)
   })
 
-  it.each(['', '  ', '0', '7.1', 'abc', '-1'])('refuses %j', (text) => {
-    expect(playtomicProblem({ text })).not.toBe('')
+  it.each(['', '  ', '0', '7.1', '2.455', 'abc', '-1'])('refuses %j', (text) => {
+    expect(canFinish(withLevel(text))).toBe(false)
   })
 })
 

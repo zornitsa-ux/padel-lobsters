@@ -24,6 +24,7 @@
     { "input": "1", "level": 1, "required": 1, "optional": 1, "keep": 1 },
     { "input": "2,5", "level": 2.5, "required": 2.5, "optional": 2.5, "keep": 2.5 },
     { "input": " 3.5 ", "level": 3.5, "required": 3.5, "optional": 3.5, "keep": 3.5 },
+    { "input": "3.5\u00a0", "level": 3.5, "required": 3.5, "optional": 3.5, "keep": 3.5 },
     { "input": "2.50", "level": 2.5, "required": 2.5, "optional": 2.5, "keep": 2.5 },
     { "input": "2.45", "level": 2.45, "required": 2.45, "optional": 2.45, "keep": 2.45 },
     { "input": "7", "level": 7, "required": 7, "optional": 7, "keep": 7 },

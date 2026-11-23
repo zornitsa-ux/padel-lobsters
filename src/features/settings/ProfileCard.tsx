@@ -6,7 +6,6 @@ import { Badge } from '../../components/ui/Badge'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import type { Player } from '../../lib/normalise'
-import { playerLevel } from './settingsHelpers'
 import { isSyntheticEmail } from '../auth/syntheticEmail'
 
 interface ProfileCardProps {
@@ -17,7 +16,6 @@ interface ProfileCardProps {
 
 /** Who is signed in: photo, name, level and war cry, with the way to edit or view the profile. */
 export default function ProfileCard({ player, isAdmin, onEdit }: ProfileCardProps) {
-  const level = playerLevel(player)
   return (
     <section aria-label="My Lobster Profile" className="card space-y-4">
       <div className="flex items-center gap-3">
@@ -28,7 +26,7 @@ export default function ProfileCard({ player, isAdmin, onEdit }: ProfileCardProp
             <span className="truncate">{player.name}</span>
           </p>
           <div className="flex items-center gap-1.5">
-            <LevelBadge level={level} size="sm" />
+            <LevelBadge level={player.playtomicLevel} size="sm" />
             {isAdmin && <Badge tone="brand" icon={<Shield />} label="Admin" />}
           </div>
           {player.tagline && <p className="caption italic truncate">“{player.tagline}”</p>}

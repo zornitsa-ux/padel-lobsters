@@ -5,7 +5,7 @@ import { usePlayerActions, useAvatarUpload } from '../players/usePlayers'
 import { randomAvatarFilename } from '../players/playerQueries'
 import { processAvatar } from '../../lib/processAvatar'
 import { errorMessage } from '../../lib/errors'
-import { levelProblem } from '../../lib/parseLevel'
+import { levelFieldValue, levelPolicy, levelProblem } from '../../lib/level'
 import { randomPrompt, emptyForm, type PlayerFormState } from './playerConstants'
 import { getMissingPlayerFormFields } from './playerFormSchema'
 import { buildPlayerEditPatch } from './playerPatch'
@@ -21,7 +21,7 @@ function formFromPlayer(p: CommunityPlayer): PlayerFormState {
     name: p.name || '',
     email: p.email || '',
     phone: p.phone || '',
-    playtomicLevel: p.playtomicLevel ?? '',
+    playtomicLevel: levelFieldValue({ level: p.playtomicLevel }),
     playtomicUsername: p.playtomicUsername || '',
     notes: p.notes || '',
     gender: p.gender || '',
@@ -56,7 +56,9 @@ export function usePlayerEditor({ isAdmin }: { isAdmin: boolean }) {
   const [error, setError] = useState('')
   // Checked from the first save on, so the field's error clears as it's corrected.
   const [levelChecked, setLevelChecked] = useState(false)
-  const levelError = levelChecked ? levelProblem({ value: form.playtomicLevel }) : ''
+  // Keep once a level is recorded: nobody can clear one, admins included (D-21).
+  const policy = levelPolicy({ recorded: editSource?.playtomicLevel })
+  const levelError = levelChecked ? levelProblem({ value: form.playtomicLevel, policy }) : ''
 
   // Opening A then B, with A's PII resolving last, must not land A's data on
   // B's form. Each open bumps the token; stale resolves are dropped.
@@ -141,7 +143,7 @@ export function usePlayerEditor({ isAdmin }: { isAdmin: boolean }) {
       return
     }
     setLevelChecked(true)
-    if (levelProblem({ value: form.playtomicLevel })) return
+    if (levelProblem({ value: form.playtomicLevel, policy })) return
     setSaving(true)
     setError('')
     try {

@@ -11,6 +11,7 @@ import {
   ProfileContactFields,
   ProfileNameFields,
   ProfilePlayFields,
+  NO_LEVEL_YET_HINT,
 } from '../features/players/ProfileFields'
 import { fullName, profileProblem, type ProfileFieldValues } from '../features/players/profileForm'
 import { requestEmailCode, normaliseEmail } from '../features/auth/authActions'
@@ -207,7 +208,8 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
     reader.readAsDataURL(file)
   }
 
-  const validate = (): string => profileProblem({ form, email: form.email })
+  const validate = (): string =>
+    profileProblem({ form, email: form.email, levelPolicy: 'optional' })
 
   // A ref, not `saving`: two taps before a re-render would both pass a state check.
   const submittingRef = useRef(false)
@@ -333,7 +335,12 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
             <NameMatchBanner match={bannerMatch} onSignIn={onBack} onDecline={declineMatch} />
           )}
 
-          <ProfilePlayFields form={form} setForm={setForm} levelError={fieldErrors.level} />
+          <ProfilePlayFields
+            form={form}
+            setForm={setForm}
+            levelError={fieldErrors.level}
+            levelHint={NO_LEVEL_YET_HINT}
+          />
 
           <div>
             <label className="label">Email</label>

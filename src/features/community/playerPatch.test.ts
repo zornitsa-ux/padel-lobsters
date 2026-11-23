@@ -180,3 +180,25 @@ describe('buildPlayerEditPatch', () => {
     })
   })
 })
+
+describe('buildPlayerEditPatch: the level', () => {
+  const patchFor = ({ level, recorded = 3.5 }: { level: string; recorded?: number }) =>
+    buildPlayerEditPatch({
+      form: { ...formFromSource(), playtomicLevel: level },
+      avatarUrl: source.avatarUrl!,
+      combinedName: source.name!,
+      notesPromptLabel: '🎤 Trash Talk',
+      source: { ...source, playtomicLevel: recorded },
+    })
+
+  it('leaves out a level that reads the same', () => {
+    expect(patchFor({ level: '3,50' })).toEqual({})
+    expect(patchFor({ level: '', recorded: 0 })).toEqual({})
+  })
+
+  it('sends a changed level as typed, for the server to read', () => {
+    expect(patchFor({ level: '2,45' }).playtomicLevel).toBe('2,45')
+    expect(patchFor({ level: 'abc' }).playtomicLevel).toBe('abc')
+    expect(patchFor({ level: '' }).playtomicLevel).toBe('')
+  })
+})

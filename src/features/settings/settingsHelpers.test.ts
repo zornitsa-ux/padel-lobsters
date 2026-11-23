@@ -26,6 +26,7 @@ describe('LOBBY_PROMPTS', () => {
 describe('refreshPromptText', () => {
   it('names the level on file, or says there is none', () => {
     expect(refreshPromptText({ level: 2.5 })).toMatch(/on file is 2\.5\.$/)
+    expect(refreshPromptText({ level: 2.45 })).toMatch(/on file is 2\.45\.$/)
     expect(refreshPromptText({ level: 0 })).toMatch(/haven't added a Playtomic level/)
   })
 })

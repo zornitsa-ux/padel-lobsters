@@ -255,6 +255,9 @@ policy per input, three layers of enforcement.
   (owner, 23 Nov: refuse more, don't round). A decimal comma is accepted.
 - **No level** is a state, not a level. Stored as 0 until S9 (the column is
   NOT NULL from S7), then null. Code asks `hasLevel`, never compares with 0.
+- **Shown as written** (owner, 23 Nov): 2.45 shows as 2.45, never rounded;
+  3 and 2.5 show as 3.0 and 2.5 (`formatLevel`, used by `LevelBadge` and
+  `levelText`).
 
 ### 6.2 Policies
 
@@ -275,7 +278,10 @@ changed, never returned to no level.
    bad value.
 2. **Server:** `private.parse_level` (C-8) in every RPC and the signup hook;
    `update_my_profile` enforces `keep`.
-3. **Client:** one `levelProblem({ value, policy })` and one level input.
+3. **Client:** one `levelProblem({ value, policy })` (`src/lib/level.ts`) and
+   one level input (`LevelInput` in `src/components/ui`). Writes send the
+   text as typed, so the server's refusal (`invalid_level`, `level_required`)
+   is the one shown when the client check is skipped.
 
 `supabase/tests/level_cases.json` holds the cases both the unit test and the
 database test check, so the two can't disagree.

@@ -1,9 +1,9 @@
-import { useId, type Dispatch, type SetStateAction } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import CountryPicker from '../../components/ui/CountryPicker'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { FormError } from '../../components/ui/FormError'
 import { useFieldError } from '../../components/ui/useFieldError'
-import { Well } from '../../components/ui/Well'
+import { LevelInput } from '../../components/ui/LevelInput'
 import type { ProfileFieldValues } from './profileForm'
 
 type FieldsProps<T> = {
@@ -121,7 +121,8 @@ export function ProfilePlayFields<T extends ProfileFieldValues>({
   form,
   setForm,
   levelError,
-}: FieldsProps<T> & { levelError?: string }) {
+  levelHint,
+}: FieldsProps<T> & { levelError?: string; levelHint: string }) {
   return (
     <>
       <div>
@@ -138,13 +139,16 @@ export function ProfilePlayFields<T extends ProfileFieldValues>({
         value={form.playtomicLevel}
         onChange={(value) => setForm((f) => ({ ...f, playtomicLevel: value }))}
         error={levelError}
-        hint="No level yet? Leave it empty: we'll ask a few quick questions before your first event."
+        hint={levelHint}
       />
     </>
   )
 }
 
-// Text with a decimal keypad, not type="number", so "3,5" can be typed; saves parse it with parseLevel.
+export const NO_LEVEL_YET_HINT =
+  "No level yet? Leave it empty: we'll ask a few quick questions before your first event."
+
+/** The Playtomic level in a profile form, with where to find it. */
 export function PlaytomicLevelField({
   value,
   onChange,
@@ -157,28 +161,16 @@ export function PlaytomicLevelField({
   hint: string
   error?: string
 }) {
-  const inputId = useId()
-  const { errorId, fieldProps } = useFieldError({ message: error })
   return (
-    <Well>
-      <label className="label" htmlFor={inputId}>
-        Playtomic Level (0–7)
-      </label>
-      <div className="space-y-1">
-        <input
-          id={inputId}
-          type="text"
-          inputMode="decimal"
-          className="input"
-          placeholder="e.g. 3.5"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          {...fieldProps}
-        />
-        <FormError id={errorId} message={error} />
-        <p className="caption">Check your Playtomic app — it shows your current level. {hint}</p>
-      </div>
-    </Well>
+    <LevelInput
+      label="Playtomic Level (0–7)"
+      value={value}
+      onChange={onChange}
+      error={error}
+      placeholder="e.g. 3.5"
+      hint={`Check your Playtomic app — it shows your current level. ${hint}`}
+      inset
+    />
   )
 }
 

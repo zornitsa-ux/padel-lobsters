@@ -34,11 +34,11 @@ describe('buildSignupMetadata', () => {
     expect(Object.values(data).every((value) => typeof value === 'string')).toBe(true)
   })
 
-  it('normalises name, phone, level and the hand flag', () => {
+  it('normalises name, phone and the hand flag, and sends the level as typed', () => {
     expect(buildSignupMetadata({ profile })).toMatchObject({
       name: 'Ada Lovelace',
       phone: '+31612345678',
-      playtomic_level: '2.5',
+      playtomic_level: '2,5',
       is_left_handed: 'true',
       birthday: '',
     })
@@ -60,9 +60,9 @@ describe('buildSignupMetadata', () => {
     ).not.toHaveProperty('signup_source_detail')
   })
 
-  it('sends an empty level as 0', () => {
+  it('sends an empty level as empty, for the hook to read as no level', () => {
     expect(
       buildSignupMetadata({ profile: { ...profile, playtomicLevel: '' } }).playtomic_level,
-    ).toBe('0')
+    ).toBe('')
   })
 })

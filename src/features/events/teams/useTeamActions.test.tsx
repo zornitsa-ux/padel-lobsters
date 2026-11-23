@@ -46,7 +46,7 @@ describe('useTeamActions invalidation', () => {
   it('refreshes the player list when a new partner account was created', async () => {
     const invalidate = await register({
       kind: 'new',
-      partner: { name: 'New One', email: 'new@example.test', playtomicLevel: 2.5 },
+      partner: { name: 'New One', email: 'new@example.test', playtomicLevel: '2.5' },
       consent: true,
     })
 

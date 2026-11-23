@@ -94,6 +94,7 @@ component doesn't fit, fix the component, not the call site.**
 | List inside a card or sheet          | `ListCard inset` (divided rows, no card of its own)  | exists |
 | Long list (a log, every tip)         | `ListCard scrollable` (scrolls inside its card)      | exists |
 | Search field                         | `SearchInput` (`label` names it)                     | exists |
+| Playtomic level field                | `LevelInput` (`inset` alone in a form, `live`)       | exists |
 | Collapsible card (+ summary)         | `CollapsibleCard` (`summary` stays visible)          | exists |
 | Collapsible row with reorder/delete  | `CollapsibleCard leading actions`                    | exists |
 | Inline show / hide detail            | `Disclosure`                                         | exists |

@@ -3,8 +3,7 @@ import { supabase } from '../../supabase'
 import { normalisePlayers, type Player } from '../../lib/normalise'
 import { fetchMyProfile as fetchMyProfileRpc } from '../../api/auth'
 import type { Json } from '../../lib/database.types'
-import { parseLevel } from '../../lib/parseLevel'
-import { withLevelMessage } from '../../lib/level'
+import { typedLevel, withLevelMessage } from '../../lib/level'
 import { playerPublicRowSchema, myProfileRowSchema, playerPiiRowSchema } from './playerSchemas'
 
 export type { Player }
@@ -149,7 +148,7 @@ export async function addPlayer(data: PlayerInput) {
     email: data.email || '',
     phone: data.phone || '',
     notes: data.notes || '',
-    playtomic_level: parseLevel(data.playtomicLevel) ?? 0,
+    playtomic_level: typedLevel({ value: data.playtomicLevel }),
     playtomic_username: data.playtomicUsername || '',
     gender: data.gender || '',
     status: data.status || 'active',
@@ -192,7 +191,7 @@ export async function updatePlayer(id: string, data: PlayerInput, role: string) 
   setIf(
     data.playtomicLevel !== undefined,
     'playtomic_level',
-    String(parseLevel(data.playtomicLevel) ?? 0),
+    typedLevel({ value: data.playtomicLevel }),
   )
   setIf(data.playtomicUsername !== undefined, 'playtomic_username', data.playtomicUsername ?? '')
   setIf(data.gender !== undefined, 'gender', data.gender ?? '')

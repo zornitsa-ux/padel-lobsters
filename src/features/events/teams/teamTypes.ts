@@ -32,7 +32,8 @@ export interface TeamEntry {
 export interface NewPartnerInput {
   name: string
   email: string
-  playtomicLevel: number
+  /** As typed: create_partner_player reads it with the shared rule (C-8). */
+  playtomicLevel: string
 }
 
 export type PartnerChoice =

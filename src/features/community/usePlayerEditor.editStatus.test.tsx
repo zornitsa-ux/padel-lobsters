@@ -91,11 +91,26 @@ describe('usePlayerEditor — Playtomic level check', () => {
     fireEvent.change(level, { target: { value: '9' } })
     fireEvent.click(screen.getByRole('button', { name: /save changes/i }))
 
-    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('from 0 to 7'))
+    await waitFor(() =>
+      expect(screen.getByRole('alert').textContent).toContain('above 0 and up to 7'),
+    )
     expect(updatePlayerMock).not.toHaveBeenCalled()
 
     fireEvent.change(level, { target: { value: '3,5' } })
     expect(screen.queryByRole('alert')).toBeNull()
     expect(level.getAttribute('aria-invalid')).toBeNull()
+  })
+
+  // D-21: nobody can clear a recorded level, admins included.
+  it.each(['', '0'])('refuses %j for a player who has a level', async (value) => {
+    render(<Harness />)
+    fireEvent.click(screen.getByText('trigger edit'))
+    await waitFor(() => expect(screen.getByRole('button', { name: /save changes/i })).toBeTruthy())
+
+    fireEvent.change(screen.getByLabelText('Playtomic Level (0–7)'), { target: { value } })
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }))
+
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('not removed'))
+    expect(updatePlayerMock).not.toHaveBeenCalled()
   })
 })

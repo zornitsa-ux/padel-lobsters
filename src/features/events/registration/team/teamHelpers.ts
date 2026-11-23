@@ -1,4 +1,4 @@
-import { parseLevel } from '../../../../lib/parseLevel'
+import { typedLevel } from '../../../../lib/level'
 import { isLevelGiven } from '../levelHelpers'
 import type { Player } from '../../../../lib/normalise'
 import type { NormalisedRegistration } from '../../registrationQueries'
@@ -33,8 +33,7 @@ export const draftToChoice = ({ draft }: { draft: NewPartnerDraft }): PartnerCho
   const partner: NewPartnerInput = {
     name: draft.name.trim(),
     email: draft.email.trim(),
-    // isDraftComplete gates this; 0 would be refused as invalid_level.
-    playtomicLevel: parseLevel(draft.level) ?? 0,
+    playtomicLevel: typedLevel({ value: draft.level }),
   }
   return { kind: 'new', partner, consent: draft.consent }
 }
@@ -45,7 +44,7 @@ export const choiceToDraft = ({ choice }: { choice: PartnerChoice | null }): New
     ? {
         name: choice.partner.name,
         email: choice.partner.email,
-        level: String(choice.partner.playtomicLevel),
+        level: choice.partner.playtomicLevel,
         consent: choice.consent,
       }
     : EMPTY_DRAFT
