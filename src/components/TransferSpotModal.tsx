@@ -65,6 +65,8 @@ const CREATE_ERRORS: Record<string, string> = {
   transfers_closed: 'Transfers are closed for this event.',
   tournament_completed: "This event is already completed — the spot can't be moved.",
   already_pending: 'There is already a pending transfer for this spot.',
+  recipient_needs_level:
+    'That player has no level yet. Add it on their page in Community, then try again.',
   error: 'Something went wrong. Try again.',
 }
 

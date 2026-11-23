@@ -767,15 +767,50 @@ begin
   end if;
   perform pg_temp.act(v_admin, true);
   select * into v_r from public.register_team_for_tournament(v_t, v_new[1], v_p[1]);
-  if v_r.status <> 'registered' then raise exception 'CHECK 30b FAILED: %', v_r.status; end if;
-  perform pg_temp.assert_teams(v_t);
-  raise notice 'CHECK 30 ok: captain gated on self-registration, not when an admin registers them';
+  if v_r.status <> 'captain_needs_level' or v_r.team_id is not null
+     or exists (select 1 from public.registrations where tournament_id = v_t) then
+    raise exception 'CHECK 30b FAILED: %', v_r.status;
+  end if;
+  raise notice 'CHECK 30 ok: captain with no level refused, whether they or an admin register the team';
 
-  -- CHECK 31: a partner who needs levelling can decline, but not accept until levelled
+  -- CHECK 33 (S6c): an existing member with no level can't be picked as partner,
+  -- by a captain or an admin, when registering or changing partner
+  perform pg_temp.act(v_p[4], false);
+  select * into v_r from public.register_team_for_tournament(v_t, v_p[4], v_new[1]);
+  if v_r.status <> 'partner_needs_level' or v_r.team_id is not null
+     or exists (select 1 from public.registrations where tournament_id = v_t) then
+    raise exception 'CHECK 33a FAILED: %', v_r.status;
+  end if;
+  perform pg_temp.act(v_admin, true);
+  select * into v_r from public.register_team_for_tournament(v_t, v_p[4], v_new[1]);
+  if v_r.status <> 'partner_needs_level' then raise exception 'CHECK 33b FAILED: %', v_r.status; end if;
+  perform pg_temp.act(v_p[4], false);
+  select * into v_r from public.register_team_for_tournament(v_t, v_p[4], v_p[5]);
+  if v_r.status <> 'registered' then raise exception 'CHECK 33c PRECONDITION FAILED: %', v_r.status; end if;
+  v_team := v_r.team_id;
+  select * into v_x from public.change_team_partner(v_team, v_new[1]);
+  if v_x.status <> 'partner_needs_level'
+     or not exists (select 1 from public.registrations
+                     where team_id = v_team and player_id = v_p[5] and status = 'registered') then
+    raise exception 'CHECK 33c FAILED: %', v_x.status;
+  end if;
+  perform pg_temp.act(v_admin, true);
+  select * into v_x from public.change_team_partner(v_team, v_new[1]);
+  if v_x.status <> 'partner_needs_level' then raise exception 'CHECK 33d FAILED: %', v_x.status; end if;
+  perform pg_temp.level(v_new[1]);
+  select * into v_x from public.change_team_partner(v_team, v_new[1]);
+  if v_x.status <> 'changed' then raise exception 'CHECK 33e FAILED: %', v_x.status; end if;
+  perform pg_temp.assert_teams(v_t);
+  raise notice 'CHECK 33 ok: a partner with no level refused on register and change, captain or admin';
+
+  -- CHECK 31: a partner who needs levelling (added before S6c, so levelled
+  -- here only to register, then reset) can decline, but not accept until levelled
+  perform pg_temp.level(v_new[2]);
   perform pg_temp.act(v_p[2], false);
   select * into v_r from public.register_team_for_tournament(v_t, v_p[2], v_new[2]);
   if v_r.status <> 'registered' then raise exception 'CHECK 31a FAILED: %', v_r.status; end if;
   v_team := v_r.team_id;
+  delete from public.player_levelling where player_id = v_new[2];
   perform pg_temp.act(v_new[2], false);
   select * into v_r from public.respond_to_team_invite(v_team, true);
   if v_r.status <> 'needs_level'
@@ -796,8 +831,10 @@ begin
   select * into v_r from public.respond_to_team_invite(v_team, true);
   if v_r.status <> 'accepted' then raise exception 'CHECK 31c FAILED: %', v_r.status; end if;
 
+  perform pg_temp.level(v_new[3]);
   perform pg_temp.act(v_p[3], false);
   select team_id into v_x from public.register_team_for_tournament(v_t, v_p[3], v_new[3]);
+  delete from public.player_levelling where player_id = v_new[3];
   perform pg_temp.act(v_new[3], false);
   select * into v_r from public.respond_to_team_invite(v_x.team_id, false);
   if v_r.status <> 'declined' then raise exception 'CHECK 31d FAILED: %', v_r.status; end if;

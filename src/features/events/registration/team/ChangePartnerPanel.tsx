@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { Player } from '../../../../lib/normalise'
-import { registrationMessage } from '../../registrationStatusMessages'
-import { CHANGE_PARTNER_MESSAGES } from '../../teams/teamStatusMessages'
+import { CHANGE_PARTNER_MESSAGES, teamStatusMessage } from '../../teams/teamStatusMessages'
 import { useTeamActions } from '../../teams/useTeams'
 import type { PartnerChoice } from '../../teams/teamTypes'
 import type { DisplayName, GetPlayer } from '../utils'
@@ -37,6 +36,11 @@ export default function ChangePartnerPanel({
   const needsLevel = useAdminLevelCheck()
   const saveLevels = useSaveLevels()
   const getPlayer: GetPlayer = (id) => candidates.find((p) => p.id === id)
+  const partnerLabel = ({ choice }: { choice: PartnerChoice }) => {
+    if (choice.kind === 'new') return choice.partner.name
+    const player = getPlayer(choice.playerId)
+    return player ? displayName(player) : ''
+  }
 
   const submit = async ({
     choice,
@@ -71,7 +75,15 @@ export default function ChangePartnerPanel({
     const { status } = await changeTeamPartner({ tournamentId, teamId, choice })
     setBusy(false)
     if (status === 'changed') onClose()
-    else setError(registrationMessage({ map: CHANGE_PARTNER_MESSAGES, status }))
+    else
+      setError(
+        teamStatusMessage({
+          map: CHANGE_PARTNER_MESSAGES,
+          status,
+          partnerName: partnerLabel({ choice }),
+          forAdmin: onBehalfOf !== undefined,
+        }),
+      )
   }
 
   return (

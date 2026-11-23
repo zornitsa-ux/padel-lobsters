@@ -353,6 +353,7 @@ begin
     returning id, name
   )
   select array_agg(id order by name) into v_tp from ins;
+  perform pg_temp.level(p) from unnest(v_tp) p;
 
   -- 14a. Recipient has TWO stale cancelled rows and no active row. The old
   -- code matched both with `status in ('waitlist','cancelled')` and flipped
@@ -585,14 +586,20 @@ begin
   end if;
   raise notice 'CHECK 15a ok — a player who needs levelling cannot sign themselves up';
 
-  -- 15b. An admin registering them is not gated.
+  -- 15b. An admin registering them is refused too (S6c), with nothing written.
+  -- The spot is then written with no caller, as a pre-S6c row would be.
   perform set_config('request.jwt.claims', json_build_object(
     'sub', v_players[6], 'app_metadata', json_build_object('role', 'admin'))::text, true);
-  select r.status into v_status from public.register_for_tournament(v_t4, v_gp[1]) r;
-  if v_status <> 'registered' then
-    raise exception 'CHECK 15b FAILED: expected registered, got %', v_status;
+  select r.status, r.registration_id into v_status, v_id
+    from public.register_for_tournament(v_t4, v_gp[1]) r;
+  if v_status <> 'player_needs_level' or v_id is not null
+     or exists (select 1 from public.registrations where tournament_id = v_t4) then
+    raise exception 'CHECK 15b FAILED: expected player_needs_level and no row, got % (%)', v_status, v_id;
   end if;
-  raise notice 'CHECK 15b ok — an admin can register a player who needs levelling';
+  perform set_config('request.jwt.claims', '', true);
+  insert into public.registrations (tournament_id, player_id, status)
+  values (v_t4, v_gp[1], 'registered');
+  raise notice 'CHECK 15b ok — an admin cannot register a player who needs levelling';
 
   -- 15c. Once levelled, they sign themselves up. The event is then full.
   perform pg_temp.level(v_gp[2]);
@@ -629,21 +636,47 @@ begin
   end if;
   raise notice 'CHECK 15d ok — a transfer to a recipient who needs levelling is refused, nothing moves';
 
-  -- 15e. Waitlist promotion isn't gated: the admin waitlists a player who
-  -- needs levelling, then a cancel promotes them.
+  -- 15d2. An admin can't push it through either (S6c): force-accept and an
+  -- immediate transfer return recipient_needs_level; the offer stays pending,
+  -- no new offer is left behind, and the sender keeps their spot.
   perform set_config('request.jwt.claims', json_build_object(
     'sub', v_players[6], 'app_metadata', json_build_object('role', 'admin'))::text, true);
-  perform public.register_for_tournament(v_t4, v_gp[3]);
+  select f.status into v_status from public.admin_force_accept_transfer(v_xfer_id) f;
+  if v_status <> 'recipient_needs_level'
+     or (select status from public.registration_transfers where id = v_xfer_id) <> 'pending' then
+    raise exception 'CHECK 15d2 FAILED: force accept returned %', v_status;
+  end if;
+  select a.status into v_status from public.admin_transfer_registration(v_t4, v_gp[1], v_gp[4]) a;
+  if v_status <> 'recipient_needs_level'
+     or (select count(*) from public.registration_transfers where tournament_id = v_t4) <> 1
+     or exists (select 1 from public.registrations where tournament_id = v_t4 and player_id = v_gp[4])
+     or not exists (select 1 from public.registrations
+                     where tournament_id = v_t4 and player_id = v_gp[1] and status = 'registered') then
+    raise exception 'CHECK 15d2 FAILED: immediate transfer returned %', v_status;
+  end if;
+  raise notice 'CHECK 15d2 ok — an admin transfer to a recipient who needs levelling is refused, nothing moves';
+
+  -- 15e. Waitlist promotion isn't gated: a player who needs levelling sits on
+  -- the waitlist (written with no caller, as a pre-S6c row), then a cancel
+  -- promotes them.
+  perform set_config('request.jwt.claims', '', true);
+  insert into public.registrations (tournament_id, player_id, status)
+  values (v_t4, v_gp[3], 'waitlist');
+  perform set_config('request.jwt.claims', json_build_object(
+    'sub', v_players[6], 'app_metadata', json_build_object('role', 'admin'))::text, true);
   select r.id into v_reg from public.registrations r
    where r.tournament_id = v_t4 and r.player_id = v_gp[1] and r.status = 'registered';
   select c.promoted_player_id into v_promoted from public.cancel_registration(v_reg) c;
   if v_promoted is distinct from v_gp[3] then
     raise exception 'CHECK 15e FAILED: expected the waitlister promoted, got %', v_promoted;
   end if;
-  select r.status into v_status from public.register_for_tournament(v_t4, v_gp[5]) r;
-  if v_status <> 'waitlist' then
-    raise exception 'CHECK 15e FAILED: expected the event full again, got %', v_status;
+  if (select count(*) from public.registrations
+       where tournament_id = v_t4 and status = 'registered') <> 2 then
+    raise exception 'CHECK 15e FAILED: expected the event full again after the promotion';
   end if;
+  perform set_config('request.jwt.claims', '', true);
+  insert into public.registrations (tournament_id, player_id, status)
+  values (v_t4, v_gp[5], 'waitlist');
   raise notice 'CHECK 15e ok — waitlist promotion is not gated';
 
   -- 15f. A recipient already on the waitlist takes the spot: their row was
@@ -682,7 +715,18 @@ begin
     get stacked diagnostics v_err = message_text;
     if v_err <> 'needs_level' then raise; end if;
   end;
-  raise notice 'CHECK 15g ok — the trigger leaves existing rows alone and stops new active ones';
+  -- An admin writing someone else's row is held the same way (S6c).
+  perform set_config('request.jwt.claims', json_build_object(
+    'sub', v_players[6], 'app_metadata', json_build_object('role', 'admin'))::text, true);
+  begin
+    insert into public.registrations (tournament_id, player_id, status)
+    values (v_t2, v_gp[6], 'waitlist');
+    raise exception 'CHECK 15g FAILED: an admin inserted an active row for a player with no level';
+  exception when sqlstate 'P0001' then
+    get stacked diagnostics v_err = message_text;
+    if v_err <> 'needs_level' then raise; end if;
+  end;
+  raise notice 'CHECK 15g ok — the trigger leaves existing rows alone and stops new active ones, whoever writes them';
 
   -- 15h. The trigger function is closed to client roles.
   if has_function_privilege('anon', 'private.registrations_require_levelling()', 'execute')

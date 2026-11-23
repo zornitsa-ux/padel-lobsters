@@ -157,6 +157,8 @@ admin (`require_admin()` raises).
 | `captain_not_active`                      | The captain isn't an `active` player                                     |
 | `partner_not_active`                      | The partner doesn't exist or isn't `active` (placeholders land here)     |
 | `partner_already_entered`                 | The partner has a registered or waitlisted row in this event             |
+| `partner_needs_level`                     | The existing member picked as partner has no level (signup revamp S6c)   |
+| `needs_level` / `captain_needs_level`     | The captain has no level: registering themselves / an admin for them     |
 | any §2 code                               | New partner rejected                                                     |
 
 Order: authenticate → lock the tournament → event checks → captain → partner
@@ -180,15 +182,15 @@ public.change_team_partner(
 The caller is the team's captain, or an admin (otherwise `require_admin()`
 raises).
 
-| `status`                                                                     | Meaning                                                                  |
-| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `changed`                                                                    | The old partner's row is cancelled; the new one inherits the team status |
-| `not_found`                                                                  | No such team                                                             |
-| `team_cancelled`                                                             | The team has no active rows                                              |
-| `tournament_completed`                                                       |                                                                          |
-| `change_closed`                                                              | Non-admin at or after `tournament_transfers_closed` (12h before start)   |
-| `same_partner`                                                               | The new partner is the current partner                                   |
-| `invalid_partner`, `partner_not_active`, `partner_already_entered`, §2 codes | As in 3.1                                                                |
+| `status`                                                                                            | Meaning                                                                  |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `changed`                                                                                           | The old partner's row is cancelled; the new one inherits the team status |
+| `not_found`                                                                                         | No such team                                                             |
+| `team_cancelled`                                                                                    | The team has no active rows                                              |
+| `tournament_completed`                                                                              |                                                                          |
+| `change_closed`                                                                                     | Non-admin at or after `tournament_transfers_closed` (12h before start)   |
+| `same_partner`                                                                                      | The new partner is the current partner                                   |
+| `invalid_partner`, `partner_not_active`, `partner_already_entered`, `partner_needs_level`, §2 codes | As in 3.1                                                                |
 
 The new partner's row gets `payment_status 'covered'`. The old partner's
 `partner_invites` row (if any) is left alone: it's how ghost accounts are
@@ -385,6 +387,7 @@ export type PartnerError =
   | 'invalid_partner'
   | 'partner_not_active'
   | 'partner_already_entered'
+  | 'partner_needs_level'
   | NewPartnerError
 
 export type RegisterTeamStatus =

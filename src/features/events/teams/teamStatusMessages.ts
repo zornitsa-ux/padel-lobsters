@@ -1,3 +1,4 @@
+import { registrationMessage } from '../registrationStatusMessages'
 import type {
   CancelMyTeamStatus,
   CancelTeamStatus,
@@ -34,6 +35,36 @@ export const ACCOUNT_ACKNOWLEDGEMENT_LABEL =
 export const PARTNER_DECLINED_NOTICE = (partnerName: string) =>
   `${partnerName} declined, so your team was cancelled. We keep spots for complete teams. Sign up again with another partner if you'd still like to play.`
 
+// Every spot in an event needs a level (signup revamp S6c), so a member with
+// none can't be picked until they set it.
+export function partnerNeedsLevelMessage({
+  partnerName,
+  forAdmin = false,
+}: {
+  partnerName: string
+  forAdmin?: boolean
+}) {
+  const who = partnerName || 'That player'
+  if (forAdmin) return `${who} has no level yet. Enter their level, then try again.`
+  return `${who} hasn't set a level yet, so they can't be picked as a partner. Ask them to set it in the app, or pick someone else.`
+}
+
+/** A team RPC status in words, naming the partner where the message is about them. */
+export function teamStatusMessage({
+  map,
+  status,
+  partnerName,
+  forAdmin = false,
+}: {
+  map: Partial<Record<string, string>>
+  status: string
+  partnerName: string
+  forAdmin?: boolean
+}) {
+  if (status === 'partner_needs_level') return partnerNeedsLevelMessage({ partnerName, forAdmin })
+  return registrationMessage({ map, status })
+}
+
 // Every non-success status from the team RPCs (CONTRACTS.md §3) has words, so
 // a rejected form or button never looks like it did nothing.
 
@@ -41,6 +72,7 @@ export const PARTNER_ERROR_MESSAGES: Record<PartnerError, string> = {
   invalid_partner: 'Pick a partner other than yourself.',
   partner_not_active: "That player can't be picked as a partner.",
   partner_already_entered: 'That player is already signed up for this event.',
+  partner_needs_level: partnerNeedsLevelMessage({ partnerName: '' }),
   consent_required: "Tick the box to confirm you have your partner's permission.",
   invalid_name: "Enter your partner's name.",
   invalid_email: 'Enter a valid email address.',
@@ -60,6 +92,7 @@ export const REGISTER_TEAM_MESSAGES: Partial<Record<RegisterTeamStatus | 'error'
   tournament_completed: 'This event has already finished.',
   captain_not_active: "That player's account isn't active.",
   needs_level: 'Set your level first, then sign your team up.',
+  captain_needs_level: 'That captain has no level yet. Enter their level, then try again.',
 }
 
 export const CHANGE_PARTNER_MESSAGES: Partial<Record<ChangePartnerStatus | 'error', string>> = {

@@ -95,7 +95,9 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
 ### `public.register_for_tournament` (changed)
 
 - New status `needs_level`, returned with a null id when
-  `input_player_id = auth.uid()` and `needs_levelling` holds. Checked after
+  `input_player_id = auth.uid()` and `needs_levelling` holds;
+  `player_needs_level` when an admin registers someone else who needs
+  levelling (S6c). Checked after
   `not_found` / `team_event` and the `already_*` check, before the insert.
   The status is an untyped string on the client: `useSelfRegister.ts`
   (which today reads only `regId`) and `Registration.tsx` add the case.
@@ -104,8 +106,12 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
 
 - New status `needs_level` when the caller is the player being written (the
   captain registering, the partner accepting) and `needs_levelling` holds.
-  Checked before any write. Admins registering a team for others aren't
-  gated.
+  Checked before any write.
+- S6c: `captain_needs_level` when an admin registers a team whose captain
+  needs levelling; `partner_needs_level` from `private.resolve_team_partner`
+  when the existing member picked as partner needs levelling, so
+  `register_team_for_tournament` and `change_team_partner` return it for
+  captains and admins alike. A new partner always has a level (S6a).
 
 ## C-4. `rating_events` kind `levelling`
 
@@ -151,13 +157,19 @@ BEFORE INSERT OR UPDATE on `public.registrations`, function
 `private.registrations_require_levelling()`. Raises
 `needs_level` (P0001) when all hold:
 
-- `new.player_id = auth.uid()`;
+- there is a caller (`auth.uid()` not null), whoever the row belongs to
+  (S6c; S3 checked only the caller's own row);
 - `private.needs_levelling(new.player_id)`;
 - and either:
   - the row becomes active: `new.status in ('registered', 'waitlist')` and
     (`TG_OP = 'INSERT'` or `old.status not in ('registered', 'waitlist')`); or
   - a team row is accepted: `TG_OP = 'UPDATE'`, `old.accepted_at is null` and
     `new.accepted_at is not null`.
+
+S6c: `admin_force_accept_transfer` and `admin_transfer_registration` catch
+the raised `needs_level` for the recipient and return `recipient_needs_level`
+(the force-accepted offer stays pending; the immediate transfer leaves no
+offer behind).
 
 Client: the RPC wrappers pass the raised `needs_level` through instead of
 collapsing it to `error` (`registerPlayer` in `registrationQueries.ts` drops

@@ -67,9 +67,10 @@ this file records how the code carries them out.
   level (S6a): an unaccepted partner still plays, so the accept gate alone
   wouldn't reach them. An admin registering a player with no level is asked
   for it first (S6b). An admin may still add or invite a player without a
-  level: they're gated at sign-in. A captain picking an existing member with no
-  level is left to the accept gate; until they accept they play at
-  `NO_LEVEL_START`.
+  level: they're gated at sign-in. Adding someone to the community isn't
+  entering an event. A captain picking an existing member with no level is
+  refused (S6c, owner 23 Nov): every spot in an event needs a level, whoever
+  writes it. Rows written before S6c stay as they are.
 - **D-19. The admin register forms ask for a level only when none is recorded**
   (S6b): one player, a team's captain or member partner, and a member picked
   when an admin changes a team's partner. By D-16's rule: no Playtomic level and no levelling start. Admins read
