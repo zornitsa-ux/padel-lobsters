@@ -7,7 +7,6 @@ import { vi } from 'vitest'
 
 export const levellingState = {
   needsLevelling: false,
-  levelOnFile: null as number | null,
   questionsOpen: false,
   existing: false,
 }
@@ -18,7 +17,6 @@ export const dismissQuestions = vi.fn()
 
 export function resetLevellingMock() {
   levellingState.needsLevelling = false
-  levellingState.levelOnFile = null
   levellingState.questionsOpen = false
   levellingState.existing = false
   refreshLevelling.mockClear()

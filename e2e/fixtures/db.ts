@@ -265,10 +265,10 @@ export async function markLevelled({ playerId }: { playerId: string }): Promise<
   await sql`
     insert into player_levelling
       (player_id, years_playing, frequency, lessons, racket_sports, walls,
-       start_source, start_mu, start_sigma, prefilled)
+       start_source, start_mu, start_sigma)
     values
       (${playerId}, 'under_1y', 'weekly_1_2', 'none', 'casual', 'slow_back_wall',
-       'walls', 1.5, 1.0, false)`
+       'walls', 1.5, 1.0)`
 }
 
 /** Removes a player made by a spec, with the rows that would block it. */

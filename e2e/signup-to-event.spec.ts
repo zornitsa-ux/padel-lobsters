@@ -238,14 +238,13 @@ test('member with no level: "Sign in" on the event page, set your level, back to
     await expectOnEventWithAction({ page, eventId: event.id, action: /register for this event/i })
     // Direct SQL: locally, service_role has no default grants on new tables.
     const [levelling] = await sql`
-      select walls, playtomic_level, start_source, start_mu::float8 as start_mu, prefilled
+      select walls, playtomic_level, start_source, start_mu::float8 as start_mu
         from player_levelling where player_id = ${member.id}`
     expect({ ...levelling }).toEqual({
       walls: 'slow_back_wall',
       playtomic_level: null,
       start_source: 'walls',
       start_mu: 1.5,
-      prefilled: false,
     })
     // Finishing never registers.
     expect(

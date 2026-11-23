@@ -26,7 +26,7 @@ returns jsonb language sql as $$
   select jsonb_build_object(
     'years_playing', 'under_1y', 'frequency', 'few_per_month', 'lessons', 'none',
     'racket_sports', 'casual', 'walls', input_walls,
-    'playtomic_level', input_level, 'prefilled', false);
+    'playtomic_level', input_level);
 $$;
 
 create function pg_temp.complete(input_player_id uuid, input_answers jsonb)
@@ -107,7 +107,7 @@ begin
   select * into v_row from public.get_my_levelling();
   perform pg_temp.check(
     v_row.needs_levelling and v_row.playtomic_level is null and not v_row.questions_open,
-    '2b: level 0 is no prefill, and no prompt');
+    '2b: no level, and no prompt');
   perform pg_temp.act_as(v_p[2]);
   select * into v_row from public.get_my_levelling();
   perform pg_temp.check(v_row.needs_levelling, '2c: played night, no level');
@@ -142,7 +142,6 @@ begin
   perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers(input_level => 7.5)) = 'invalid_level', '4e: level over 7');
   perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers(input_level => 2.455)) = 'invalid_level', '4e2: three decimals');
   perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers() || '{"playtomic_level": "2"}') = 'invalid_answers', '4f: level as text');
-  perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers() || '{"prefilled": "yes"}') = 'invalid_answers', '4g: prefilled as text');
   perform pg_temp.check(pg_temp.complete(v_p[7], pg_temp.answers() || '{"walls": 2}') = 'invalid_answers', '4h: code as number');
   perform pg_temp.check(
     not exists (select 1 from public.player_levelling where player_id = v_p[7])
@@ -168,8 +167,7 @@ begin
   select * into v_row from public.player_levelling where player_id = v_p[11];
   perform pg_temp.check(
     v_row.start_source = 'walls' and v_row.start_mu = 2.5 and v_row.start_sigma = 1.0
-    and v_row.playtomic_level is null and v_row.walls = 'corners' and v_row.years_playing = 'under_1y'
-    and not v_row.prefilled,
+    and v_row.playtomic_level is null and v_row.walls = 'corners' and v_row.years_playing = 'under_1y',
     '5g: stored answers');
   perform pg_temp.check(not private.needs_levelling(v_p[11]), '5i: a walls start counts as a level');
   select * into v_row from public.rating_events where player_id = v_p[11];
@@ -193,8 +191,8 @@ begin
     (select mm_rating = 6.5 from public.players where id = v_p[13]), '6d: no cap on Playtomic');
   select * into v_row from public.player_levelling where player_id = v_p[12];
   perform pg_temp.check(
-    v_row.start_source = 'playtomic' and v_row.playtomic_level = 1.0 and v_row.prefilled,
-    '6e: stored with prefilled');
+    v_row.start_source = 'playtomic' and v_row.playtomic_level = 1.0,
+    '6e: stored; a prefilled key from an older client is ignored');
   perform pg_temp.check(
     (select breakdown = '{"source": "playtomic"}' from public.rating_events where player_id = v_p[12]),
     '6f: audit source');
@@ -226,7 +224,7 @@ begin
   select * into v_row from public.player_levelling where player_id = v_p[1];
   perform pg_temp.check(
     v_row.start_source = 'none' and v_row.start_mu is null and v_row.start_sigma is null
-    and v_row.playtomic_level = 2.3 and not v_row.prefilled and v_row.walls = 'corners',
+    and v_row.playtomic_level = 2.3 and v_row.walls = 'corners',
     '8k: answers only, the level on file kept, the value sent ignored');
   perform pg_temp.check(
     (select mm_rating is null and playtomic_level = 2.3 from public.players where id = v_p[1])
