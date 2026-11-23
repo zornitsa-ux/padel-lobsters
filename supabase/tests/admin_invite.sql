@@ -1,10 +1,9 @@
 -- ============================================================================
--- Admin invite checks (20261012130000, 20261020150000): invites and adds carry
--- no PIN, resend, readiness, the legacy PIN reset, and the auth email restore
--- (20261012140000).
+-- Admin invite checks (20261012130000, 20261020150000): invites and adds,
+-- resend, readiness, and the auth email restore (20261012140000).
 --
--- private.send_pin_email and private.send_invite_email post to the production
--- edge functions, so both are replaced with recorders inside this transaction.
+-- private.send_invite_email posts to the production edge function, so it is
+-- replaced with a recorder inside this transaction.
 -- Everything rolls back.
 --
 --   docker exec -i supabase_db_padel-lobsters \
@@ -15,13 +14,6 @@
 begin;
 
 set local client_min_messages = notice;
-
-create temp table sent_pin_emails (player_id uuid, pin text, kind text);
-
-create or replace function private.send_pin_email(input_player_id uuid, input_pin text, input_kind text)
- returns bigint language sql as $$
-  insert into sent_pin_emails values (input_player_id, input_pin, input_kind) returning 1::bigint
-$$;
 
 create temp table sent_invite_emails (player_id uuid, kind text);
 
@@ -40,14 +32,13 @@ declare
   v_pin    text;
   v_added  public.players%rowtype;
   v_ready  jsonb;
-  v_login  record;
   v_player public.players%rowtype;
   v_err    text;
 begin
   insert into public.players (name, status, email, role) values ('Invite Admin', 'active', 'admin@test.invalid', 'admin')
   returning id into v_admin;
-  insert into public.players (name, status, pin) values ('Invitee One', 'placeholder', '') returning id into v_ph;
-  insert into public.players (name, status, pin) values ('Invitee Two', 'placeholder', '') returning id into v_ph2;
+  insert into public.players (name, status) values ('Invitee One', 'placeholder') returning id into v_ph;
+  insert into public.players (name, status) values ('Invitee Two', 'placeholder') returning id into v_ph2;
   insert into public.players (name, status, email) values ('Taken Email', 'active', 'taken@test.invalid')
   returning id into v_taken;
 
@@ -74,7 +65,7 @@ begin
   end;
   select * into v_player from public.players where id = v_ph;
   if v_err is distinct from 'invalid email' or v_player.status <> 'placeholder'
-     or exists (select 1 from sent_pin_emails) or exists (select 1 from sent_invite_emails) then
+     or exists (select 1 from sent_invite_emails) then
     raise exception 'CHECK 2 FAILED: got % row %', v_err, row_to_json(v_player);
   end if;
   raise notice 'CHECK 2 ok: malformed email refused';
@@ -95,23 +86,21 @@ begin
   if v_err is distinct from 'email in use' then raise exception 'CHECK 3 FAILED (auth): got %', v_err; end if;
   raise notice 'CHECK 3 ok: taken email refused';
 
-  -- CHECK 4: a valid invite activates the row without a PIN, returns NULL,
+  -- CHECK 4: a valid invite activates the row, returns NULL,
   -- records one league_invite email, and puts the real (lower-cased) address
   -- on auth.users
   v_pin := public.admin_invite_league_player(v_ph, ' One@Test.invalid ');
   select * into v_player from public.players where id = v_ph;
-  if v_pin is not null or v_player.status <> 'active' or v_player.email <> 'one@test.invalid'
-     or nullif(v_player.pin, '') is not null or v_player.pin_hash is not null then
-    raise exception 'CHECK 4 FAILED: pin % row %', v_pin, row_to_json(v_player);
+  if v_pin is not null or v_player.status <> 'active' or v_player.email <> 'one@test.invalid' then
+    raise exception 'CHECK 4 FAILED: returned % row %', v_pin, row_to_json(v_player);
   end if;
-  if (select count(*) from sent_invite_emails where player_id = v_ph and kind = 'league_invite') <> 1
-     or exists (select 1 from sent_pin_emails) then
-    raise exception 'CHECK 4 FAILED: invite email not recorded once, or a PIN email was sent';
+  if (select count(*) from sent_invite_emails where player_id = v_ph and kind = 'league_invite') <> 1 then
+    raise exception 'CHECK 4 FAILED: invite email not recorded once';
   end if;
   if (select email from auth.users where id = v_ph) <> 'one@test.invalid' then
     raise exception 'CHECK 4 FAILED: auth.users email not synced';
   end if;
-  if not exists (select 1 from public.pin_attempts where player_id = v_ph and attempt_kind = 'admin_action') then
+  if not exists (select 1 from public.security_events where player_id = v_ph and attempt_kind = 'admin_action') then
     raise exception 'CHECK 4 FAILED: admin_action row missing';
   end if;
   raise notice 'CHECK 4 ok: invite';
@@ -125,19 +114,23 @@ begin
   if v_err is distinct from 'player is not a placeholder' then raise exception 'CHECK 5 FAILED: got %', v_err; end if;
   raise notice 'CHECK 5 ok: no re-invite';
 
-  update public.players set pin = '4321' where id = v_ph;
-  v_pin := '4321';
-
-  -- CHECK 6: PIN reset issues a working new PIN, retires the old one, and emails it
-  v_err := v_pin;
-  v_pin := public.admin_regenerate_pin(v_ph);
-  select * into v_login from public.verify_player_pin_v2(v_pin, 'invite-device');
-  if v_pin = v_err or v_login.player_id is distinct from v_ph
-     or (select player_id from public.verify_player_pin_v2(v_err, 'invite-device')) is not null
-     or not exists (select 1 from sent_pin_emails where pin = v_pin and kind = 'regenerated') then
-    raise exception 'CHECK 6 FAILED: pin % login %', v_pin, row_to_json(v_login);
+  -- CHECK 6: the PIN functions are gone (pin-auth-removal PR 6)
+  if exists (
+    select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+     where (n.nspname, p.proname) in (('public', 'admin_regenerate_pin'), ('public', 'verify_player_pin_v2'),
+                                      ('public', 'self_signup_player'), ('private', 'send_pin_email'),
+                                      ('private', 'generate_unique_pin'), ('public', 'sync_player_pin_hash'),
+                                      ('public', 'get_all_players_with_pii_v2'), ('public', 'admin_get_player_pii_v2'))
+  ) or to_regclass('private.admin_secrets') is not null
+    or to_regclass('public.pin_attempts') is not null
+    or to_regclass('public.security_events') is null
+    or exists (
+    select 1 from information_schema.columns
+     where table_schema = 'public' and table_name = 'players' and column_name in ('pin', 'pin_hash', 'pin_changes')
+  ) then
+    raise exception 'CHECK 6 FAILED: a PIN function or column is still there';
   end if;
-  raise notice 'CHECK 6 ok: PIN reset';
+  raise notice 'CHECK 6 ok: PIN functions, columns and admin secret dropped; security_events renamed';
 
   -- CHECK 7: the auth email restore fixes synthetic rows and skips taken addresses
   update auth.users set email = format('player-%s@padelobsters.internal', v_ph) where id = v_ph;
@@ -165,18 +158,18 @@ begin
   end if;
   raise notice 'CHECK 7 ok: auth email restore';
 
-  -- CHECK 8: admin_add_player stores no PIN, NULLs a blank email, and mails
+  -- CHECK 8: admin_add_player NULLs a blank email, and mails
   -- an 'added' invite only when there is an email
   delete from sent_invite_emails;
   select * into v_added from public.admin_add_player(
     jsonb_build_object('name', 'Added With Email', 'email', ' Added@Test.invalid '));
-  if v_added.pin is not null or v_added.pin_hash is not null or v_added.email <> 'Added@Test.invalid'
+  if v_added.email <> 'Added@Test.invalid'
      or (select count(*) from sent_invite_emails where player_id = v_added.id and kind = 'added') <> 1 then
     raise exception 'CHECK 8 FAILED (with email): %', row_to_json(v_added);
   end if;
   select * into v_added from public.admin_add_player(
     jsonb_build_object('name', 'Added Blank', 'email', '   '));
-  if v_added.email is not null or v_added.pin is not null
+  if v_added.email is not null
      or exists (select 1 from sent_invite_emails where player_id = v_added.id) then
     raise exception 'CHECK 8 FAILED (blank): %', row_to_json(v_added);
   end if;

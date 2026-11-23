@@ -80,7 +80,7 @@ Access control is in `src/lib/authPaths.ts`:
 
 - `PUBLIC_PATHS = ['/', '/home', '/auth/confirm']` — path prefixes a guest can browse (boundary-aware prefix match: `/home/foo` matches, `/homer` does not)
 - `PROTECTED_PATHS` is documentation only — `isPublicPath()` is default-deny, so anything not allowlisted is protected
-- `VerificationGate` shows the PIN prompt for guests on a non-public path
+- `VerificationGate` shows the sign-in form (email code or password) for guests on a non-public path
 
 ### Folder Shape
 

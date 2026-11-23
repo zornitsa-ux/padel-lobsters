@@ -130,7 +130,7 @@ begin
      or v_player.is_left_handed is not true or v_player.country <> 'NL'
      or v_player.birthday <> date '1990-05-06' or v_player.preferred_position <> 'left'
      or v_player.tagline_label <> 'Hi' or v_player.notes <> 'n'
-     or v_player.pin is not null or v_player.pin_hash is not null or v_player.role <> 'player' then
+     or v_player.role <> 'player' then
     raise exception 'CHECK 6 FAILED: %', row_to_json(v_player);
   end if;
   if (select count(*) from auth.users where id = v_id) <> 1

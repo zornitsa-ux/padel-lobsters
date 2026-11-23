@@ -23,10 +23,11 @@ import { Spinner } from './ui/Spinner'
 /**
  * Admin-only Security panel.
  *
- * Recent security events — last N rows of pin_attempts joined to player
- * names, color-coded by outcome. Useful for spotting attack patterns:
- * bursts of failures from one device, an unusually large number of
- * player_pii_read rows, etc. A 'pii_dump' row (the old whole-roster read) is
+ * Recent security events — last N rows of security_events joined to player
+ * names, color-coded by outcome. Logs admin actions and contact-details
+ * reads; sign-in attempts were logged only while PINs existed (until 7 Nov
+ * 2026), since email and password sign-ins go through Supabase Auth. Useful
+ * for spotting an unusually large number of player_pii_read rows. A 'pii_dump' row (the old whole-roster read) is
  * now itself anomalous — the admin Players screen only ever requests one
  * player's PII at a time (player_pii_read).
  *
@@ -122,9 +123,9 @@ export default function SecurityEventsPanel() {
         <>
           <div className="flex items-center justify-between">
             <p className="caption leading-snug flex-1 pr-2">
-              Every PIN attempt and contact-details read is logged. Reads name the player whose
-              details were read. Watch for bursts of failures or any "Full roster PII read" — that
-              path is no longer used and shouldn't appear.
+              Admin actions and contact-details reads are logged. Reads name the player whose
+              details were read. Sign-in attempts were logged only until PINs retired on 7 Nov.
+              Watch for any "Full roster PII read": that path no longer exists.
             </p>
             <IconButton onClick={load} aria-label="Refresh" variant="ghost" size="sm">
               <RefreshCw />

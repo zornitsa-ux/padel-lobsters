@@ -5,7 +5,7 @@ import type { Database } from '../lib/database.types'
 export type SecurityEventRow =
   Database['public']['Functions']['admin_list_security_events']['Returns'][number]
 
-// Admin: recent security events feed (pin_attempts, joined to player names).
+// Admin: recent security events feed (security_events, joined to player names).
 // Surfaces load failures as a toast — an admin reviewing security events
 // needs to know the feed didn't load, not see an empty log.
 export async function adminListSecurityEvents(limit = 100): Promise<SecurityEventRow[]> {

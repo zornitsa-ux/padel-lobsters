@@ -28,7 +28,6 @@ import { ListCard, ListRow } from './ui/ListCard'
 //   onClose():  dismiss the panel
 // RPC status code → admin-facing message.
 const FORCE_ACCEPT_ERRORS: Record<string, string> = {
-  wrong_admin_pin: 'Sign in as an admin to do this.',
   not_found: 'Transfer no longer exists.',
   not_pending: 'Transfer was already responded to.',
   tournament_started: 'Too late — the event has already started.',
@@ -40,7 +39,6 @@ const FORCE_ACCEPT_ERRORS: Record<string, string> = {
 }
 
 const CANCEL_ERRORS: Record<string, string> = {
-  wrong_admin_pin: 'Sign in as an admin to do this.',
   not_found: 'Transfer no longer exists.',
   not_pending: 'Transfer was already responded to.',
 }

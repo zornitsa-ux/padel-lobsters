@@ -37,8 +37,7 @@ export const myProfileRowSchema = playerPublicRowSchema.extend({
 
 // admin_get_player_pii returns a narrow, fixed projection for exactly one
 // player (not SETOF players) — see supabase/migrations/20260816120000_
-// scoped_player_pii.sql. No pin/pin_changes: pin is never read by any admin
-// surface any more, and pin_changes is already public via players_public.
+// scoped_player_pii.sql.
 export const playerPiiRowSchema = z
   .object({
     id: z.string(),

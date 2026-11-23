@@ -93,7 +93,7 @@ export const READS: Read[] = [
   rpc({ name: 'lobster_oscars_get_my_votes', args: tournamentArg }),
   rpc({ name: 'lobster_oscars_get_results', args: tournamentArg }),
   // Admin-only security and scheduling data
-  table({ name: 'pin_attempts' }),
+  table({ name: 'security_events' }),
   table({ name: 'schedule_runs' }),
   rpc({ name: 'admin_list_security_events', args: () => ({ input_limit: 100000 }) }),
 ]

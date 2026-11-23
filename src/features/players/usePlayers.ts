@@ -94,7 +94,7 @@ export function useMyProfile(id: string | null | undefined) {
 // merge candidate), never a page-mount side effect — `enabled` is the caller
 // declaring "I actually need this player's PII right now".
 //
-// Every successful call writes a pin_attempts audit row keyed on the player
+// Every successful call writes a security_events audit row keyed on the player
 // being read, so this deliberately does not refetch on focus. staleTime
 // matches the old roster-wide overlay's 5min; gcTime is shorter than the
 // default (2min) so a revealed-then-hidden/collapsed player's PII leaves

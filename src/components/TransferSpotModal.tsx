@@ -56,7 +56,6 @@ interface TransferSpotModalProps {
 // (transfers_closed doesn't apply there since it bypasses the cutoff, but
 // tournament_completed does).
 const CREATE_ERRORS: Record<string, string> = {
-  wrong_pin: 'Sign in again to send a transfer.',
   invalid_target: "That player can't receive a transfer.",
   not_registered: 'That registration is no longer active.',
   target_already_registered: 'That player is already signed up for this event.',

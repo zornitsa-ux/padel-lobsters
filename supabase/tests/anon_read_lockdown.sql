@@ -64,7 +64,7 @@ begin
 end$$;
 
 -- The two functions guests call, run as anon.
-insert into public.players (name, status, pin) values ('Lockdown Placeholder', 'placeholder', '');
+insert into public.players (name, status) values ('Lockdown Placeholder', 'placeholder');
 insert into public.players (name, status) values ('Lockdown Member', 'active');
 set local role anon;
 do $$

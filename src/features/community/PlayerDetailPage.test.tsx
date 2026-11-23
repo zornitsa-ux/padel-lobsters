@@ -22,7 +22,7 @@ vi.mock('../../context/useApp', () => ({
 }))
 vi.mock('../players/usePlayers', () => ({
   usePlayers: () => ({ data: h.players, isLoading: false }),
-  usePlayerActions: () => ({ deletePlayer: h.deletePlayer, regeneratePin: vi.fn() }),
+  usePlayerActions: () => ({ deletePlayer: h.deletePlayer }),
 }))
 vi.mock('./usePlayerEditor', () => ({
   usePlayerEditor: () => ({

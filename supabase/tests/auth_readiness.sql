@@ -45,12 +45,12 @@ begin
   insert into public.players (name, status, email) values ('R inactive', 'inactive', 'r8@test.invalid') returning id into v_inactive;
   insert into public.players (name, status, email) values ('R PIN newer', 'active', 'r9@test.invalid') returning id into v_newer;
   insert into public.players (name, status, email) values ('R PIN older', 'active', 'r10@test.invalid') returning id into v_older;
-  insert into public.players (name, status, pin) values ('R placeholder', 'placeholder', '') returning id into v_ph;
+  insert into public.players (name, status) values ('R placeholder', 'placeholder') returning id into v_ph;
 
   update auth.users set last_sign_in_at = v_now - interval '1 day' where id in (v_pin1, v_edge5, v_over5, v_after, v_email, v_inactive, v_ph, v_newer, v_older);
   update auth.users set last_sign_in_at = v_now - interval '20 days' where id = v_old;
 
-  insert into public.pin_attempts (player_id, attempt_kind, succeeded, attempted_at) values
+  insert into public.security_events (player_id, attempt_kind, succeeded, attempted_at) values
     (v_pin1,     'player', true,  v_now - interval '1 day' - interval '1 minute'),
     (v_edge5,    'player', true,  v_now - interval '1 day' - interval '5 minutes'),
     (v_over5,    'player', true,  v_now - interval '1 day' - interval '5 minutes 1 second'),

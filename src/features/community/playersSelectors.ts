@@ -30,10 +30,6 @@ export interface CommunityPlayer extends PlayerLike {
   tagline?: string | null
   taglineLabel?: string | null
   tagline_label?: string | null
-  // Public (players_public) reset counter. No `pin` field — the plaintext
-  // PIN is never read by any admin surface (regenerating one is a separate,
-  // one-time reveal of a freshly generated value, not a stored read).
-  pin_changes?: number | null
 }
 
 export type OrderedPlayer<T extends PlayerLike> = {

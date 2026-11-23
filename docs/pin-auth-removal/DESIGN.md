@@ -378,8 +378,8 @@ One PR, one migration, with the PR description stating the deploy order
   `admin_pin_hash`), and the `players.pin`, `pin_hash`, `pin_changes` columns. Rebuild
   `players_public` without `pin_changes`.
 - Delete the `verify-pin` and `send-pin-email` edge functions and their
-  `config.toml` blocks. Remove the `edge_send_pin_service_role` Vault secret
-  (dashboard).
+  `config.toml` blocks. The `edge_send_pin_service_role` Vault secret stays
+  (D-19).
 - Rename `pin_attempts` → `security_events`, and `attempt_kind` values stay as they
   are (historical rows untouched, per F-6 / device-trust D-7). Update
   `api/securityEvents.ts` and `SecurityEventsPanel` copy ("Every sign-in attempt
@@ -582,6 +582,21 @@ change. D-8 to D-13 come from the 2026-10-15 interview.
   cutover, and its 5-per-24h cap keys on a device id the caller supplies. So
   the D-13 fallback is gone: if the signup hook misfires, signup stays down
   until the hook is fixed or a reviewed migration grants the function back.
+
+- **D-19. Phase 4 as built (PR 6).** Three changes to the list above:
+  - The `edge_send_pin_service_role` Vault secret stays.
+    `private.get_edge_service_role_key` reads it for `send_invite_email` too,
+    so removing it would stop invite emails.
+  - Two PIN-era PII reads go as well: `get_all_players_with_pii_v2` (the old
+    whole-roster read) and `admin_get_player_pii_v2` (PIN-gated; production
+    had it with no migration creating it, so it's dropped `if exists`).
+    Nothing calls either, and both logged to `pin_attempts`.
+  - The transfer RPCs no longer return `wrong_pin` (the cutover removed it),
+    so the client just drops the dead `wrong_pin` and `wrong_admin_pin`
+    messages; there's nothing to rename. `respond_to_transfer` has no
+    `input_device_id` left. The functions that write the security log are
+    re-created against `security_events` with their bodies otherwise
+    unchanged.
 
 ## Owner answers (2026-10-15)
 

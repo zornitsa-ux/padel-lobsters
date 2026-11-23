@@ -343,18 +343,17 @@ review.
 - **History:** old names linked to players (`player_aliases`), and old email
   addresses with who cleared them and how (`player_email_clears`). A deletion
   must cover these too.
-- **Security log:** IP, user agent and device ID in `pin_attempts`. It stays:
-  the PIN removal plan renames it as the audit log (pin-auth-removal D-5).
-- **On the device:** the sign-in session token (Supabase, `localStorage`), a
-  device ID, the greeting name cache, the sign-in return path, the merch
+- **Security log:** IP, user agent and device ID in `security_events`
+  (`pin_attempts` until PIN removal PR 6, pin-auth-removal D-5). Rows from the
+  PIN era keep them; new rows don't set a device ID.
+- **On the device:** the sign-in session token (Supabase, `localStorage`), the greeting name cache, the sign-in return path, the merch
   last-checked time, the Playtomic check time and a perf flag; partner-invite
   "seen" flags in `sessionStorage`. Functional; no cookies.
 
 **Processors and where they run**
 
 - Supabase: database, auth, storage. Database in Zurich (owner).
-- Resend: the sign-in emails (owner), invite emails, PIN emails
-  (`send-pin-email`, until PIN removal deletes it) and event reminder emails.
+- Resend: the sign-in emails (owner), invite emails and event reminder emails.
   Reminders go through the `send-tournament-reminders-batch` edge function,
   which isn't in this repo; check whether it still runs.
 - Vercel: hosting (edge network), the link-preview functions in `fra1`
