@@ -12,7 +12,6 @@ export const isStaleTransferStatus = (status: string): boolean => STALE_STATUSES
 
 // Recipient-facing reasons a response to a transfer didn't go through.
 const RESPOND_MESSAGES: Record<string, string> = {
-  wrong_pin: 'Sign in again to respond.',
   forbidden: 'This transfer is for a different player.',
   not_found: 'This transfer no longer exists.',
   not_pending: 'This transfer was already responded to or closed.',

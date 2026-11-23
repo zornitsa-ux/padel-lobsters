@@ -23,7 +23,7 @@ import { Spinner } from './ui/Spinner'
 /**
  * Admin-only Security panel.
  *
- * Recent security events — last N rows of pin_attempts joined to player
+ * Recent security events — last N rows of security_events joined to player
  * names, color-coded by outcome. Useful for spotting attack patterns:
  * bursts of failures from one device, an unusually large number of
  * player_pii_read rows, etc. A 'pii_dump' row (the old whole-roster read) is
@@ -122,7 +122,7 @@ export default function SecurityEventsPanel() {
         <>
           <div className="flex items-center justify-between">
             <p className="caption leading-snug flex-1 pr-2">
-              Every PIN attempt and contact-details read is logged. Reads name the player whose
+              Every sign-in attempt and contact-details read is logged. Reads name the player whose
               details were read. Watch for bursts of failures or any "Full roster PII read" — that
               path is no longer used and shouldn't appear.
             </p>

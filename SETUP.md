@@ -64,11 +64,11 @@ Vercel gives you a URL like `padel-lobsters.vercel.app` — that's your app.
 
 ## Step 5 — First-time setup in the app
 
-1. Open the app → tap **Settings** (bottom right)
-2. Tap **Login** and enter the default admin PIN: **`0000`**
-3. Go to Settings → change the PIN to something only you know
-4. Paste your **WhatsApp community invite link** (a green button will appear in the header)
-5. Start adding players under the **Players** tab
+1. Open the app and sign in with your email: you'll get a 6-digit code
+2. Make your account an admin: in the Supabase SQL editor, set `role = 'admin'`
+   on your row in `players`, then sign out and back in
+3. Go to **Settings** and paste your **WhatsApp community invite link** (a green button will appear in the header)
+4. Start adding players under the **Players** tab
 
 ---
 

@@ -753,39 +753,6 @@ export type Database = {
           },
         ]
       }
-      pin_attempts: {
-        Row: {
-          attempt_kind: string
-          attempted_at: string
-          device_id: string | null
-          id: number
-          ip_address: unknown
-          player_id: string | null
-          succeeded: boolean
-          user_agent: string | null
-        }
-        Insert: {
-          attempt_kind: string
-          attempted_at?: string
-          device_id?: string | null
-          id?: number
-          ip_address?: unknown
-          player_id?: string | null
-          succeeded: boolean
-          user_agent?: string | null
-        }
-        Update: {
-          attempt_kind?: string
-          attempted_at?: string
-          device_id?: string | null
-          id?: number
-          ip_address?: unknown
-          player_id?: string | null
-          succeeded?: boolean
-          user_agent?: string | null
-        }
-        Relationships: []
-      }
       player_aliases: {
         Row: {
           created_at: string
@@ -968,9 +935,6 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
-          pin: string | null
-          pin_changes: number
-          pin_hash: string | null
           playtomic_level: number | null
           playtomic_updated_at: string | null
           playtomic_username: string | null
@@ -1002,9 +966,6 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
-          pin?: string | null
-          pin_changes?: number
-          pin_hash?: string | null
           playtomic_level?: number | null
           playtomic_updated_at?: string | null
           playtomic_username?: string | null
@@ -1036,9 +997,6 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
-          pin?: string | null
-          pin_changes?: number
-          pin_hash?: string | null
           playtomic_level?: number | null
           playtomic_updated_at?: string | null
           playtomic_username?: string | null
@@ -1429,6 +1387,39 @@ export type Database = {
           },
         ]
       }
+      security_events: {
+        Row: {
+          attempt_kind: string
+          attempted_at: string
+          device_id: string | null
+          id: number
+          ip_address: unknown
+          player_id: string | null
+          succeeded: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          attempt_kind: string
+          attempted_at?: string
+          device_id?: string | null
+          id?: number
+          ip_address?: unknown
+          player_id?: string | null
+          succeeded: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          attempt_kind?: string
+          attempted_at?: string
+          device_id?: string | null
+          id?: number
+          ip_address?: unknown
+          player_id?: string | null
+          succeeded?: boolean
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           group_name: string | null
@@ -1601,7 +1592,6 @@ export type Database = {
           learned_updated_at: string | null
           learned_volatility: number | null
           name: string | null
-          pin_changes: number | null
           playtomic_level: number | null
           preferred_position: string | null
           role: Database['public']['Enums']['player_role'] | null
@@ -1627,7 +1617,6 @@ export type Database = {
           learned_updated_at?: string | null
           learned_volatility?: number | null
           name?: string | null
-          pin_changes?: never
           playtomic_level?: number | null
           preferred_position?: string | null
           role?: Database['public']['Enums']['player_role'] | null
@@ -1653,7 +1642,6 @@ export type Database = {
           learned_updated_at?: string | null
           learned_volatility?: number | null
           name?: string | null
-          pin_changes?: never
           playtomic_level?: number | null
           preferred_position?: string | null
           role?: Database['public']['Enums']['player_role'] | null
@@ -1713,9 +1701,6 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
-          pin: string | null
-          pin_changes: number
-          pin_hash: string | null
           playtomic_level: number | null
           playtomic_updated_at: string | null
           playtomic_username: string | null
@@ -1959,10 +1944,6 @@ export type Database = {
         Args: { input_payload: Json }
         Returns: string
       }
-      admin_regenerate_pin: {
-        Args: { input_target_id: string }
-        Returns: string
-      }
       admin_resend_invite: {
         Args: { input_player_id: string }
         Returns: string
@@ -2196,49 +2177,6 @@ export type Database = {
         }[]
       }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
-      get_all_players_with_pii_v2: {
-        Args: never
-        Returns: {
-          adjusted_level: number | null
-          adjustment: number | null
-          avatar_url: string | null
-          birthday: string | null
-          country: string | null
-          created_at: string | null
-          email: string | null
-          gender: string | null
-          id: string
-          is_left_handed: boolean | null
-          learned_matches_count: number
-          learned_rating: number | null
-          learned_rd: number | null
-          learned_updated_at: string | null
-          learned_volatility: number | null
-          mm_rating: number | null
-          mm_rating_updated_at: string | null
-          mm_sigma: number | null
-          name: string
-          notes: string | null
-          phone: string | null
-          pin: string | null
-          pin_changes: number
-          pin_hash: string | null
-          playtomic_level: number | null
-          playtomic_updated_at: string | null
-          playtomic_username: string | null
-          preferred_position: string | null
-          role: Database['public']['Enums']['player_role']
-          status: string | null
-          tagline: string | null
-          tagline_label: string | null
-        }[]
-        SetofOptions: {
-          from: '*'
-          to: 'players'
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
       get_group_link: { Args: never; Returns: string }
       get_my_account_setup: {
         Args: never
@@ -2280,9 +2218,6 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
-          pin: string | null
-          pin_changes: number
-          pin_hash: string | null
           playtomic_level: number | null
           playtomic_updated_at: string | null
           playtomic_username: string | null
@@ -2465,18 +2400,6 @@ export type Database = {
           status: string
         }[]
       }
-      self_signup_player: {
-        Args: {
-          input_device_id?: string
-          input_payload: Json
-          input_user_agent?: string
-        }
-        Returns: {
-          pin: string
-          player_id: string
-          was_existing: boolean
-        }[]
-      }
       set_registration_payment: {
         Args: {
           input_payment_method?: string
@@ -2498,17 +2421,6 @@ export type Database = {
         Returns: boolean
       }
       update_my_profile: { Args: { input_payload: Json }; Returns: boolean }
-      verify_player_pin_v2: {
-        Args: {
-          input_device_id: string
-          input_pin: string
-          input_user_agent?: string
-        }
-        Returns: {
-          player_id: string
-          status: string
-        }[]
-      }
     }
     Enums: {
       player_role: 'player' | 'admin'

@@ -3,8 +3,8 @@
 // ============================================================================
 //
 //  Rule: default-deny. If a path is NOT in PUBLIC_PATHS, VerificationGate
-//  shows the PIN prompt to guests. Forgetting to allowlist a public path is
-//  a loud failure (unexpected PIN prompt, caught in testing). Forgetting to
+//  shows the sign-in form to guests. Forgetting to allowlist a public path is
+//  a loud failure (unexpected sign-in form, caught in testing). Forgetting to
 //  list a protected path is a quiet failure (still locked). We pick loud
 //  over quiet deliberately.
 // ============================================================================

@@ -49,7 +49,7 @@ export async function fetchPlayers(): Promise<Player[]> {
   const { data, error } = await supabase
     .from('players_public')
     .select(
-      'id, name, status, gender, is_left_handed, preferred_position, country, tagline, tagline_label, playtomic_level, avatar_url, created_at, birthday_md, birthday_month, birthday_day, pin_changes',
+      'id, name, status, gender, is_left_handed, preferred_position, country, tagline, tagline_label, playtomic_level, avatar_url, created_at, birthday_md, birthday_month, birthday_day',
     )
     .order('name')
   if (error) throw error

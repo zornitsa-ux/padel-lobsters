@@ -83,17 +83,6 @@ fi
 echo
 echo "── private surface (should reject for anon; Phase 2/3 will tighten) ────"
 
-# Case A: reading PIN column from players. Must NOT return 200 with data.
-status=$(fetch "$REST/players?select=pin&limit=1")
-body=$(cat /tmp/body.$$)
-if [ "$status" = "200" ] && echo "$body" | jq -e 'length > 0' >/dev/null 2>&1; then
-  fail "players.pin is readable as anon — PII LEAK (Phase 2 must fix)"
-elif [ "$status" = "200" ]; then
-  pass "players.pin query returned empty array (RLS filtered — acceptable)"
-else
-  pass "players.pin query rejected (status=$status)"
-fi
-
 # Case B: email column on players.
 status=$(fetch "$REST/players?select=email&limit=1")
 body=$(cat /tmp/body.$$)

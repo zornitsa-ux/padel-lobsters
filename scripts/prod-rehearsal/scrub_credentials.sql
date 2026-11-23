@@ -18,11 +18,6 @@ update auth.users
        reauthentication_token     = '',
        phone_change_token         = '';
 
--- PINs are live credentials until cutover (players.pin is plaintext).
-update public.players
-   set pin = null, pin_hash = null
- where pin is not null or pin_hash is not null;
-
-update public.pin_attempts
+update public.security_events
    set ip_address = null, user_agent = null
  where ip_address is not null or user_agent is not null;
