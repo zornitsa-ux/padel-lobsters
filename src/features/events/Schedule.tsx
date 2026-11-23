@@ -188,7 +188,7 @@ export default function Schedule({
         return {
           playerId: String(p.id),
           name: p.name,
-          playtomicLevel: p.playtomicLevel ?? 0,
+          playtomicLevel: p.playtomicLevel ?? null,
           mmRating: learned?.mu ?? null,
           mmSigma: learned?.sigma ?? null,
           isLeftHanded: Boolean(p.isLeftHanded),

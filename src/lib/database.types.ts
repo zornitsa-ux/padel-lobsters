@@ -914,8 +914,6 @@ export type Database = {
       }
       players: {
         Row: {
-          adjusted_level: number | null
-          adjustment: number | null
           avatar_url: string | null
           birthday: string | null
           country: string | null
@@ -924,18 +922,13 @@ export type Database = {
           gender: string | null
           id: string
           is_left_handed: boolean | null
-          learned_matches_count: number
-          learned_rating: number | null
-          learned_rd: number | null
-          learned_updated_at: string | null
-          learned_volatility: number | null
           mm_rating: number | null
           mm_rating_updated_at: string | null
           mm_sigma: number | null
           name: string
           notes: string | null
           phone: string | null
-          playtomic_level: number
+          playtomic_level: number | null
           playtomic_updated_at: string | null
           playtomic_username: string | null
           preferred_position: string | null
@@ -945,8 +938,6 @@ export type Database = {
           tagline_label: string | null
         }
         Insert: {
-          adjusted_level?: number | null
-          adjustment?: number | null
           avatar_url?: string | null
           birthday?: string | null
           country?: string | null
@@ -955,18 +946,13 @@ export type Database = {
           gender?: string | null
           id?: string
           is_left_handed?: boolean | null
-          learned_matches_count?: number
-          learned_rating?: number | null
-          learned_rd?: number | null
-          learned_updated_at?: string | null
-          learned_volatility?: number | null
           mm_rating?: number | null
           mm_rating_updated_at?: string | null
           mm_sigma?: number | null
           name: string
           notes?: string | null
           phone?: string | null
-          playtomic_level?: number
+          playtomic_level?: number | null
           playtomic_updated_at?: string | null
           playtomic_username?: string | null
           preferred_position?: string | null
@@ -976,8 +962,6 @@ export type Database = {
           tagline_label?: string | null
         }
         Update: {
-          adjusted_level?: number | null
-          adjustment?: number | null
           avatar_url?: string | null
           birthday?: string | null
           country?: string | null
@@ -986,18 +970,13 @@ export type Database = {
           gender?: string | null
           id?: string
           is_left_handed?: boolean | null
-          learned_matches_count?: number
-          learned_rating?: number | null
-          learned_rd?: number | null
-          learned_updated_at?: string | null
-          learned_volatility?: number | null
           mm_rating?: number | null
           mm_rating_updated_at?: string | null
           mm_sigma?: number | null
           name?: string
           notes?: string | null
           phone?: string | null
-          playtomic_level?: number
+          playtomic_level?: number | null
           playtomic_updated_at?: string | null
           playtomic_username?: string | null
           preferred_position?: string | null
@@ -1513,7 +1492,6 @@ export type Database = {
           notes: string | null
           prize_item_ids: number[] | null
           raffle_published_at: string | null
-          ratings_applied_at: string | null
           results_shared_at: string | null
           starting_courts_published_at: string | null
           status: string | null
@@ -1537,7 +1515,6 @@ export type Database = {
           notes?: string | null
           prize_item_ids?: number[] | null
           raffle_published_at?: string | null
-          ratings_applied_at?: string | null
           results_shared_at?: string | null
           starting_courts_published_at?: string | null
           status?: string | null
@@ -1561,7 +1538,6 @@ export type Database = {
           notes?: string | null
           prize_item_ids?: number[] | null
           raffle_published_at?: string | null
-          ratings_applied_at?: string | null
           results_shared_at?: string | null
           starting_courts_published_at?: string | null
           status?: string | null
@@ -1575,8 +1551,6 @@ export type Database = {
     Views: {
       players_public: {
         Row: {
-          adjusted_level: number | null
-          adjustment: number | null
           avatar_url: string | null
           birthday_day: number | null
           birthday_md: string | null
@@ -1586,11 +1560,6 @@ export type Database = {
           gender: string | null
           id: string | null
           is_left_handed: boolean | null
-          learned_matches_count: number | null
-          learned_rating: number | null
-          learned_rd: number | null
-          learned_updated_at: string | null
-          learned_volatility: number | null
           name: string | null
           playtomic_level: number | null
           preferred_position: string | null
@@ -1600,8 +1569,6 @@ export type Database = {
           tagline_label: string | null
         }
         Insert: {
-          adjusted_level?: number | null
-          adjustment?: number | null
           avatar_url?: string | null
           birthday_day?: never
           birthday_md?: never
@@ -1611,11 +1578,6 @@ export type Database = {
           gender?: string | null
           id?: string | null
           is_left_handed?: boolean | null
-          learned_matches_count?: number | null
-          learned_rating?: number | null
-          learned_rd?: number | null
-          learned_updated_at?: string | null
-          learned_volatility?: number | null
           name?: string | null
           playtomic_level?: number | null
           preferred_position?: string | null
@@ -1625,8 +1587,6 @@ export type Database = {
           tagline_label?: string | null
         }
         Update: {
-          adjusted_level?: number | null
-          adjustment?: number | null
           avatar_url?: string | null
           birthday_day?: never
           birthday_md?: never
@@ -1636,11 +1596,6 @@ export type Database = {
           gender?: string | null
           id?: string | null
           is_left_handed?: boolean | null
-          learned_matches_count?: number | null
-          learned_rating?: number | null
-          learned_rd?: number | null
-          learned_updated_at?: string | null
-          learned_volatility?: number | null
           name?: string | null
           playtomic_level?: number | null
           preferred_position?: string | null
@@ -1680,8 +1635,6 @@ export type Database = {
       admin_add_player: {
         Args: { input_payload: Json }
         Returns: {
-          adjusted_level: number | null
-          adjustment: number | null
           avatar_url: string | null
           birthday: string | null
           country: string | null
@@ -1690,18 +1643,13 @@ export type Database = {
           gender: string | null
           id: string
           is_left_handed: boolean | null
-          learned_matches_count: number
-          learned_rating: number | null
-          learned_rd: number | null
-          learned_updated_at: string | null
-          learned_volatility: number | null
           mm_rating: number | null
           mm_rating_updated_at: string | null
           mm_sigma: number | null
           name: string
           notes: string | null
           phone: string | null
-          playtomic_level: number
+          playtomic_level: number | null
           playtomic_updated_at: string | null
           playtomic_username: string | null
           preferred_position: string | null
@@ -1903,10 +1851,6 @@ export type Database = {
           succeeded: boolean
           user_agent: string
         }[]
-      }
-      admin_persist_learned_ratings: {
-        Args: { input_applied_tournament_ids?: string[]; input_updates: Json }
-        Returns: number
       }
       admin_promote_team: {
         Args: { input_team_id: string }
@@ -2197,8 +2141,6 @@ export type Database = {
       get_my_profile_v2: {
         Args: never
         Returns: {
-          adjusted_level: number | null
-          adjustment: number | null
           avatar_url: string | null
           birthday: string | null
           country: string | null
@@ -2207,18 +2149,13 @@ export type Database = {
           gender: string | null
           id: string
           is_left_handed: boolean | null
-          learned_matches_count: number
-          learned_rating: number | null
-          learned_rd: number | null
-          learned_updated_at: string | null
-          learned_volatility: number | null
           mm_rating: number | null
           mm_rating_updated_at: string | null
           mm_sigma: number | null
           name: string
           notes: string | null
           phone: string | null
-          playtomic_level: number
+          playtomic_level: number | null
           playtomic_updated_at: string | null
           playtomic_username: string | null
           preferred_position: string | null

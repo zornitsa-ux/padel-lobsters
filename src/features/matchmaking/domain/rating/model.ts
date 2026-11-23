@@ -1,5 +1,5 @@
 import type { Rating } from '../types'
-import { hasLevel, NO_LEVEL_START } from '../../../../lib/level'
+import { knownLevel, NO_LEVEL_START } from '../../../../lib/level'
 
 // Blessed starting values (D-003); M1.6 calibration may retune.
 export const SIGMA_PRIOR = 0.7
@@ -13,9 +13,10 @@ export const SIGMA_NO_LEVEL = 1.0
  * Prior for a player the engine has never seen: trust the self-reported level, low confidence.
  * No level at all starts at NO_LEVEL_START, lower confidence (signup revamp D-15).
  */
-export function initialRating({ playtomicLevel }: { playtomicLevel: number }): Rating {
-  if (!hasLevel({ level: playtomicLevel })) return { mu: NO_LEVEL_START, sigma: SIGMA_NO_LEVEL }
-  return { mu: playtomicLevel, sigma: SIGMA_PRIOR }
+export function initialRating({ playtomicLevel }: { playtomicLevel: number | null }): Rating {
+  const level = knownLevel({ level: playtomicLevel })
+  if (level == null) return { mu: NO_LEVEL_START, sigma: SIGMA_NO_LEVEL }
+  return { mu: level, sigma: SIGMA_PRIOR }
 }
 
 /** D-002: a playtomic_level self-edit re-anchors the prior. */

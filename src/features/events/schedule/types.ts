@@ -5,7 +5,7 @@ export interface SchedulePlayer {
   name: string
   gender?: string
   isLeftHanded?: boolean
-  playtomicLevel?: number
+  playtomicLevel?: number | null
 }
 
 // `round` and `completed` are nullable in the `matches` table (both have a

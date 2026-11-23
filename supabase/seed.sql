@@ -39,36 +39,36 @@ ON CONFLICT (id) DO UPDATE SET
 -- play in nothing. 00…27–28: placeholders (league partners with no account).
 -- The ensure_auth_user trigger creates each auth user.
 
-INSERT INTO players (id, name, gender, playtomic_level, adjusted_level, status, is_left_handed, country, preferred_position, email, role)
+INSERT INTO players (id, name, gender, playtomic_level, status, is_left_handed, country, preferred_position, email, role)
 VALUES
-  ('00000000-0000-4000-a000-000000000001', 'Mara Quint',     'female', 3.0, 3.0, 'active', false, 'NL', 'left',  'admin@lobsters.test', 'admin'),
-  ('00000000-0000-4000-a000-000000000002', 'Lena Voss',      'female', 2.4, 2.4, 'active', false, 'DE', 'right', 'lena@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000003', 'Ines Calder',    'female', 1.8, 1.8, 'active', true,  'PT', 'both',  'ines@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000004', 'Noor Haddad',    'female', 2.9, 2.9, 'active', false, 'NL', 'left',  'noor@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000005', 'Sofia Brandt',   'female', 1.5, 1.5, 'active', false, 'SE', 'right', 'sofia@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000006', 'Elif Kaya',      'female', 2.2, 2.2, 'active', false, 'TR', 'both',  'elif@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000007', 'Hanna Moreau',   'female', 3.2, 3.2, 'active', false, 'FR', 'left',  'hanna@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000008', 'Priya Menon',    'female', 2.6, 2.6, 'active', false, 'IN', 'right', 'priya@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000009', 'Clara Duval',    'female', 2.0, 2.0, 'active', false, 'BE', 'right', 'clara@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000010', 'Theo Lind',      'male',   2.5, 2.5, 'active', false, 'NL', 'right', 'player@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000011', 'Bram Visser',    'male',   3.1, 3.1, 'active', false, 'NL', 'left',  'bram@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000012', 'Diego Ferraz',   'male',   2.7, 2.7, 'active', true,  'BR', 'both',  'diego@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000013', 'Kofi Mensah',    'male',   1.9, 1.9, 'active', false, 'GH', 'right', 'kofi@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000014', 'Luca Bianchi',   'male',   3.4, 3.4, 'active', false, 'IT', 'left',  'luca@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000015', 'Omar Sayed',     'male',   2.3, 2.3, 'active', false, 'EG', 'right', 'omar@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000016', 'Jonas Weber',    'male',   1.6, 1.6, 'active', false, 'DE', 'both',  'jonas@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000017', 'Ravi Kapoor',    'male',   2.8, 2.8, 'active', false, 'IN', 'right', 'ravi@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000018', 'Felix Novak',    'male',   2.1, 2.1, 'active', false, 'CZ', 'left',  'felix@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000019', 'Mateo Ruiz',     'male',   3.0, 3.0, 'active', false, 'ES', 'right', 'mateo@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000020', 'Wren Abbott',    'female', 2.0, 2.0, 'active', false, 'GB', 'right', 'code@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000021', 'Nina Okoro',     'female', 2.0, 2.0, 'active', false, 'NG', 'right', 'modal@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000022', 'Ada Park',       'female', 2.0, 2.0, 'active', false, 'KR', 'left',  'password@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000023', 'Erik Sand',      'male',   2.0, 2.0, 'active', false, 'NO', 'right', 'link@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000024', 'Fay Lund',       'female', 2.0, 2.0, 'active', false, 'DK', 'both',  'reset@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000025', 'Gil Moss',       'male',   2.0, 2.0, 'active', false, 'IE', 'right', 'transfer-from@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000026', 'Hugo Lane',      'male',   2.0, 2.0, 'active', false, 'FR', 'left',  'transfer-to@lobsters.test', 'player'),
-  ('00000000-0000-4000-a000-000000000027', 'Kit Morrow',     'male',   1.8, 1.8, 'placeholder', false, NULL, NULL, NULL, 'player'),
-  ('00000000-0000-4000-a000-000000000028', 'Joss Ainsley',   'female', 1.7, 1.7, 'placeholder', false, NULL, NULL, NULL, 'player');
+  ('00000000-0000-4000-a000-000000000001', 'Mara Quint',     'female', 3.0, 'active', false, 'NL', 'left',  'admin@lobsters.test', 'admin'),
+  ('00000000-0000-4000-a000-000000000002', 'Lena Voss',      'female', 2.4, 'active', false, 'DE', 'right', 'lena@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000003', 'Ines Calder',    'female', 1.8, 'active', true,  'PT', 'both',  'ines@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000004', 'Noor Haddad',    'female', 2.9, 'active', false, 'NL', 'left',  'noor@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000005', 'Sofia Brandt',   'female', 1.5, 'active', false, 'SE', 'right', 'sofia@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000006', 'Elif Kaya',      'female', 2.2, 'active', false, 'TR', 'both',  'elif@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000007', 'Hanna Moreau',   'female', 3.2, 'active', false, 'FR', 'left',  'hanna@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000008', 'Priya Menon',    'female', 2.6, 'active', false, 'IN', 'right', 'priya@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000009', 'Clara Duval',    'female', 2.0, 'active', false, 'BE', 'right', 'clara@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000010', 'Theo Lind',      'male',   2.5, 'active', false, 'NL', 'right', 'player@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000011', 'Bram Visser',    'male',   3.1, 'active', false, 'NL', 'left',  'bram@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000012', 'Diego Ferraz',   'male',   2.7, 'active', true,  'BR', 'both',  'diego@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000013', 'Kofi Mensah',    'male',   1.9, 'active', false, 'GH', 'right', 'kofi@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000014', 'Luca Bianchi',   'male',   3.4, 'active', false, 'IT', 'left',  'luca@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000015', 'Omar Sayed',     'male',   2.3, 'active', false, 'EG', 'right', 'omar@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000016', 'Jonas Weber',    'male',   1.6, 'active', false, 'DE', 'both',  'jonas@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000017', 'Ravi Kapoor',    'male',   2.8, 'active', false, 'IN', 'right', 'ravi@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000018', 'Felix Novak',    'male',   2.1, 'active', false, 'CZ', 'left',  'felix@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000019', 'Mateo Ruiz',     'male',   3.0, 'active', false, 'ES', 'right', 'mateo@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000020', 'Wren Abbott',    'female', 2.0, 'active', false, 'GB', 'right', 'code@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000021', 'Nina Okoro',     'female', 2.0, 'active', false, 'NG', 'right', 'modal@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000022', 'Ada Park',       'female', 2.0, 'active', false, 'KR', 'left',  'password@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000023', 'Erik Sand',      'male',   2.0, 'active', false, 'NO', 'right', 'link@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000024', 'Fay Lund',       'female', 2.0, 'active', false, 'DK', 'both',  'reset@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000025', 'Gil Moss',       'male',   2.0, 'active', false, 'IE', 'right', 'transfer-from@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000026', 'Hugo Lane',      'male',   2.0, 'active', false, 'FR', 'left',  'transfer-to@lobsters.test', 'player'),
+  ('00000000-0000-4000-a000-000000000027', 'Kit Morrow',     'male',   1.8, 'placeholder', false, NULL, NULL, NULL, 'player'),
+  ('00000000-0000-4000-a000-000000000028', 'Joss Ainsley',   'female', 1.7, 'placeholder', false, NULL, NULL, NULL, 'player');
 
 -- Passwords for the e2e sign-in (they meet the D-17 rules).
 UPDATE auth.users
@@ -82,20 +82,20 @@ WHERE email = 'player@lobsters.test';
 -- …101 upcoming individual · …102 finished individual (results and Oscars
 -- shared) · …103 upcoming team event · …104 upcoming King of the Court.
 
-INSERT INTO tournaments (id, name, date, time, location, max_players, format, entry_mode, status, duration, gender_mode, total_price, tikkie_link, courts, notes, completed_at, ratings_applied_at, results_shared_at)
+INSERT INTO tournaments (id, name, date, time, location, max_players, format, entry_mode, status, duration, gender_mode, total_price, tikkie_link, courts, notes, completed_at, results_shared_at)
 VALUES
   ('00000000-0000-4000-b000-000000000101', 'Lobster Social', CURRENT_DATE + 7, '18:00', 'Seed Courts Amsterdam', 16, 'lobster_matching', 'individual', 'upcoming', 90, 'mixed', 160, 'https://tikkie.me/pay/seed-local',
    '[{"name":"Court 1","booked":true},{"name":"Court 2","booked":true},{"name":"Court 3","booked":false},{"name":"Court 4","booked":false}]',
-   'Seed event: open for registration.', NULL, NULL, NULL),
+   'Seed event: open for registration.', NULL, NULL),
   ('00000000-0000-4000-b000-000000000102', 'Season Opener', CURRENT_DATE - 14, '17:30', 'Seed Courts Amsterdam', 8, 'lobster_matching', 'individual', 'completed', 90, 'mixed', 80, NULL,
    '[{"name":"Court 1","booked":true},{"name":"Court 2","booked":true}]',
-   'Seed event: finished, results shared.', now() - interval '14 days', now() - interval '14 days', now() - interval '13 days'),
+   'Seed event: finished, results shared.', now() - interval '14 days', now() - interval '13 days'),
   ('00000000-0000-4000-b000-000000000103', 'Mixed Pairs Night', CURRENT_DATE + 14, '19:00', 'Seed Courts Amsterdam', 16, 'lobster_matching', 'team', 'upcoming', 120, 'mixed', 160, NULL,
    '[{"name":"Court 1","booked":true},{"name":"Court 2","booked":false}]',
-   'Seed event: register as a pair.', NULL, NULL, NULL),
+   'Seed event: register as a pair.', NULL, NULL),
   ('00000000-0000-4000-b000-000000000104', 'King of the Court', CURRENT_DATE + 21, '18:30', 'Seed Courts Amsterdam', 12, 'king_of_court', 'team', 'upcoming', 120, 'mixed', 120, NULL,
    '[{"name":"Centre","booked":true},{"name":"Court 2","booked":true},{"name":"Court 3","booked":true}]',
-   'Seed event: King of the Court.', NULL, NULL, NULL);
+   'Seed event: King of the Court.', NULL, NULL);
 
 -- Lobster Social: 12 of 16 spots, every payment state. Theo (player@) is in,
 -- Bram and Mateo are not.

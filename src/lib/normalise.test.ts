@@ -45,7 +45,7 @@ describe('normalisePlayers', () => {
       {
         id: 'p2',
         name: '',
-        playtomicLevel: 0,
+        playtomicLevel: null,
         playtomicUsername: '',
         gender: '',
         status: 'active',

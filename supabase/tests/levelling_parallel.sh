@@ -62,7 +62,7 @@ race() {
   fi
 }
 
-players+=("$(new_player 0)")
+players+=("$(new_player null)")
 race "no level" "${players[0]}" "1 1"
 players+=("$(new_player 2.0)")
 race "answers only" "${players[1]}" "1 0"

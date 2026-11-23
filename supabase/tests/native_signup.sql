@@ -126,8 +126,8 @@ begin
    where u.id = v_id;
   select * into v_player from public.players where id = v_id;
   if not found or v_player.name <> 'Valid Person' or v_player.email <> 'pending@test.invalid'
-     or v_player.status <> 'active' or v_player.playtomic_level <> 2.5 or v_player.adjustment <> 0
-     or v_player.adjusted_level <> 2.5 or v_player.phone <> '+31600000000'
+     or v_player.status <> 'active' or v_player.playtomic_level <> 2.5
+     or v_player.phone <> '+31600000000'
      or v_player.playtomic_username <> 'hook' or v_player.gender <> 'female'
      or v_player.is_left_handed is not true or v_player.country <> 'NL'
      or v_player.birthday <> date '1990-05-06' or v_player.preferred_position <> 'left'
@@ -161,7 +161,7 @@ begin
     jsonb_build_object('name', 'Confirmed  Insert', 'playtomic_level', '', 'birthday', '2026-13-45',
                        'is_left_handed', 'false'), true);
   select * into v_player from public.players where id = v_id2;
-  if not found or v_player.name <> 'Confirmed Insert' or v_player.playtomic_level <> 0
+  if not found or v_player.name <> 'Confirmed Insert' or v_player.playtomic_level is not null
      or v_player.birthday is not null or v_player.is_left_handed is not false
      or (select count(*) from auth.users where id = v_id2) <> 1
      or (select count(*) from auth.identities where user_id = v_id2) <> 1
@@ -197,7 +197,7 @@ begin
   v_id := gen_random_uuid();
   perform pg_temp.insert_auth_user(v_id, 'badlevel@test.invalid',
     jsonb_build_object('name', 'Bad Level', 'playtomic_level', '2.455'), true);
-  if (select playtomic_level from public.players where id = v_id) is distinct from 0 then
+  if not exists (select 1 from public.players where id = v_id and playtomic_level is null) then
     raise exception 'CHECK 11 FAILED: bad level at confirmation';
   end if;
   raise notice 'CHECK 11 ok: ASCII digits only, bad level confirms as none';

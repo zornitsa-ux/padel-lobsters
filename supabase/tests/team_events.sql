@@ -707,11 +707,11 @@ begin
     raise exception 'CHECK 28h FAILED: new partner without the level given';
   end if;
   -- A partner created before S6a, with no level, is still gated on accepting.
-  update public.players set playtomic_level = 0, adjusted_level = 0 where id = v_new;
+  update public.players set playtomic_level = null where id = v_new;
   select * into v_r from public.respond_to_team_invite(
     (select team_id from public.registrations where tournament_id = v_t and player_id = v_new), true);
   if v_r.status <> 'needs_level' then raise exception 'CHECK 28i FAILED: %', v_r.status; end if;
-  update public.players set playtomic_level = 2.5, adjusted_level = 2.5 where id = v_new;
+  update public.players set playtomic_level = 2.5 where id = v_new;
   select * into v_r from public.respond_to_team_invite(
     (select team_id from public.registrations where tournament_id = v_t and player_id = v_new), true);
   if v_r.status <> 'accepted' then raise exception 'CHECK 28e FAILED: %', v_r.status; end if;

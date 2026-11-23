@@ -12,7 +12,7 @@ export interface RatingApplyPlayer {
   playerId: string
   mu: number
   sigma: number
-  playtomicLevel: number
+  playtomicLevel: number | null
   previousDeltas?: number[]
 }
 

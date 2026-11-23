@@ -239,10 +239,7 @@ test('edit the profile', async ({ browser }) => {
 /** A throwaway player with a Playtomic level, signed in in their own browser. */
 async function playerWithLevel({ browser }: { browser: Browser }) {
   const player = await createPlayer()
-  const { error } = await admin
-    .from('players')
-    .update({ playtomic_level: 2.4, adjusted_level: 2.4 })
-    .eq('id', player.id)
+  const { error } = await admin.from('players').update({ playtomic_level: 2.4 }).eq('id', player.id)
   if (error) throw new Error(`Could not set the level: ${error.message}`)
   const other = await openAs({ browser, email: player.email, password: PLAYER_PASSWORD })
   return { player, other }

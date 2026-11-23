@@ -85,12 +85,12 @@ export function useEventLifecycle({ tournament }: { tournament: NormalisedTourna
   const applyRatings = async () => {
     const ratingPlayers = registeredPlayers.map((p) => {
       const learned = mmRatings?.[String(p.id)]
-      const prior = learned ?? initialRating({ playtomicLevel: p.playtomicLevel ?? 0 })
+      const prior = learned ?? initialRating({ playtomicLevel: p.playtomicLevel })
       return {
         playerId: String(p.id),
         mu: prior.mu,
         sigma: prior.sigma,
-        playtomicLevel: p.playtomicLevel ?? 0,
+        playtomicLevel: p.playtomicLevel,
         previousDeltas: [],
       }
     })

@@ -21,7 +21,6 @@ public.admin_get_raffle_ineligible(input_tournament_id uuid) authenticated
 public.admin_invite_league_player(input_player_id uuid, input_email text) authenticated
 public.admin_list_partner_invites(input_tournament_id uuid) authenticated
 public.admin_list_security_events(input_limit integer) authenticated
-public.admin_persist_learned_ratings(input_updates jsonb, input_applied_tournament_ids uuid[]) authenticated
 public.admin_promote_team(input_team_id uuid) authenticated
 public.admin_record_league_match_result(input_payload jsonb) authenticated
 public.admin_record_schedule_run(input_payload jsonb) authenticated

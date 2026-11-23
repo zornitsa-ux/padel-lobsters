@@ -62,7 +62,7 @@ export const formFromPlayer = ({
     gender: string
     isLeftHanded: boolean
     preferredPosition: string
-    playtomicLevel: number
+    playtomicLevel: number | null
     phone?: string | null
     birthday?: string | null
   }
