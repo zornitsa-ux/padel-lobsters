@@ -207,7 +207,8 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
     reader.readAsDataURL(file)
   }
 
-  const validate = (): string => profileProblem({ form, email: form.email })
+  const validate = (): string =>
+    profileProblem({ form, email: form.email, levelPolicy: 'optional' })
 
   // A ref, not `saving`: two taps before a re-render would both pass a state check.
   const submittingRef = useRef(false)

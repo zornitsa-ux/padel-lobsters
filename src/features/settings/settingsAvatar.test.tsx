@@ -180,7 +180,7 @@ describe('Settings — own level', () => {
 
   it.each(['', '0'])('refuses %j for a player who has a level', async (value) => {
     openAndSetLevel(value)
-    expect(await screen.findByText(/not remove it|above 0 and up to 7/)).toBeTruthy()
+    expect(await screen.findByText(/not removed/)).toBeTruthy()
     expect(updatePlayerMock).not.toHaveBeenCalled()
   })
 

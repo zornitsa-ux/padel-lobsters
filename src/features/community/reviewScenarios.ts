@@ -1,3 +1,4 @@
+import { formatLevel, levelOrNoLevelStart } from '../../lib/level'
 import { computeTournamentStandings, type MatchForStandings } from '../../lib/standings'
 import type { TeamResultsByEvent } from '../events/kingOfCourt/kotcPlayer'
 
@@ -89,7 +90,7 @@ export function corpReview({
   tournaments?: ReviewTournament[]
   teamResults?: TeamResultsByEvent
 }): CorpReview {
-  const lvl = player.playtomicLevel || 0
+  const lvl = levelOrNoLevelStart({ level: player.playtomicLevel })
   const name = (player.name || 'Employee').split(' ')[0]
   const pid = player.id
 
@@ -230,7 +231,7 @@ export function corpReview({
   ) {
     return tag(
       'last-place-elite',
-      `A Playtomic rating of ${lvl.toFixed(1)} and yet — last place. Scientists are studying this. The data doesn't lie but it does appear to be deeply confused. A walking contradiction, somehow making the rest of us feel both inferior and hopeful at the same time.`,
+      `A Playtomic rating of ${formatLevel({ level: lvl })} and yet — last place. Scientists are studying this. The data doesn't lie but it does appear to be deeply confused. A walking contradiction, somehow making the rest of us feel both inferior and hopeful at the same time.`,
     )
   }
 

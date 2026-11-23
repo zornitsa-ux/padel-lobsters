@@ -3,7 +3,7 @@ import { LogOut, Settings as SettingsIcon, Shield } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { useMyProfile, usePlayerActions, useAvatarUpload } from '../players/usePlayers'
 import { isE164 } from '../../lib/whatsapp'
-import { ownLevelProblem } from '../../lib/parseLevel'
+import { levelFieldValue, levelPolicy, levelProblem } from '../../lib/level'
 import { errorMessage } from '../../lib/errors'
 import { processAvatar } from '../../lib/processAvatar'
 import { ownAvatarFilename } from '../players/playerQueries'
@@ -83,7 +83,7 @@ export default function Settings() {
         gender: myPlayer.gender || '',
         isLeftHanded: myPlayer.isLeftHanded || myPlayer.is_left_handed || false,
         preferredPosition: myPlayer.preferredPosition || myPlayer.preferred_position || '',
-        playtomicLevel: myPlayer.playtomicLevel > 0 ? String(myPlayer.playtomicLevel) : '',
+        playtomicLevel: levelFieldValue({ level: myPlayer.playtomicLevel }),
         tagline: myPlayer.tagline || '',
         email: myPlayer.email || '',
         phone: myPlayer.phone || '',
@@ -149,9 +149,9 @@ export default function Settings() {
       setProfileError('Phone must start with + and the country code (e.g. +31612345678).')
       return
     }
-    const levelError = ownLevelProblem({
+    const levelError = levelProblem({
       value: profileForm.playtomicLevel,
-      hasLevel: (myPlayer?.playtomicLevel ?? 0) > 0,
+      policy: levelPolicy({ recorded: myPlayer.playtomicLevel }),
     })
     if (levelError) {
       setProfileError(levelError)

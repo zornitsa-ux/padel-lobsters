@@ -15,6 +15,7 @@ import {
   type ProfileFieldValues,
 } from '../../players/profileForm'
 import { errorMessage } from '../../../lib/errors'
+import { levelPolicy } from '../../../lib/level'
 import {
   useAcknowledgeMyAccount,
   useMyAccountSetup,
@@ -76,7 +77,10 @@ export default function FinishAccountPage() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const problem = profileProblem({ form })
+    const problem = profileProblem({
+      form,
+      levelPolicy: levelPolicy({ recorded: profile.data?.playtomicLevel }),
+    })
     if (problem) {
       setError(problem)
       return

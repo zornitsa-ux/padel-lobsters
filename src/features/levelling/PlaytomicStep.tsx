@@ -1,9 +1,7 @@
-import { useId } from 'react'
 import { OptionRow } from '../../components/ui/OptionRow'
-import { Well } from '../../components/ui/Well'
-import { FormError } from '../../components/ui/FormError'
-import { useFieldError } from '../../components/ui/useFieldError'
-import { playtomicProblem, type LevellingState, type PlaytomicChoice } from './levellingFlow'
+import { LevelInput } from '../../components/ui/LevelInput'
+import { typedLevelProblem } from '../../lib/level'
+import type { LevellingState, PlaytomicChoice } from './levellingFlow'
 
 interface PlaytomicStepProps {
   playtomic: LevellingState['playtomic']
@@ -59,27 +57,16 @@ export default function PlaytomicStep({
 }
 
 function LevelField({ text, onType }: { text: string; onType: (text: string) => void }) {
-  const inputId = useId()
-  // Blank is covered by the disabled Finish button; only a typed mistake is called out.
-  const problem = text.trim() ? playtomicProblem({ text }) : ''
-  const { errorId, fieldProps } = useFieldError({ message: problem })
   return (
-    <Well>
-      <label className="label" htmlFor={inputId}>
-        Your Playtomic level (0–7)
-      </label>
-      <input
-        id={inputId}
-        type="text"
-        inputMode="decimal"
-        className="input"
-        placeholder="e.g. 2.5"
-        value={text}
-        onChange={(e) => onType(e.target.value)}
-        {...fieldProps}
-      />
-      <FormError id={errorId} message={problem} polite />
-      <p className="caption">Open the Playtomic app: it’s on your profile.</p>
-    </Well>
+    <LevelInput
+      label="Your Playtomic level (0–7)"
+      value={text}
+      onChange={onType}
+      // Blank is covered by the disabled Finish button; only a typed mistake is called out.
+      error={typedLevelProblem({ value: text, policy: 'required' })}
+      hint="Open the Playtomic app: it’s on your profile."
+      live
+      inset
+    />
   )
 }

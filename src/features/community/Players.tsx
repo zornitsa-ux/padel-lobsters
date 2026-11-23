@@ -20,6 +20,7 @@ import {
 } from './playersSelectors'
 import type { CommunityPlayer } from './playersSelectors'
 import { loadFailed } from '../../lib/queryState'
+import { knownLevel } from '../../lib/level'
 
 // The roster only needs the public player rows; stats, reviews and admin
 // actions load on the player's own page (PlayerDetailPage).
@@ -106,7 +107,10 @@ export default function Players() {
         phone: existingFull.phone || pendingFull.phone || '',
         country: existingFull.country || pendingFull.country || '',
         gender: existingFull.gender || pendingFull.gender || '',
-        playtomicLevel: existingFull.playtomicLevel || pendingFull.playtomicLevel || 0,
+        playtomicLevel:
+          knownLevel({ level: existingFull.playtomicLevel }) ??
+          knownLevel({ level: pendingFull.playtomicLevel }) ??
+          '',
         playtomicUsername: existingFull.playtomicUsername || pendingFull.playtomicUsername || '',
         isLeftHanded: existingFull.isLeftHanded || pendingFull.isLeftHanded || false,
         avatarUrl: existingFull.avatarUrl || pendingFull.avatarUrl || '',

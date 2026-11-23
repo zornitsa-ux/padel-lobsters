@@ -1,9 +1,19 @@
 import type { PlayerFormState } from './playerConstants'
 import type { CommunityPlayer } from './playersSelectors'
 import type { PlayerInput } from '../players/playerQueries'
-import { parseLevel } from '../../lib/parseLevel'
+import { knownLevel, parseLevel, typedLevel } from '../../lib/level'
 
 const normText = (v: string | number | null | undefined): string => String(v ?? '').trim()
+
+// Sent as typed whenever it reads differently, so the server refuses what it must
+// ("invalid_level", or "level_required" for a recorded level left blank).
+const levelChanged = ({
+  typed,
+  recorded,
+}: {
+  typed: string | number | null | undefined
+  recorded: number | null | undefined
+}): boolean => parseLevel({ value: typed }) !== knownLevel({ level: recorded })
 
 interface BuildEditPatchArgs {
   form: PlayerFormState
@@ -40,7 +50,6 @@ export function buildPlayerEditPatch({
   activate,
 }: BuildEditPatchArgs): PlayerInput {
   const patch: PlayerInput = {}
-  const parsedLevel = parseLevel(form.playtomicLevel) ?? 0
 
   if (activate && source.status === 'pending') patch.status = 'active'
 
@@ -54,7 +63,9 @@ export function buildPlayerEditPatch({
     if (patch.email === '' && normText(source.email) !== '') patch.emailCleared = true
   }
   if (normText(form.phone) !== normText(source.phone)) patch.phone = normText(form.phone)
-  if (parsedLevel !== (source.playtomicLevel ?? 0)) patch.playtomicLevel = parsedLevel
+  if (levelChanged({ typed: form.playtomicLevel, recorded: source.playtomicLevel })) {
+    patch.playtomicLevel = typedLevel({ value: form.playtomicLevel })
+  }
   if (normText(form.playtomicUsername) !== normText(source.playtomicUsername)) {
     patch.playtomicUsername = normText(form.playtomicUsername)
   }

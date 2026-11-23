@@ -67,7 +67,7 @@ describe('player write payloads', () => {
 
     expect(mockRpc).toHaveBeenCalledWith('admin_add_player', expect.anything())
     const payload = payloadOf(0)
-    expect(payload.playtomic_level).toBe(3.5)
+    expect(payload.playtomic_level).toBe('3.5')
     expect(payload).not.toHaveProperty('adjustment')
     expect(payload).not.toHaveProperty('adjusted_level')
   })
@@ -79,6 +79,16 @@ describe('player write payloads', () => {
     const payload = payloadOf(0)
     expect(payload.playtomic_level).toBe('3.5')
     expect(payload).not.toHaveProperty('adjustment')
+  })
+
+  it('sends the level as typed, and a missing one as empty, never "null"', async () => {
+    await updatePlayer('p1', { playtomicLevel: '2,455' }, 'player')
+    await updatePlayer('p1', { playtomicLevel: null }, 'player')
+    await addPlayer({ name: 'Ada' })
+
+    expect(payloadOf(0).playtomic_level).toBe('2,455')
+    expect(payloadOf(1).playtomic_level).toBe('')
+    expect(payloadOf(2).playtomic_level).toBe('')
   })
 
   it('update_my_profile receives no adjustment either', async () => {

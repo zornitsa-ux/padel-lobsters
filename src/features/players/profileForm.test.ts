@@ -15,21 +15,32 @@ const complete = {
 
 describe('profileProblem', () => {
   it('accepts a complete profile', () => {
-    expect(profileProblem({ form: complete })).toBe('')
+    expect(profileProblem({ form: complete, levelPolicy: 'optional' })).toBe('')
   })
   it('lists what is missing, including email only when the form has one', () => {
     const form = { ...complete, country: '', phone: '' }
-    expect(profileProblem({ form })).toBe('Please complete: Country, Phone / WhatsApp')
-    expect(profileProblem({ form, email: '' })).toBe(
+    expect(profileProblem({ form, levelPolicy: 'optional' })).toBe(
+      'Please complete: Country, Phone / WhatsApp',
+    )
+    expect(profileProblem({ form, email: '', levelPolicy: 'optional' })).toBe(
       'Please complete: Country, Email, Phone / WhatsApp',
     )
   })
-  it('accepts a profile without a Playtomic level', () => {
-    expect(profileProblem({ form: { ...complete, playtomicLevel: '  ' } })).toBe('')
+  it('accepts a profile without a Playtomic level where the level is optional', () => {
+    const form = { ...complete, playtomicLevel: '  ' }
+    expect(profileProblem({ form, levelPolicy: 'optional' })).toBe('')
+  })
+  it('keeps a recorded level: blank is refused', () => {
+    const form = { ...complete, playtomicLevel: '' }
+    expect(profileProblem({ form, levelPolicy: 'keep' })).toMatch(/can be changed, but not removed/)
   })
   it('checks the phone format and the level range', () => {
-    expect(profileProblem({ form: { ...complete, phone: '0612345678' } })).toMatch(/^Phone must/)
-    expect(profileProblem({ form: { ...complete, playtomicLevel: '9' } })).toMatch(/^Playtomic/)
+    expect(
+      profileProblem({ form: { ...complete, phone: '0612345678' }, levelPolicy: 'optional' }),
+    ).toMatch(/^Phone must/)
+    expect(
+      profileProblem({ form: { ...complete, playtomicLevel: '9' }, levelPolicy: 'optional' }),
+    ).toMatch(/^Playtomic/)
   })
 })
 

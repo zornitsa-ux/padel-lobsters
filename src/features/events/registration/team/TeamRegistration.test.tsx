@@ -272,7 +272,7 @@ describe('team join card', () => {
       captainId: 'me',
       choice: {
         kind: 'new',
-        partner: { name: 'Gus', email: 'gus@example.com', playtomicLevel: 2.5 },
+        partner: { name: 'Gus', email: 'gus@example.com', playtomicLevel: '2,5' },
         consent: true,
       },
     })

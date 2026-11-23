@@ -1,13 +1,10 @@
-import { useId } from 'react'
-import { FormError } from '../../../components/ui/FormError'
-import { useFieldError } from '../../../components/ui/useFieldError'
-import { givenLevelProblem } from '../../../lib/parseLevel'
+import { LevelInput } from '../../../components/ui/LevelInput'
+import { typedLevelProblem } from '../../../lib/level'
 import { noLevelHint } from './levelHelpers'
 
 interface LevelFieldProps {
   value: string
   onChange: (value: string) => void
-  /** Shown under the field until something invalid is typed. */
   hint: string
   label?: string
 }
@@ -19,31 +16,16 @@ export default function LevelField({
   hint,
   label = 'Playtomic level',
 }: LevelFieldProps) {
-  const error = givenLevelProblem({ value, blank: '' })
-  const hintId = useId()
-  const field = useFieldError({ message: error })
-
   return (
-    <div className="space-y-1">
-      <label className="block text-xs font-semibold text-lob-muted">
-        {label}
-        <input
-          inputMode="decimal"
-          required
-          className="input py-2 text-sm mt-1"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          aria-describedby={error ? undefined : hintId}
-          {...field.fieldProps}
-        />
-      </label>
-      <FormError id={field.errorId} message={error} polite />
-      {!error && (
-        <p id={hintId} className="caption">
-          {hint}
-        </p>
-      )}
-    </div>
+    <LevelInput
+      label={label}
+      value={value}
+      onChange={onChange}
+      hint={hint}
+      error={typedLevelProblem({ value, policy: 'required' })}
+      live
+      required
+    />
   )
 }
 

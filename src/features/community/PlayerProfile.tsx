@@ -18,7 +18,7 @@ import { TextButton } from '../../components/ui/TextButton'
 import { Chip, ChipGroup } from '../../components/ui/Chip'
 import { Well } from '../../components/ui/Well'
 import { Tag } from '../../components/ui/Tag'
-import { hasLevel } from '../../lib/level'
+import { hasLevel, knownLevel } from '../../lib/level'
 
 const MONTH_ABBR = [
   'Jan',
@@ -80,7 +80,8 @@ export default function PlayerProfile({
   // admin explicitly taps "Show contact details" below.
   const pii = useRevealPii(String(p.id))
   const learned = mmRatings?.[String(p.id)] ?? null
-  const learnedDelta = learned ? learned.mu - (p.playtomicLevel || 0) : 0
+  const playtomic = knownLevel({ level: p.playtomicLevel })
+  const learnedDelta = learned && playtomic != null ? learned.mu - playtomic : null
 
   const firstNameOf = (id: string): string | null => {
     const found = players.find((x) => String(x.id) === id)
@@ -175,10 +176,12 @@ export default function PlayerProfile({
         <div className="flex items-center gap-1.5 caption">
           <span className="eyebrow-accent">Learned level</span>
           <span className="font-bold text-lob-slate">{learned.mu.toFixed(2)}</span>
-          <span className={learnedDelta >= 0 ? 'text-lob-success' : 'text-lob-danger'}>
-            ({learnedDelta >= 0 ? '+' : ''}
-            {learnedDelta.toFixed(2)} vs Playtomic)
-          </span>
+          {learnedDelta != null && (
+            <span className={learnedDelta >= 0 ? 'text-lob-success' : 'text-lob-danger'}>
+              ({learnedDelta >= 0 ? '+' : ''}
+              {learnedDelta.toFixed(2)} vs Playtomic)
+            </span>
+          )}
           <span className="text-lob-muted-light">·</span>
           <span
             title="Uncertainty in level units — 0.70 is a brand-new player, 0.15 is as confident as the model gets."

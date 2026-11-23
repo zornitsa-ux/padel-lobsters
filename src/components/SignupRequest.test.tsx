@@ -196,7 +196,8 @@ describe('SignupRequest — hook rejections', () => {
         ? screen.getByPlaceholderText('e.g. Tapia')
         : screen.getByPlaceholderText('e.g. 3.5')
     expect(near.getAttribute('aria-invalid')).toBe('true')
-    expect(near.getAttribute('aria-describedby')).toBe(alert.closest('[role="alert"]')?.id)
+    const errorId = alert.closest('[role="alert"]')?.id
+    expect(near.getAttribute('aria-describedby')?.split(' ')[0]).toBe(errorId)
     expect(screen.queryByText(/we sent a 6-digit code/i)).toBeNull()
   })
 
@@ -297,10 +298,12 @@ describe('SignupRequest — code step', () => {
 })
 
 describe('SignupRequest — Playtomic level', () => {
+  // Sent as typed: the signup hook reads it with the same rule (C-8).
   it.each([
-    ['2,2', '2.2'],
+    ['2,2', '2,2'],
     ['2.45', '2.45'],
-  ])('accepts %s', async (level, expected) => {
+    ['', ''],
+  ])('accepts %j', async (level, expected) => {
     const { container } = render(<SignupRequest onComplete={() => {}} onBack={() => {}} />)
     await fillForm({ level })
     submit(container)
@@ -309,12 +312,12 @@ describe('SignupRequest — Playtomic level', () => {
     expect(mockRequestCode.mock.calls[0][0].data.playtomic_level).toBe(expected)
   })
 
-  it.each(['abc', '8'])('rejects %s before calling the server', async (level) => {
+  it.each(['abc', '8', '2.455'])('rejects %s before calling the server', async (level) => {
     const { container } = render(<SignupRequest onComplete={() => {}} onBack={() => {}} />)
     await fillForm({ level })
     submit(container)
 
-    expect(await screen.findByText(/from 0 to 7/i)).toBeTruthy()
+    expect(await screen.findByText(/above 0 and up to 7/i)).toBeTruthy()
     expect(mockRequestCode).not.toHaveBeenCalled()
   })
 })

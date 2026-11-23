@@ -17,8 +17,9 @@ describe('LevelBadge bands', () => {
 })
 
 describe('LevelBadge', () => {
-  it('shows the level to one decimal', () => {
-    expect(propsOf(LevelBadge({ level: 3.45 })).children).toBe('3.5')
+  it('shows the level as written, never rounded', () => {
+    expect(propsOf(LevelBadge({ level: 3.45 })).children).toBe('3.45')
+    expect(propsOf(LevelBadge({ level: 3 })).children).toBe('3.0')
   })
 
   it('shows nothing for a player with no level', () => {

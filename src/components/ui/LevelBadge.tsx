@@ -1,4 +1,4 @@
-import { knownLevel } from '../../lib/level'
+import { formatLevel, knownLevel } from '../../lib/level'
 
 /** Playtomic level bands (owner, 2026-11-04): a teal ramp, darker as the level rises. */
 const LEVEL_BANDS = [
@@ -23,7 +23,7 @@ interface LevelBadgeProps {
   size?: keyof typeof SIZES
 }
 
-/** A player's Playtomic level, one decimal, in its band's colour. */
+/** A player's Playtomic level as written (up to 2 decimals), in its band's colour. */
 export function LevelBadge({ level, size = 'md' }: LevelBadgeProps) {
   const value = knownLevel({ level })
   if (value == null) return null
@@ -31,7 +31,7 @@ export function LevelBadge({ level, size = 'md' }: LevelBadgeProps) {
     <span
       className={`inline-block font-bold tabular-nums ${SIZES[size]} ${levelBand({ level: value })}`}
     >
-      {value.toFixed(1)}
+      {formatLevel({ level: value })}
     </span>
   )
 }

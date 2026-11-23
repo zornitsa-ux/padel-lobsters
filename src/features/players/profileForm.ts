@@ -1,5 +1,5 @@
 import { isE164 } from '../../lib/whatsapp'
-import { levelProblem } from '../../lib/parseLevel'
+import { levelFieldValue, levelProblem, type LevelPolicy } from '../../lib/level'
 
 // The profile every member fills in: self-signup and a captain-created
 // account finishing setup (D-021) use the same fields and rules.
@@ -16,12 +16,15 @@ export interface ProfileFieldValues {
 }
 
 // `email` is checked only when the form has an email field (self-signup).
+// `levelPolicy`: optional at signup; keep or optional when finishing an account.
 export function profileProblem({
   form,
   email,
+  levelPolicy,
 }: {
   form: ProfileFieldValues
   email?: string
+  levelPolicy: LevelPolicy
 }): string {
   const missing = []
   if (!form.firstName.trim()) missing.push('First Name')
@@ -35,8 +38,7 @@ export function profileProblem({
   if (!isE164(form.phone)) {
     return 'Phone must start with + and the country code (e.g. +31612345678).'
   }
-  // Optional (signup revamp S4): checked only when given.
-  return levelProblem({ value: form.playtomicLevel })
+  return levelProblem({ value: form.playtomicLevel, policy: levelPolicy })
 }
 
 export const fullName = ({ form }: { form: Pick<ProfileFieldValues, 'firstName' | 'lastName'> }) =>
@@ -51,7 +53,6 @@ export const splitName = ({ name }: { name: string }) => {
 }
 
 // What the captain (or anyone before) stored, as a starting point for the form.
-// A level of 0 means "not given", so the field starts empty.
 export const formFromPlayer = ({
   player,
 }: {
@@ -71,7 +72,7 @@ export const formFromPlayer = ({
   gender: player.gender,
   isLeftHanded: player.isLeftHanded,
   preferredPosition: player.preferredPosition,
-  playtomicLevel: player.playtomicLevel > 0 ? String(player.playtomicLevel) : '',
+  playtomicLevel: levelFieldValue({ level: player.playtomicLevel }),
   phone: player.phone ?? '',
   birthday: player.birthday ?? '',
 })
