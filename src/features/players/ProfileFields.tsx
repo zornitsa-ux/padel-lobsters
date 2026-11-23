@@ -121,7 +121,8 @@ export function ProfilePlayFields<T extends ProfileFieldValues>({
   form,
   setForm,
   levelError,
-}: FieldsProps<T> & { levelError?: string }) {
+  levelHint,
+}: FieldsProps<T> & { levelError?: string; levelHint: string }) {
   return (
     <>
       <div>
@@ -138,11 +139,14 @@ export function ProfilePlayFields<T extends ProfileFieldValues>({
         value={form.playtomicLevel}
         onChange={(value) => setForm((f) => ({ ...f, playtomicLevel: value }))}
         error={levelError}
-        hint="No level yet? Leave it empty: we'll ask a few quick questions before your first event."
+        hint={levelHint}
       />
     </>
   )
 }
+
+export const NO_LEVEL_YET_HINT =
+  "No level yet? Leave it empty: we'll ask a few quick questions before your first event."
 
 /** The Playtomic level in a profile form, with where to find it. */
 export function PlaytomicLevelField({

@@ -7,6 +7,7 @@ import {
   ProfileContactFields,
   ProfileNameFields,
   ProfilePlayFields,
+  NO_LEVEL_YET_HINT,
 } from '../../players/ProfileFields'
 import {
   formFromPlayer,
@@ -15,7 +16,7 @@ import {
   type ProfileFieldValues,
 } from '../../players/profileForm'
 import { errorMessage } from '../../../lib/errors'
-import { levelPolicy } from '../../../lib/level'
+import { hasLevel, levelPolicy } from '../../../lib/level'
 import {
   useAcknowledgeMyAccount,
   useMyAccountSetup,
@@ -135,7 +136,15 @@ export default function FinishAccountPage() {
 
       <div className="card space-y-4">
         <ProfileNameFields form={form} setForm={setForm} />
-        <ProfilePlayFields form={form} setForm={setForm} />
+        <ProfilePlayFields
+          form={form}
+          setForm={setForm}
+          levelHint={
+            hasLevel({ level: profile.data?.playtomicLevel })
+              ? `${setup.requestedByName} entered it for you. Change it if it's not right.`
+              : NO_LEVEL_YET_HINT
+          }
+        />
         <ProfileContactFields form={form} setForm={setForm} />
       </div>
 

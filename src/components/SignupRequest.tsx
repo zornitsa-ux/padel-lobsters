@@ -11,6 +11,7 @@ import {
   ProfileContactFields,
   ProfileNameFields,
   ProfilePlayFields,
+  NO_LEVEL_YET_HINT,
 } from '../features/players/ProfileFields'
 import { fullName, profileProblem, type ProfileFieldValues } from '../features/players/profileForm'
 import { requestEmailCode, normaliseEmail } from '../features/auth/authActions'
@@ -334,7 +335,12 @@ export default function SignupRequest({ onComplete, onBack, compact = false }: S
             <NameMatchBanner match={bannerMatch} onSignIn={onBack} onDecline={declineMatch} />
           )}
 
-          <ProfilePlayFields form={form} setForm={setForm} levelError={fieldErrors.level} />
+          <ProfilePlayFields
+            form={form}
+            setForm={setForm}
+            levelError={fieldErrors.level}
+            levelHint={NO_LEVEL_YET_HINT}
+          />
 
           <div>
             <label className="label">Email</label>

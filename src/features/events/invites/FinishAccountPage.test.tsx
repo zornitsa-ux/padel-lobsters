@@ -95,6 +95,8 @@ describe('finish your account', () => {
     expect((screen.getByPlaceholderText('e.g. Augustin') as HTMLInputElement).value).toBe('Gus')
     expect((screen.getByPlaceholderText('e.g. Tapia') as HTMLInputElement).value).toBe('Grant')
     expect((screen.getByPlaceholderText('e.g. 3.5') as HTMLInputElement).value).toBe('3.5')
+    expect(screen.getByText(/cara diaz entered it for you/i)).not.toBeNull()
+    expect(screen.queryByText(/leave it empty/i)).toBeNull()
   })
 
   it('needs the acknowledgement before it can be submitted', () => {
