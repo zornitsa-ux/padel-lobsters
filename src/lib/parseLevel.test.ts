@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { levelProblem, parseLevel } from './parseLevel'
+import { levelProblem, ownLevelProblem, parseLevel } from './parseLevel'
 
 describe('parseLevel', () => {
   it.each([
@@ -40,5 +40,21 @@ describe('levelProblem with aboveMin', () => {
 
   it.each(['0', '7.1', 'abc'])('refuses %j', (value) => {
     expect(levelProblem({ value, aboveMin: true })).toMatch(/above 0 and up to 7/)
+  })
+})
+
+describe('ownLevelProblem (Settings)', () => {
+  it.each(['', '  ', '0'])('refuses %j once the player has a level', (value) => {
+    expect(ownLevelProblem({ value, hasLevel: true })).not.toBe('')
+  })
+
+  it.each(['0.3', '2,5', '7'])('takes %j once the player has a level', (value) => {
+    expect(ownLevelProblem({ value, hasLevel: true })).toBe('')
+  })
+
+  it('lets a player with no level leave it blank, but not enter 0', () => {
+    expect(ownLevelProblem({ value: '', hasLevel: false })).toBe('')
+    expect(ownLevelProblem({ value: '0', hasLevel: false })).toMatch(/above 0 and up to 7/)
+    expect(ownLevelProblem({ value: '0.3', hasLevel: false })).toBe('')
   })
 })

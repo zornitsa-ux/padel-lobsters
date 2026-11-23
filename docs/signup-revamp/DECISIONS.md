@@ -84,7 +84,10 @@ this file records how the code carries them out.
   23 Nov). Every form takes a Playtomic level from 0 to 7, and levelling and
   new partners take one above 0 (`levelProblem` in `parseLevel.ts`). Settings'
   old 0.5 minimum, from when signup required a level, refused profile saves
-  for players with a level levelling had accepted (#190). The stale-page case
+  for players with a level levelling had accepted (#190). In Settings a player
+  who has a level can change it but not remove it: blank or 0 would gate them
+  again (D-16), so `ownLevelProblem` refuses both; a player with none may
+  leave it blank. Signup and the admin editor keep 0 to 7. The stale-page case
   (Register shown, then `needs_level` from the server) stays covered by the
   database tests and the client's `needs_level` handling; it gets no
   end-to-end test.

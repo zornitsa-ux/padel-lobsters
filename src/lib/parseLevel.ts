@@ -16,6 +16,27 @@ export function givenLevelProblem({ value, blank }: { value: unknown; blank: str
 }
 
 /**
+ * A player's own level in Settings. Once they have one they can change it but
+ * not remove it (blank or 0 would gate them again, D-16); without one they may
+ * leave it blank and level later.
+ */
+export function ownLevelProblem({
+  value,
+  hasLevel,
+}: {
+  value: unknown
+  hasLevel: boolean
+}): string {
+  if (hasLevel) {
+    return givenLevelProblem({
+      value,
+      blank: 'Enter your Playtomic level. You can change it, but not remove it.',
+    })
+  }
+  return levelProblem({ value, aboveMin: true })
+}
+
+/**
  * What's wrong with a typed level, or '' when it's blank or a number from 0 to 7.
  * One range for every form (#190). `aboveMin` excludes 0 itself, where a level
  * has to be given (0 means "no level").
