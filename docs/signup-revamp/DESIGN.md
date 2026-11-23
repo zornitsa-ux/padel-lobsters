@@ -141,13 +141,16 @@ Players with a played night keep today's behaviour.
   captain (S6a, D-18), so the gate doesn't hold them; a partner created before
   S6a without one finishes their account, levels, then accepts.
 - **Backstop trigger** `registrations_require_levelling`, BEFORE INSERT OR
-  UPDATE on `registrations` (C-6): raises `needs_level` when the caller's own
-  row becomes active, or when the caller accepts their own team row, and
-  `needs_levelling` holds. This covers the transfer RPCs without editing them,
+  UPDATE on `registrations` (C-6): raises `needs_level` when a row becomes
+  active, or a team row is accepted, and its player's `needs_levelling`
+  holds, whoever writes it (S6c). This covers the transfer RPCs without editing them,
   which matters because PIN removal PR 6 (T11) rewrites them.
+- **Every spot, whoever writes it (S6c, D-18).** A captain can't pick an
+  existing member with no level as partner, and an admin can't register a
+  player, captain or partner with no level: the RPCs return
+  `partner_needs_level`, `captain_needs_level` or `player_needs_level`. The
+  admin forms ask for the level first (S6b), so admins rarely see these.
 - **Not gated:**
-  - an admin acting for another player (`auth.uid() <> player_id`); the admin
-    forms already name the player and confirm (`useConfirmOnBehalf`);
   - service-role and migration writes (`auth.uid()` is null);
   - rows already active at release, and waitlist → registered promotion
     (already active). That includes a transfer recipient already on the

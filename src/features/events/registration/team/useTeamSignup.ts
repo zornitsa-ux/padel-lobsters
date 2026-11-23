@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { registrationMessage } from '../../registrationStatusMessages'
-import { REGISTER_TEAM_MESSAGES } from '../../teams/teamStatusMessages'
+import { REGISTER_TEAM_MESSAGES, teamStatusMessage } from '../../teams/teamStatusMessages'
 import { useTeamActions } from '../../teams/useTeams'
 import type { PartnerChoice } from '../../teams/teamTypes'
 import type { GetPlayer } from '../utils'
@@ -38,7 +37,13 @@ export function useTeamSignup({
     const { status, teamId, partnerId } = await registerTeam({ tournamentId, captainId, choice })
     setBusy(false)
     if (status !== 'registered' && status !== 'waitlist') {
-      setError(registrationMessage({ map: REGISTER_TEAM_MESSAGES, status }))
+      setError(
+        teamStatusMessage({
+          map: REGISTER_TEAM_MESSAGES,
+          status,
+          partnerName: choicePartnerName({ choice, getPlayer }),
+        }),
+      )
       return false
     }
     const partnerName =

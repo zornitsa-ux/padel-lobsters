@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import type { Player } from '../../../../lib/normalise'
-import { registrationMessage } from '../../registrationStatusMessages'
-import { CHANGE_PARTNER_MESSAGES } from '../../teams/teamStatusMessages'
+import { CHANGE_PARTNER_MESSAGES, teamStatusMessage } from '../../teams/teamStatusMessages'
 import { useTeamActions } from '../../teams/useTeams'
 import type { PartnerChoice } from '../../teams/teamTypes'
 import type { DisplayName, GetPlayer } from '../utils'
 import { useConfirmOnBehalf } from '../../../../lib/confirmOnBehalf'
 import PartnerChoiceForm from './PartnerChoiceForm'
-import { partnerConfirmLine } from './teamHelpers'
+import { choicePartnerName, partnerConfirmLine } from './teamHelpers'
 import { levelConfirmLine } from '../levelHelpers'
 import { useSaveLevels } from '../useSaveLevels'
 import { useAdminLevelCheck } from '../../../levelling/useAdminLevelCheck'
@@ -71,7 +70,14 @@ export default function ChangePartnerPanel({
     const { status } = await changeTeamPartner({ tournamentId, teamId, choice })
     setBusy(false)
     if (status === 'changed') onClose()
-    else setError(registrationMessage({ map: CHANGE_PARTNER_MESSAGES, status }))
+    else
+      setError(
+        teamStatusMessage({
+          map: CHANGE_PARTNER_MESSAGES,
+          status,
+          partnerName: choicePartnerName({ choice, getPlayer }),
+        }),
+      )
   }
 
   return (

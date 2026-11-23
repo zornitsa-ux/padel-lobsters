@@ -51,6 +51,7 @@ export type PartnerError =
   | 'invalid_partner'
   | 'partner_not_active'
   | 'partner_already_entered'
+  | 'partner_needs_level'
   | NewPartnerError
 
 export type RegisterTeamStatus =
@@ -63,6 +64,7 @@ export type RegisterTeamStatus =
   | 'tournament_completed'
   | 'captain_not_active'
   | 'needs_level'
+  | 'captain_needs_level'
   | PartnerError
 
 export type ChangePartnerStatus =
