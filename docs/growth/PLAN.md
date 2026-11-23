@@ -353,8 +353,7 @@ review.
 **Processors and where they run**
 
 - Supabase: database, auth, storage. Database in Zurich (owner).
-- Resend: the sign-in emails (owner), invite emails, PIN emails
-  (`send-pin-email`, until PIN removal deletes it) and event reminder emails.
+- Resend: the sign-in emails (owner), invite emails and event reminder emails.
   Reminders go through the `send-tournament-reminders-batch` edge function,
   which isn't in this repo; check whether it still runs.
 - Vercel: hosting (edge network), the link-preview functions in `fra1`

@@ -34,7 +34,6 @@ vi.mock('../players/usePlayers', () => ({
     addPlayer: vi.fn(),
     updatePlayer: updatePlayerMock,
     deletePlayer: vi.fn(),
-    regeneratePin: vi.fn(),
   }),
   useAvatarUpload: () => ({ mutateAsync: vi.fn() }),
 }))

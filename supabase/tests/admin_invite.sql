@@ -119,14 +119,18 @@ begin
     select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
      where (n.nspname, p.proname) in (('public', 'admin_regenerate_pin'), ('public', 'verify_player_pin_v2'),
                                       ('public', 'self_signup_player'), ('private', 'send_pin_email'),
-                                      ('private', 'generate_unique_pin'), ('public', 'sync_player_pin_hash'))
-  ) or exists (
+                                      ('private', 'generate_unique_pin'), ('public', 'sync_player_pin_hash'),
+                                      ('public', 'get_all_players_with_pii_v2'), ('public', 'admin_get_player_pii_v2'))
+  ) or to_regclass('private.admin_secrets') is not null
+    or to_regclass('public.pin_attempts') is not null
+    or to_regclass('public.security_events') is null
+    or exists (
     select 1 from information_schema.columns
      where table_schema = 'public' and table_name = 'players' and column_name in ('pin', 'pin_hash', 'pin_changes')
   ) then
     raise exception 'CHECK 6 FAILED: a PIN function or column is still there';
   end if;
-  raise notice 'CHECK 6 ok: PIN functions and columns dropped';
+  raise notice 'CHECK 6 ok: PIN functions, columns and admin secret dropped; security_events renamed';
 
   -- CHECK 7: the auth email restore fixes synthetic rows and skips taken addresses
   update auth.users set email = format('player-%s@padelobsters.internal', v_ph) where id = v_ph;
