@@ -67,10 +67,9 @@ begin
   -- 6 team-event partner · 7 cancelled only · 8–11 walls answers
   -- 12 Playtomic 1.0 · 13 Playtomic 6.5 · 14 admin
   with ins as (
-    insert into public.players (name, status, playtomic_level, adjusted_level)
+    insert into public.players (name, status, playtomic_level)
     select 'Levelling Test P' || lpad(g::text, 2, '0'), 'active',
-           case g when 1 then 2.3 when 4 then 2.0 else 0 end,
-           case g when 1 then 2.3 when 4 then 2.0 else 0 end
+           case g when 1 then 2.3 when 4 then 2.0 end
       from generate_series(1, 14) g
     returning id, name
   )
@@ -162,7 +161,7 @@ begin
       = array[1.0, 1.5, 2.0, 2.5]::numeric[],
     '5e: walls starts');
   perform pg_temp.check(
-    (select bool_and(p.mm_sigma = 1.0 and p.playtomic_level = 0 and p.adjusted_level = 0
+    (select bool_and(p.mm_sigma = 1.0 and p.playtomic_level is null
                      and p.mm_rating_updated_at is not null and p.mm_rating <= 3.0)
        from public.players p where p.id = any(v_p[8:11])),
     '5f: σ 1.0, level unchanged, within the 3.0 cap');
@@ -188,7 +187,7 @@ begin
   select * into v_row from public.players where id = v_p[12];
   perform pg_temp.check(
     v_row.mm_rating = 1.0 and v_row.mm_sigma = 0.7 and v_row.playtomic_level = 1.0
-    and v_row.adjusted_level = 1.0 and v_row.playtomic_updated_at is not null,
+    and v_row.playtomic_updated_at is not null,
     '6c: 1.0 taken as entered, profile level set');
   perform pg_temp.check(
     (select mm_rating = 6.5 from public.players where id = v_p[13]), '6d: no cap on Playtomic');
@@ -203,13 +202,13 @@ begin
 
   -- ── 7. Overwrites a self_reset start; audit keeps the prior ───────────────
   -- p[4]'s level is cleared, so the gate holds them; their self_reset μ stays the prior.
-  update public.players set playtomic_level = 0 where id = v_p[4];
+  update public.players set playtomic_level = null where id = v_p[4];
   perform pg_temp.check(pg_temp.complete(v_p[4], pg_temp.answers('slow_back_wall')) = 'ok', '7a');
   select * into v_row from public.rating_events where player_id = v_p[4] and kind = 'levelling';
   perform pg_temp.check(
     v_row.prior_mu = 2.0 and v_row.prior_sigma = 0.7 and v_row.applied_delta = -0.5, '7b: prior kept');
   perform pg_temp.check(
-    (select mm_rating = 1.5 and playtomic_level = 0 from public.players where id = v_p[4]),
+    (select mm_rating = 1.5 and playtomic_level is null from public.players where id = v_p[4]),
     '7c: start overwritten, profile level kept');
   raise notice 'CHECK 7 ok: self_reset overwritten';
 
@@ -247,7 +246,7 @@ begin
   perform pg_temp.check(
     (select bool_and(mm_rating = 2.2 and mm_sigma = 0.4) from public.players where id in (v_p[2], v_p[5]))
     and (select playtomic_level = 2.6 from public.players where id = v_p[2])
-    and (select playtomic_level = 0 from public.players where id = v_p[5])
+    and (select playtomic_level is null from public.players where id = v_p[5])
     and not exists (select 1 from public.rating_events
                      where player_id in (v_p[2], v_p[5]) and kind = 'levelling')
     and (select count(*) from public.player_levelling where player_id in (v_p[2], v_p[5])) = 2,
@@ -289,7 +288,7 @@ begin
   -- Cleared after answering (only by a data fix since S7): the answers-only
   -- row is no level, so the gate holds them, and levelling replaces the row
   -- with a start.
-  update public.players set playtomic_level = 0 where id = v_p[1];
+  update public.players set playtomic_level = null where id = v_p[1];
   perform pg_temp.check(private.needs_levelling(v_p[1]), '9i: answers only is no level');
   select * into v_row from public.get_my_levelling();
   perform pg_temp.check(v_row.needs_levelling and not v_row.questions_open, '9j: gated, no prompt');
@@ -361,9 +360,8 @@ begin
   -- ── 11. admin_update_player resets like a self edit (C-7, #182) ──────────
   -- 1 no level · 2 levelled, no night · 3 levelled, played since · 4 level 2.0
   with ins as (
-    insert into public.players (name, status, playtomic_level, adjusted_level, adjustment)
-    select 'Levelling Admin P' || g, 'active',
-           case g when 4 then 2.0 else 0 end, case g when 4 then 2.0 else 0 end, 0
+    insert into public.players (name, status, playtomic_level)
+    select 'Levelling Admin P' || g, 'active', case g when 4 then 2.0 end
       from generate_series(1, 4) g
     returning id, name
   )
@@ -385,7 +383,7 @@ begin
   perform pg_temp.check(public.admin_update_player(v_p[1], '{"playtomic_level": "2.5"}'), '11b: saved');
   select * into v_row from public.rating_events where player_id = v_p[1] and kind = 'admin_edit';
   perform pg_temp.check(
-    (select playtomic_level = 2.5 and adjusted_level = 2.5 and mm_rating = 2.5 and mm_sigma = 0.7
+    (select playtomic_level = 2.5 and mm_rating = 2.5 and mm_sigma = 0.7
        from public.players where id = v_p[1])
     and v_row.prior_mu = 0 and v_row.prior_sigma = 0.7 and v_row.applied_delta = 2.5,
     '11c: no level to 2.5 resets, prior 0');
@@ -424,13 +422,12 @@ begin
 
   perform public.admin_update_player(v_p[4], '{"playtomic_level": 2.2, "adjustment": 1}');
   perform pg_temp.check(
-    (select adjustment = 0 and adjusted_level = 2.2 and mm_rating = 2.2 from public.players where id = v_p[4]),
-    '11i: adjustment not written');
-  update public.players set adjusted_level = 2.7 where id = v_p[4];
+    (select playtomic_level = 2.2 and mm_rating = 2.2 from public.players where id = v_p[4]),
+    '11i: a legacy adjustment key is ignored');
   perform public.admin_update_player(v_p[4], '{"phone": "0600000001"}');
   perform pg_temp.check(
-    (select adjusted_level = 2.7 from public.players where id = v_p[4]),
-    '11j: other edits leave adjusted_level');
+    (select playtomic_level = 2.2 from public.players where id = v_p[4]),
+    '11j: other edits leave the level');
   raise notice 'CHECK 11 ok: admin level edit';
 
   raise notice 'levelling: all checks passed';

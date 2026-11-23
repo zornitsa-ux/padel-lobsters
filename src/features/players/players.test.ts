@@ -48,7 +48,7 @@ describe('players_public validate → normalise pipeline', () => {
       status: 'active',
       avatarUrl: '',
       isLeftHanded: false,
-      playtomicLevel: 0,
+      playtomicLevel: null,
     })
   })
 

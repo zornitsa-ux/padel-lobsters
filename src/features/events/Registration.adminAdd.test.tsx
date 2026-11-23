@@ -26,8 +26,8 @@ vi.mock('../players/usePlayers', () => ({
     data: [
       { id: 'p1', name: 'Alma Reyes', playtomicLevel: 3 },
       { id: 'p2', name: 'Bob Stone', playtomicLevel: 3 },
-      { id: 'p3', name: 'Cleo Park', playtomicLevel: 0 },
-      { id: 'p4', name: 'Dina Moss', playtomicLevel: 0 },
+      { id: 'p3', name: 'Cleo Park', playtomicLevel: null },
+      { id: 'p4', name: 'Dina Moss', playtomicLevel: null },
     ],
   }),
 }))

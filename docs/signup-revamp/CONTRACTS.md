@@ -198,18 +198,18 @@ is skipped when:
 - Trims whitespace, replaces the first decimal comma with a point.
 - Blank: null, meaning "no level".
 - Otherwise must match `^[0-9]+(\.[0-9]{1,2})?$`, else raises
-  `invalid_level` (P0001). A value equal to 0 (`0`, `0.00`) is null too: the
-  client sends 0 for blank until S9. Above 7 raises `invalid_level`.
+  `invalid_level` (P0001). A value equal to 0 (`0`, `0.00`) is null too: 0
+  isn't a level. Above 7 raises `invalid_level`.
 - Returns the value without trailing zeros (`2.50` is 2.5).
 - `IMMUTABLE`, revoked from all client roles.
 
 ### `private.level_to_store(input_text text, input_policy text, input_recorded numeric default null) returns numeric`
 
 The value a path stores, by policy (table below): the parsed level, or for
-null, 0 (`optional`, and `keep` with no level recorded), `invalid_level`
+null, null (`optional`, and `keep` with no level recorded), `invalid_level`
 (`required`) or `level_required` (`keep` with a level recorded).
-`input_recorded` is the level on file. Every write path calls this, so S9
-changes "no level" from 0 to null here and in `has_level` only.
+`input_recorded` is the level on file. Every write path calls this. Until S9
+it returned 0 for no level.
 
 ### `private.has_level(input_level numeric) returns boolean`
 
@@ -218,12 +218,12 @@ instead of comparing with 0.
 
 ### What each path does with null (no level)
 
-| Path                                                                 | Policy     | Null                                            |
-| -------------------------------------------------------------------- | ---------- | ----------------------------------------------- |
-| Signup hook, `create_player_for_confirmed_user`, `admin_add_player`  | `optional` | stores 0                                        |
-| `create_partner_player`, `complete_levelling` (when the key is sent) | `required` | `invalid_level`                                 |
-| `update_my_profile`                                                  | `keep`     | `level_required` if a level is recorded, else 0 |
-| `admin_update_player`                                                | `keep`     | `level_required` if a level is recorded, else 0 |
+| Path                                                                 | Policy     | Null                                               |
+| -------------------------------------------------------------------- | ---------- | -------------------------------------------------- |
+| Signup hook, `create_player_for_confirmed_user`, `admin_add_player`  | `optional` | stores null                                        |
+| `create_partner_player`, `complete_levelling` (when the key is sent) | `required` | `invalid_level`                                    |
+| `update_my_profile`                                                  | `keep`     | `level_required` if a level is recorded, else null |
+| `admin_update_player`                                                | `keep`     | `level_required` if a level is recorded, else null |
 
 A key that isn't sent leaves the level unchanged on every update path. A key
 sent as JSON null counts as blank. `complete_levelling` reads a JSON number as
@@ -238,10 +238,10 @@ sets a level at the gate.
 
 ### Column `players.playtomic_level`
 
-NOT NULL, default 0, CHECK `players_playtomic_level_range`: `playtomic_level
-= 0 or (playtomic_level > 0 and playtomic_level <= 7 and playtomic_level =
-round(playtomic_level, 2))`. S9 drops NOT NULL and the `= 0` branch, and
-stores null for no level.
+Nullable, no default: null is no level (S9). CHECK
+`players_playtomic_level_range`: `playtomic_level > 0 and playtomic_level <= 7
+and playtomic_level = round(playtomic_level, 2)`. From S7 to S9 the column was
+NOT NULL with 0 for no level.
 
 ### Statuses
 

@@ -30,7 +30,7 @@ export interface RawPlayerRow extends LooseRow<Tables<'players'>> {
 export interface Player extends RawPlayerRow {
   id: string
   name: string
-  playtomicLevel: number
+  playtomicLevel: number | null
   playtomicUsername: string
   gender: string
   status: string
@@ -45,7 +45,7 @@ export function normalisePlayers(players: RawPlayerRow[]): Player[] {
   return players.map((p) => ({
     ...p,
     name: p.name ?? '',
-    playtomicLevel: p.playtomic_level ?? p.playtomicLevel ?? 0,
+    playtomicLevel: p.playtomic_level ?? p.playtomicLevel ?? null,
     playtomicUsername: p.playtomic_username ?? p.playtomicUsername ?? '',
     gender: p.gender ?? '',
     status: p.status ?? 'active',

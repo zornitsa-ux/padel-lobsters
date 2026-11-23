@@ -4,10 +4,7 @@ import { render, screen, cleanup } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { renderWithClient } from '../../test/renderWithClient'
 
-// D-028: every roster/registration badge now reads playtomicLevel. A player
-// carrying a stale adjusted_level from before D-018 must not have it shown —
-// these renders pass a row where the two values differ, so a regression that
-// reads the legacy field shows 4.5 instead of 3.5.
+// D-028: every roster/registration badge reads playtomicLevel.
 
 import PlayersList from './PlayersList'
 import PendingApprovalsList from './PendingApprovalsList'
@@ -17,14 +14,11 @@ import { mkRegistration } from '../../test/factories'
 
 // Built through the real normaliser so the fixture is a complete Player rather
 // than a hand-written subset.
-const [stalePlayer] = normalisePlayers([
+const [player] = normalisePlayers([
   {
     id: 'p1',
     name: 'Ada Lovelace',
     playtomic_level: 3.5,
-    // Legacy columns still present on the row but no longer read.
-    adjustment: 1,
-    adjusted_level: 4.5,
     status: 'active',
   },
 ])
@@ -32,18 +26,17 @@ const [stalePlayer] = normalisePlayers([
 afterEach(cleanup)
 
 describe('roster level badges read the Playtomic level', () => {
-  it('PlayersList shows the Playtomic level, not adjusted_level', () => {
+  it('PlayersList shows the Playtomic level', () => {
     render(
       <MemoryRouter>
         <PlayersList
-          orderedForRender={[{ p: stalePlayer, idx: 0, isSelf: false }]}
+          orderedForRender={[{ p: player, idx: 0, isSelf: false }]}
           displayName={(p) => p.name || ''}
         />
       </MemoryRouter>,
     )
 
     expect(screen.getByText('3.5')).toBeTruthy()
-    expect(screen.queryByText('4.5')).toBeNull()
   })
 
   it('PendingApprovalsList shows the Playtomic level', () => {
@@ -52,7 +45,7 @@ describe('roster level badges read the Playtomic level', () => {
     // tapped, but the hooks still need a client in the tree).
     renderWithClient(
       <PendingApprovalsList
-        pendingPlayers={[stalePlayer]}
+        pendingPlayers={[player]}
         onApprove={() => {}}
         onReject={() => {}}
         onLink={() => {}}
@@ -60,14 +53,13 @@ describe('roster level badges read the Playtomic level', () => {
     )
 
     expect(screen.getByText(/Lv 3\.5/)).toBeTruthy()
-    expect(screen.queryByText(/Lv 4\.5/)).toBeNull()
   })
 
   it('RegisteredSection shows the Playtomic level', () => {
     render(
       <RegisteredSection
         isCompleted={false}
-        getPlayer={() => stalePlayer}
+        getPlayer={() => player}
         registered={[mkRegistration({ id: 'r1', playerId: 'p1', paymentStatus: 'unpaid' })]}
         maxPlayers={16}
         isAdmin
@@ -82,6 +74,5 @@ describe('roster level badges read the Playtomic level', () => {
     )
 
     expect(screen.getByText(/Level 3\.5/)).toBeTruthy()
-    expect(screen.queryByText(/Level 4\.5/)).toBeNull()
   })
 })

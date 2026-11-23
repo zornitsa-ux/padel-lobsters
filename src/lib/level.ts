@@ -1,6 +1,6 @@
 import { errorCode, errorMessage } from './errors'
 
-// A Playtomic level of 0 means none was given (signup revamp D-5, D-14).
+// No level is null (signup revamp S9). 0 isn't a level either (D-5, D-14).
 export const knownLevel = ({ level }: { level: number | null | undefined }): number | null =>
   level != null && level > 0 ? level : null
 

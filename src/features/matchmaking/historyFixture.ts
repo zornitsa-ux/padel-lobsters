@@ -104,8 +104,9 @@ export function buildReplayDataset({
 }): ReplayDataset {
   const levelByPlayerId: Record<string, number> = {}
   for (const p of fixture.players) {
-    const n = Number(p.playtomic_level)
-    levelByPlayerId[p.id] = p.playtomic_level == null || Number.isNaN(n) ? FALLBACK_LEVEL : n
+    // Snapshots from S9 on store no level as null; earlier ones stored 0.
+    const n = Number(p.playtomic_level ?? 0)
+    levelByPlayerId[p.id] = Number.isNaN(n) ? FALLBACK_LEVEL : n
   }
 
   const aliasMap = new Map(

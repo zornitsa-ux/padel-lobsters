@@ -1,5 +1,5 @@
 import type { GuardrailResult, RatingFlag, RatingUpdate } from '../types'
-import { hasLevel } from '../../../../lib/level'
+import { knownLevel } from '../../../../lib/level'
 
 // Blessed starting values (D-003); expected to move after live events.
 export const DELTA_CAP_PER_EVENT = 0.3
@@ -27,7 +27,7 @@ export function applyGuardrails({
   cap = DELTA_CAP_PER_EVENT,
 }: {
   update: RatingUpdate
-  playtomicLevel: number
+  playtomicLevel: number | null
   previousDeltas: number[]
   cap?: number
 }): GuardrailResult {
@@ -42,10 +42,8 @@ export function applyGuardrails({
   }
 
   const postCapMu = update.priorMu + appliedDelta
-  if (
-    hasLevel({ level: playtomicLevel }) &&
-    Math.abs(postCapMu - playtomicLevel) > DRIFT_THRESHOLD
-  ) {
+  const level = knownLevel({ level: playtomicLevel })
+  if (level != null && Math.abs(postCapMu - level) > DRIFT_THRESHOLD) {
     flags.push('drift')
   }
 

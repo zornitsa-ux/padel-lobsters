@@ -253,8 +253,8 @@ policy per input, three layers of enforcement.
 
 - **A level** is a number above 0, up to 7, with at most 2 decimals
   (owner, 23 Nov: refuse more, don't round). A decimal comma is accepted.
-- **No level** is a state, not a level. Stored as 0 until S9 (the column is
-  NOT NULL from S7), then null. Code asks `hasLevel`, never compares with 0.
+- **No level** is a state, not a level, stored as null (S9; 0 from S7 until
+  then). Code asks `hasLevel`, never compares with 0.
 - **Shown as written** (owner, 23 Nov): 2.45 shows as 2.45, never rounded;
   3 and 2.5 show as 3.0 and 2.5 (`formatLevel`, used by `LevelBadge` and
   `levelText`).

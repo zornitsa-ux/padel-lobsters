@@ -31,7 +31,7 @@ const mmRatingRowsSchema = z.array(
 export function toPlayerInput(row: {
   playerId: string
   name: string
-  playtomicLevel: number
+  playtomicLevel: number | null
   mmRating: number | null
   mmSigma: number | null
   isLeftHanded: boolean

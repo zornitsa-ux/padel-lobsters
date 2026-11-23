@@ -64,7 +64,7 @@ describe('formFromPlayer', () => {
         gender: '',
         isLeftHanded: false,
         preferredPosition: '',
-        playtomicLevel: 0,
+        playtomicLevel: null,
         phone: null,
         birthday: null,
       },

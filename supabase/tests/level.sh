@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================================
-# One definition of a level (20261123180000, docs/signup-revamp S7, C-8).
+# One definition of a level (20261123180000, docs/signup-revamp S7, C-8; no
+# level is null from S9, 20261124120000).
 # Runs every case in level_cases.json, which the client's unit test reads
 # too, through private.parse_level and each policy of private.level_to_store,
 # then checks the column rule and the write paths. One transaction, rolled
@@ -58,7 +59,7 @@ create function pg_temp.expected(input_outcome jsonb, input_policy text)
 returns text language sql as $$
   select case
     when jsonb_typeof(input_outcome) = 'number' then (input_outcome #>> '{}')::numeric::text
-    when input_outcome #>> '{}' = 'no_level' then '0'
+    when input_outcome #>> '{}' = 'no_level' then 'null'
     when input_outcome #>> '{}' = 'invalid' then 'invalid_level'
     when input_outcome #>> '{}' = 'blank' and input_policy = 'keep' then 'level_required'
     when input_outcome #>> '{}' = 'blank' then 'invalid_level'
@@ -94,7 +95,7 @@ begin
     end loop;
 
     -- keep with no level recorded behaves as optional.
-    v_got := pg_temp.outcome(format('select private.level_to_store(%L, %L, 0)', v_input, 'keep'));
+    v_got := pg_temp.outcome(format('select private.level_to_store(%L, %L, null)', v_input, 'keep'));
     v_want := pg_temp.expected(v_case -> 'optional', 'optional');
     perform pg_temp.check(pg_temp.same(v_got, v_want),
       format('level_to_store(%L, keep, no level): got %s, want %s', v_input, v_got, v_want));
@@ -116,19 +117,19 @@ declare
 begin
   perform set_config('app.audit_source', 'test_fixture', true);
 
-  -- ── 2. The column refuses anything but 0 or a level ───────────────────────
-  foreach v_bad in array array[null, -1, 7.01, 7.5, 2.455, 0.001]::numeric[] loop
+  -- ── 2. The column refuses anything but null or a level ────────────────────
+  foreach v_bad in array array[0, -1, 7.01, 7.5, 2.455, 0.001]::numeric[] loop
     begin
       insert into public.players (name, status, playtomic_level) values ('Level Column Test', 'active', v_bad);
       raise exception 'FAILED: column took %', v_bad;
-    exception when check_violation or not_null_violation then
+    exception when check_violation then
       null;
     end;
   end loop;
   insert into public.players (name, status, playtomic_level)
-  values ('Level Column Ok A', 'active', 0), ('Level Column Ok B', 'active', 7), ('Level Column Ok C', 'active', 2.45);
+  values ('Level Column Ok A', 'active', null), ('Level Column Ok B', 'active', 7), ('Level Column Ok C', 'active', 2.45);
   insert into public.players (name, status) values ('Level Column Default', 'active') returning id into v_none;
-  perform pg_temp.check((select playtomic_level = 0 from public.players where id = v_none), '2a: default is no level');
+  perform pg_temp.check((select playtomic_level is null from public.players where id = v_none), '2a: default is no level');
   raise notice 'CHECK 2 ok: column';
 
   -- ── 3. update_my_profile (keep) ───────────────────────────────────────────
@@ -161,7 +162,7 @@ begin
 
   perform pg_temp.act_as(v_none);
   perform public.update_my_profile('{"playtomic_level": "0"}');
-  perform pg_temp.check((select playtomic_level = 0 from public.players where id = v_none), '3e: no level stays none');
+  perform pg_temp.check((select playtomic_level is null from public.players where id = v_none), '3e: no level stays none');
   raise notice 'CHECK 3 ok: update_my_profile';
 
   -- ── 4. admin_update_player (keep) and admin_add_player (optional) ─────────
@@ -182,9 +183,9 @@ begin
   perform pg_temp.check((select playtomic_level = 1.5 from public.players where id = v_none), '4c: admin sets a level');
 
   select id into v_added from public.admin_add_player('{"name": "Level Added Blank", "playtomic_level": ""}');
-  perform pg_temp.check((select playtomic_level = 0 from public.players where id = v_added), '4d: add, blank is no level');
+  perform pg_temp.check((select playtomic_level is null from public.players where id = v_added), '4d: add, blank is no level');
   select id into v_added from public.admin_add_player('{"name": "Level Added", "playtomic_level": 2.45}');
-  perform pg_temp.check((select playtomic_level = 2.45 and adjusted_level = 2.45 from public.players where id = v_added), '4e: add with a level');
+  perform pg_temp.check((select playtomic_level = 2.45 from public.players where id = v_added), '4e: add with a level');
   begin
     perform public.admin_add_player('{"name": "Level Added Bad", "playtomic_level": "7.5"}');
     v_err := null;

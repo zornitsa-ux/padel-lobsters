@@ -26,13 +26,13 @@ const update = ({
 const apply = (args: {
   proposedDelta: number
   priorMu?: number
-  playtomicLevel?: number
+  playtomicLevel?: number | null
   previousDeltas?: number[]
   cap?: number
 }) =>
   applyGuardrails({
     update: update(args),
-    playtomicLevel: args.playtomicLevel ?? args.priorMu ?? 3,
+    playtomicLevel: args.playtomicLevel === undefined ? (args.priorMu ?? 3) : args.playtomicLevel,
     previousDeltas: args.previousDeltas ?? [],
     cap: args.cap,
   })
@@ -108,8 +108,10 @@ describe('rating/guardrails (M1.4)', () => {
     })
 
     it('never flags drift for a player with no reported level', () => {
-      const r = apply({ proposedDelta: 0.3, priorMu: 1, playtomicLevel: 0 })
-      expect(r.flags).not.toContain('drift')
+      for (const playtomicLevel of [null, 0]) {
+        const r = apply({ proposedDelta: 0.3, priorMu: 1, playtomicLevel })
+        expect(r.flags).not.toContain('drift')
+      }
     })
 
     it('measures drift with the post-cap mu, not the raw proposal', () => {

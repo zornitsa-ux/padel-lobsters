@@ -9,16 +9,16 @@ describe('hasNoLevel', () => {
   })
 
   it('is false with a levelling start and no Playtomic level', () => {
-    expect(hasNoLevel({ player: { id: 'walls', playtomicLevel: 0 }, levelledIds })).toBe(false)
+    expect(hasNoLevel({ player: { id: 'walls', playtomicLevel: null }, levelledIds })).toBe(false)
   })
 
   it('is true with neither', () => {
-    expect(hasNoLevel({ player: { id: 'a', playtomicLevel: 0 }, levelledIds })).toBe(true)
+    expect(hasNoLevel({ player: { id: 'a', playtomicLevel: null }, levelledIds })).toBe(true)
   })
 
   it('counts only the Playtomic level until the starts load', () => {
-    expect(hasNoLevel({ player: { id: 'walls', playtomicLevel: 0 }, levelledIds: undefined })).toBe(
-      true,
-    )
+    expect(
+      hasNoLevel({ player: { id: 'walls', playtomicLevel: null }, levelledIds: undefined }),
+    ).toBe(true)
   })
 })
