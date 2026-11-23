@@ -935,7 +935,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
-          playtomic_level: number | null
+          playtomic_level: number
           playtomic_updated_at: string | null
           playtomic_username: string | null
           preferred_position: string | null
@@ -966,7 +966,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
-          playtomic_level?: number | null
+          playtomic_level?: number
           playtomic_updated_at?: string | null
           playtomic_username?: string | null
           preferred_position?: string | null
@@ -997,7 +997,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
-          playtomic_level?: number | null
+          playtomic_level?: number
           playtomic_updated_at?: string | null
           playtomic_username?: string | null
           preferred_position?: string | null
@@ -1701,7 +1701,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
-          playtomic_level: number | null
+          playtomic_level: number
           playtomic_updated_at: string | null
           playtomic_username: string | null
           preferred_position: string | null
@@ -2218,7 +2218,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
-          playtomic_level: number | null
+          playtomic_level: number
           playtomic_updated_at: string | null
           playtomic_username: string | null
           preferred_position: string | null

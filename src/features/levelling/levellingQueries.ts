@@ -35,6 +35,7 @@ export type CompleteLevellingStatus =
   | 'already_levelled'
   | 'not_needed'
   | 'invalid_answers'
+  | 'invalid_level'
   | 'error'
 
 export async function completeLevelling({

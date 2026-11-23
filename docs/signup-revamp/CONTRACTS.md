@@ -53,8 +53,9 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
 - Statuses: `ok`, `already_levelled` (a row with a start; or, for a caller
   with a level, any row), `not_needed` (a caller with no player row),
   `invalid_answers`
-  (unknown code, missing key, or a level outside (0, 7]),
-  `not_authenticated` (raised, P0001).
+  (unknown code or missing key), `invalid_level` (a `playtomic_level` that
+  isn't a level, C-8; from S7), `not_authenticated` (raised, P0001). The
+  client treats any status it doesn't know as a failed save.
 - Locks the caller's `players` row `FOR UPDATE` first (as
   `update_my_profile` does), then branches on `needs_levelling`. A double tap gets `ok` then `already_levelled`, never a
   unique violation or two audit rows.
@@ -194,12 +195,26 @@ is skipped when:
 
 ### `private.parse_level(input_text text) returns numeric`
 
-- Trims, replaces one decimal comma with a point.
-- Blank, or a value equal to 0 (`0`, `0.0`): null, meaning "no level". The
-  client sends 0 for blank until S9.
-- Otherwise matches `^[0-9]+(\.[0-9]{1,2})?$` and is `<= 7`, else raises
-  `invalid_level` (P0001).
+- Trims whitespace, replaces the first decimal comma with a point.
+- Blank: null, meaning "no level".
+- Otherwise must match `^[0-9]+(\.[0-9]{1,2})?$`, else raises
+  `invalid_level` (P0001). A value equal to 0 (`0`, `0.00`) is null too: the
+  client sends 0 for blank until S9. Above 7 raises `invalid_level`.
+- Returns the value without trailing zeros (`2.50` is 2.5).
 - `IMMUTABLE`, revoked from all client roles.
+
+### `private.level_to_store(input_text text, input_policy text, input_recorded numeric default null) returns numeric`
+
+The value a path stores, by policy (table below): the parsed level, or for
+null, 0 (`optional`, and `keep` with no level recorded), `invalid_level`
+(`required`) or `level_required` (`keep` with a level recorded).
+`input_recorded` is the level on file. Every write path calls this, so S9
+changes "no level" from 0 to null here and in `has_level` only.
+
+### `private.has_level(input_level numeric) returns boolean`
+
+Whether a stored value is a level. SQL that asks "has a level?" calls this
+instead of comparing with 0.
 
 ### What each path does with null (no level)
 
@@ -210,7 +225,16 @@ is skipped when:
 | `update_my_profile`                                                  | `keep`     | `level_required` if a level is recorded, else 0 |
 | `admin_update_player`                                                | `keep`     | `level_required` if a level is recorded, else 0 |
 
-A key that isn't sent leaves the level unchanged on every update path.
+A key that isn't sent leaves the level unchanged on every update path. A key
+sent as JSON null counts as blank. `complete_levelling` reads a JSON number as
+a level sent and null as none (its C-3 shape); it and `create_partner_player`
+return `invalid_level` as a status rather than raising it.
+
+The hook refuses a level that isn't one with "Playtomic level must be a
+number above 0 and up to 7, with at most 2 decimals, e.g. 2.45." The
+confirmation trigger can't refuse: a bad level that reaches it (metadata from
+before S7) is stored as no level, so confirming never fails and the player
+sets a level at the gate.
 
 ### Column `players.playtomic_level`
 

@@ -1,5 +1,44 @@
 import { describe, expect, it } from 'vitest'
-import { hasLevel, knownLevel, levelOrNoLevelStart, levelText } from './level'
+import {
+  hasLevel,
+  INVALID_LEVEL_MESSAGE,
+  knownLevel,
+  LEVEL_REQUIRED_MESSAGE,
+  levelOrNoLevelStart,
+  levelRefusalMessage,
+  levelText,
+  withLevelMessage,
+} from './level'
+
+describe('levelRefusalMessage', () => {
+  it('puts the database level refusals into words (C-8)', () => {
+    expect(levelRefusalMessage({ error: { code: 'P0001', message: 'invalid_level' } })).toBe(
+      INVALID_LEVEL_MESSAGE,
+    )
+    expect(levelRefusalMessage({ error: { code: 'P0001', message: 'level_required' } })).toBe(
+      LEVEL_REQUIRED_MESSAGE,
+    )
+  })
+
+  it('leaves other errors alone', () => {
+    expect(levelRefusalMessage({ error: { code: 'P0001', message: 'needs_level' } })).toBeNull()
+    expect(levelRefusalMessage({ error: { code: '23505', message: 'invalid_level' } })).toBeNull()
+    expect(levelRefusalMessage({ error: new Error('offline') })).toBeNull()
+  })
+})
+
+describe('withLevelMessage', () => {
+  it('turns a level refusal into an Error with the message', () => {
+    const shown = withLevelMessage({ error: { code: 'P0001', message: 'level_required' } })
+    expect(shown).toBeInstanceOf(Error)
+    expect((shown as Error).message).toBe(LEVEL_REQUIRED_MESSAGE)
+  })
+
+  it('passes anything else through unchanged', () => {
+    const error = { code: '42501', message: 'permission denied' }
+    expect(withLevelMessage({ error })).toBe(error)
+  })
+})
 
 describe('knownLevel and hasLevel', () => {
   it('keep only a level above 0', () => {

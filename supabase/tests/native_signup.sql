@@ -34,7 +34,7 @@ do $$
 declare
   c_name_msg  constant text := 'Please enter your name.';
   c_long_msg  constant text := 'Your name can be at most 100 characters.';
-  c_level_msg constant text := 'Enter your Playtomic level as a number, like 2.5.';
+  c_level_msg constant text := 'Playtomic level must be a number above 0 and up to 7, with at most 2 decimals, e.g. 2.45.';
   c_ph_msg    constant text := 'You’ve already been added to a Lobster team — ask an admin to invite you.';
   c_src_msg   constant text := 'Please pick how you found us from the list.';
   c_detail_msg constant text := 'How you found us can be at most 100 characters.';
@@ -78,7 +78,9 @@ begin
   end if;
   if pg_temp.hook_message('{"name":"A","playtomic_level":"abc"}') is distinct from c_level_msg
      or pg_temp.hook_message('{"name":"A","playtomic_level":"2."}') is distinct from c_level_msg
-     or pg_temp.hook_message('{"name":"A","playtomic_level":"-1"}') is distinct from c_level_msg then
+     or pg_temp.hook_message('{"name":"A","playtomic_level":"-1"}') is distinct from c_level_msg
+     or pg_temp.hook_message('{"name":"A","playtomic_level":"7.5"}') is distinct from c_level_msg
+     or pg_temp.hook_message('{"name":"A","playtomic_level":"2.455"}') is distinct from c_level_msg then
     raise exception 'CHECK 2 FAILED: level pattern';
   end if;
   if pg_temp.hook_message('{"name":" hook   PLACEHOLDER "}') is distinct from c_ph_msg then
@@ -186,13 +188,19 @@ begin
   end if;
   raise notice 'CHECK 10 ok: nameless user skipped';
 
-  -- CHECK 11: non-ASCII digits are refused by the hook and parse to 0, so a
-  -- level can never fail the confirmation's numeric cast
-  if pg_temp.hook_message('{"name":"A","playtomic_level":"２"}') is distinct from c_level_msg
-     or private.parse_metadata_level('２') <> 0 then
+  -- CHECK 11: non-ASCII digits are refused by the hook. A bad level that gets
+  -- past it (signed up before the hook refused it) confirms as no level
+  -- instead of failing the confirmation.
+  if pg_temp.hook_message('{"name":"A","playtomic_level":"２"}') is distinct from c_level_msg then
     raise exception 'CHECK 11 FAILED: full-width digit';
   end if;
-  raise notice 'CHECK 11 ok: ASCII digits only';
+  v_id := gen_random_uuid();
+  perform pg_temp.insert_auth_user(v_id, 'badlevel@test.invalid',
+    jsonb_build_object('name', 'Bad Level', 'playtomic_level', '2.455'), true);
+  if (select playtomic_level from public.players where id = v_id) is distinct from 0 then
+    raise exception 'CHECK 11 FAILED: bad level at confirmation';
+  end if;
+  raise notice 'CHECK 11 ok: ASCII digits only, bad level confirms as none';
 
   -- CHECK 12: confirming an address another player holds (in any case) skips
   -- the player row instead of failing the confirmation
