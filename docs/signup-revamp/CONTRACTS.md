@@ -189,3 +189,23 @@ is skipped when:
 
 `admin_update_player` logs kind `admin_edit`. It no longer writes
 `adjustment`; `adjusted_level` mirrors the level, as in `update_my_profile`.
+
+## C-8. Level parsing (S7)
+
+### `private.parse_level(input_text text) returns numeric`
+
+- Trims, replaces one decimal comma with a point. Blank → null.
+- Matches `^[0-9]+(\.[0-9]{1,2})?$` and `> 0` and `<= 7`, else raises
+  `invalid_level` (P0001).
+- `IMMUTABLE`, revoked from all client roles.
+
+### CHECK `players_playtomic_level_range`
+
+`playtomic_level = 0 or (playtomic_level > 0 and playtomic_level <= 7 and
+playtomic_level = round(playtomic_level, 2))`. S9 drops the `= 0` branch and
+the column becomes nullable for no level.
+
+### Statuses
+
+- `invalid_level`: any write path given a level outside 6.1.
+- `level_required`: `update_my_profile` asked to clear a recorded level.
