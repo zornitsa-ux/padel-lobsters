@@ -89,8 +89,8 @@ const players = [
   player('p6', 'Nico Lee'),
   player('p7', 'Nico Stone'),
   player('ghost', 'Pia', 'placeholder'),
-  { ...player('q1', 'Quinn'), playtomicLevel: 0 },
-  { ...player('q2', 'Rosa'), playtomicLevel: 0 },
+  { ...player('q1', 'Quinn'), playtomicLevel: null },
+  { ...player('q2', 'Rosa'), playtomicLevel: null },
 ]
 
 const reg = (
@@ -839,7 +839,7 @@ describe('admin adds a team with a player who has no level (S6b)', () => {
 })
 
 describe('admin changes a partner to a member with no level (S6b)', () => {
-  const rosa = { id: 'q2', name: 'Rosa', status: 'active', playtomicLevel: 0 } as never
+  const rosa = { id: 'q2', name: 'Rosa', status: 'active', playtomicLevel: null } as never
   const renderPanel = ({ onBehalfOf }: { onBehalfOf?: string }) =>
     render(
       <ChangePartnerPanel

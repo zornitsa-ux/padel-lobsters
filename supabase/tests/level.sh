@@ -117,7 +117,7 @@ declare
 begin
   perform set_config('app.audit_source', 'test_fixture', true);
 
-  -- ── 2. The column refuses anything but 0 or a level ───────────────────────
+  -- ── 2. The column refuses anything but null or a level ────────────────────
   foreach v_bad in array array[0, -1, 7.01, 7.5, 2.455, 0.001]::numeric[] loop
     begin
       insert into public.players (name, status, playtomic_level) values ('Level Column Test', 'active', v_bad);

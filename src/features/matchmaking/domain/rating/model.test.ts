@@ -18,7 +18,8 @@ describe('rating/model constants (D-003)', () => {
 })
 
 describe('initialRating with no level (signup revamp D-15)', () => {
-  it('starts a level of 0 at NO_LEVEL_START with the guessed-start sigma', () => {
+  it('starts no level (null, or 0) at NO_LEVEL_START with the guessed-start sigma', () => {
+    expect(initialRating({ playtomicLevel: null })).toEqual({ mu: 1, sigma: SIGMA_NO_LEVEL })
     expect(initialRating({ playtomicLevel: 0 })).toEqual({ mu: 1, sigma: SIGMA_NO_LEVEL })
     expect(SIGMA_NO_LEVEL).toBe(1)
   })

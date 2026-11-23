@@ -16,7 +16,7 @@ const pendingPlayer = {
   status: 'pending',
   email: '',
   phone: '',
-  playtomicLevel: 0,
+  playtomicLevel: null,
 }
 
 vi.mock('../../context/useApp', () => ({
