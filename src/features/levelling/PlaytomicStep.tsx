@@ -5,39 +5,25 @@ import type { LevellingState, PlaytomicChoice } from './levellingFlow'
 
 interface PlaytomicStepProps {
   playtomic: LevellingState['playtomic']
-  prefilled: boolean
   onChoose: (choice: Exclude<PlaytomicChoice, null>) => void
   onType: (text: string) => void
 }
 
 const COPY = {
-  fresh: {
-    title: 'Do you have a Playtomic level?',
-    hint: 'No problem if you don’t. Many new Lobsters haven’t played on Playtomic yet.',
-    no: 'No, or I’m not sure',
-  },
-  prefilled: {
-    title: 'Is this still your Playtomic level?',
-    hint: 'From your profile. Change it if it’s moved.',
-    no: 'I don’t have one',
-  },
+  title: 'Do you have a Playtomic level?',
+  hint: 'No problem if you don’t. Many new Lobsters haven’t played on Playtomic yet.',
+  no: 'No, or I’m not sure',
 }
 
 /** The last step: a Playtomic level, or none. The only step with a submit button. */
-export default function PlaytomicStep({
-  playtomic,
-  prefilled,
-  onChoose,
-  onType,
-}: PlaytomicStepProps) {
-  const copy = prefilled ? COPY.prefilled : COPY.fresh
+export default function PlaytomicStep({ playtomic, onChoose, onType }: PlaytomicStepProps) {
   return (
     <section className="space-y-4" aria-labelledby="levelling-question">
       <div className="space-y-1">
         <h2 id="levelling-question" className="text-xl font-bold text-lob-dark leading-snug">
-          {copy.title}
+          {COPY.title}
         </h2>
-        <p className="text-sm text-lob-slate">{copy.hint}</p>
+        <p className="text-sm text-lob-slate">{COPY.hint}</p>
       </div>
       <div className="space-y-2">
         <OptionRow
@@ -47,7 +33,7 @@ export default function PlaytomicStep({
         />
         {playtomic.choice === 'yes' && <LevelField text={playtomic.text} onType={onType} />}
         <OptionRow
-          title={copy.no}
+          title={COPY.no}
           selected={playtomic.choice === 'no'}
           onClick={() => onChoose('no')}
         />

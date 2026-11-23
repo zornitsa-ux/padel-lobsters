@@ -4,17 +4,14 @@ import { firstRow } from '../../lib/firstRow'
 import { errorCode, errorMessage } from '../../lib/errors'
 import type { LevellingPayload } from './levellingFlow'
 
-// The generated type says `number`, but the RPC returns null when no level is on file.
 // `questions_open` defaults while the client is live ahead of its migration (S3c).
 const myLevellingRowSchema = z.object({
   needs_levelling: z.boolean(),
-  playtomic_level: z.number().nullable(),
   questions_open: z.boolean().default(false),
 })
 
 export interface MyLevelling {
   needsLevelling: boolean
-  levelOnFile: number | null
   /** Has a level and hasn't answered the five questions (S3c). */
   questionsOpen: boolean
 }
@@ -25,7 +22,6 @@ export async function fetchMyLevelling(): Promise<MyLevelling> {
   const row = myLevellingRowSchema.parse(firstRow(data))
   return {
     needsLevelling: row.needs_levelling,
-    levelOnFile: row.playtomic_level,
     questionsOpen: row.questions_open,
   }
 }

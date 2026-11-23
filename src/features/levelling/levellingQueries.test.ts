@@ -21,7 +21,6 @@ const payload: LevellingPayload = {
   racket_sports: 'casual',
   walls: 'slow_back_wall',
   playtomic_level: null,
-  prefilled: false,
 }
 
 beforeEach(() => {
@@ -30,14 +29,13 @@ beforeEach(() => {
 })
 
 describe('fetchMyLevelling', () => {
-  it('reads a player with no level on file (null, though the generated type says number)', async () => {
+  it('reads a player who needs levelling', async () => {
     mockRpc.mockResolvedValue({
       data: [{ needs_levelling: true, playtomic_level: null, questions_open: false }],
       error: null,
     })
     await expect(fetchMyLevelling()).resolves.toEqual({
       needsLevelling: true,
-      levelOnFile: null,
       questionsOpen: false,
     })
     expect(mockRpc).toHaveBeenCalledWith('get_my_levelling')
@@ -50,7 +48,6 @@ describe('fetchMyLevelling', () => {
     })
     await expect(fetchMyLevelling()).resolves.toEqual({
       needsLevelling: false,
-      levelOnFile: 2.3,
       questionsOpen: true,
     })
   })

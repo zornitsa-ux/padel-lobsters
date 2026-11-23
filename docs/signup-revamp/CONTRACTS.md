@@ -32,7 +32,6 @@ Walls → start (DESIGN §2.3): 1.0, 1.5, 2.0, 2.5, in the order above.
 | `start_source`    | `text`        | `playtomic`, `walls` or `none`     |
 | `start_mu`        | `numeric`     | NULL only for `none`               |
 | `start_sigma`     | `numeric`     | NULL only for `none`               |
-| `prefilled`       | `boolean`     | step 6 opened with a level on file |
 | `completed_at`    | `timestamptz` | NOT NULL DEFAULT `now()`           |
 
 `none` (S3c) is an answers-only row from a player who has a level: no start,
@@ -48,8 +47,8 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
 ### `public.complete_levelling(input_answers jsonb) returns table(status text)`
 
 - `SECURITY DEFINER`, caller = `auth.uid()`; `authenticated` only.
-- `input_answers`: the five C-1 keys, plus `playtomic_level` (number or null)
-  and `prefilled` (boolean).
+- `input_answers`: the five C-1 keys, plus `playtomic_level` (number or null).
+  Other keys are ignored (older clients sent `prefilled`).
 - Statuses: `ok`, `already_levelled` (a row with a start; or, for a caller
   with a level, any row), `not_needed` (a caller with no player row),
   `invalid_answers`
@@ -67,17 +66,17 @@ SELECT (filtered by RLS), nothing for `anon`. Added to
   `player_levelling` row and the level are written: the rating is kept.
 - **Anyone else** (they have a level): `already_levelled` if they have a
   row; else insert an answers-only row (`start_source` `none`, C-2) and
-  return `ok`. Nothing else is written; `playtomic_level` and `prefilled` in
-  the input are ignored.
-- `prefilled` is stored as sent; it doesn't change the result.
+  return `ok`. Nothing else is written; `playtomic_level` in the input is
+  ignored.
 
 ### `public.get_my_levelling() returns table(needs_levelling boolean, playtomic_level numeric, questions_open boolean)`
 
 - `SECURITY DEFINER`, caller = `auth.uid()`; `authenticated` only. Not
   `STABLE`: it sets `statement_timeout`.
-- `playtomic_level` is the level on file (> 0) for the step 6 prefill, else
-  null. `questions_open`: not `needs_levelling` and no `player_levelling`
-  row (S3c). One row; signed-in callers without a player row get
+- `playtomic_level` is the level on file, else null. The client no longer
+  reads it (no prefill); it stays so older clients still parse the row.
+  `questions_open`: not `needs_levelling` and no `player_levelling` row
+  (S3c). One row; signed-in callers without a player row get
   `false, null, false`.
 
 ### `private.needs_levelling(input_player_id uuid) returns boolean`

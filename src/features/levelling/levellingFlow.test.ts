@@ -21,38 +21,25 @@ const answerAll: LevellingAction[] = QUESTIONS.map(({ key, options }) => ({
   code: options[0].code,
 }))
 
-const fresh = () => initialLevellingState({ levelOnFile: null })
+const fresh = () => initialLevellingState()
 
 describe('initialLevellingState', () => {
-  it('starts with nothing chosen when there is no level on file', () => {
+  it('starts with nothing chosen', () => {
     expect(fresh()).toEqual({
       mode: 'level',
       step: 0,
       answers: {},
       playtomic: { choice: null, text: '' },
-      prefilled: false,
     })
-  })
-
-  it('prefills step 6 with a level on file', () => {
-    const state = initialLevellingState({ levelOnFile: 2.3 })
-    expect(state.playtomic).toEqual({ choice: 'yes', text: '2.3' })
-    expect(state.prefilled).toBe(true)
-  })
-
-  it('treats 0 as no level', () => {
-    expect(initialLevellingState({ levelOnFile: 0 }).prefilled).toBe(false)
-  })
-
-  it('never prefills the questions-only flow', () => {
-    const state = initialLevellingState({ levelOnFile: 2.3, mode: 'questions' })
-    expect(state.prefilled).toBe(false)
-    expect(state.playtomic).toEqual({ choice: null, text: '' })
+    expect(initialLevellingState({ mode: 'questions' }).playtomic).toEqual({
+      choice: null,
+      text: '',
+    })
   })
 })
 
 describe('questions mode', () => {
-  const questions = () => initialLevellingState({ levelOnFile: 2.3, mode: 'questions' })
+  const questions = () => initialLevellingState({ mode: 'questions' })
 
   it('has five steps and stops on the last question', () => {
     expect(totalSteps({ mode: 'questions' })).toBe(5)
@@ -71,7 +58,6 @@ describe('questions mode', () => {
     expect(toPayload(state)).toMatchObject({
       walls: 'lets_go',
       playtomic_level: null,
-      prefilled: false,
     })
   })
 })
@@ -168,15 +154,16 @@ describe('canFinish and toPayload', () => {
       racket_sports: 'none',
       walls: 'lets_go',
       playtomic_level: null,
-      prefilled: false,
     })
   })
 
-  it('parses a comma decimal and keeps the prefill flag', () => {
-    const state = run(initialLevellingState({ levelOnFile: 2.3 }), [
+  it('parses a comma decimal', () => {
+    const state = run(fresh(), [
       ...answerAll,
+      { type: 'choosePlaytomic', choice: 'yes' },
       { type: 'typePlaytomic', text: '2,8' },
     ])
-    expect(toPayload(state)).toMatchObject({ playtomic_level: 2.8, prefilled: true })
+    expect(toPayload(state)).toMatchObject({ playtomic_level: 2.8 })
+    expect(toPayload(state)).not.toHaveProperty('prefilled')
   })
 })

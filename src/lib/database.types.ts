@@ -823,7 +823,6 @@ export type Database = {
           lessons: string
           player_id: string
           playtomic_level: number | null
-          prefilled: boolean
           racket_sports: string
           start_mu: number | null
           start_sigma: number | null
@@ -837,7 +836,6 @@ export type Database = {
           lessons: string
           player_id: string
           playtomic_level?: number | null
-          prefilled?: boolean
           racket_sports: string
           start_mu?: number | null
           start_sigma?: number | null
@@ -851,7 +849,6 @@ export type Database = {
           lessons?: string
           player_id?: string
           playtomic_level?: number | null
-          prefilled?: boolean
           racket_sports?: string
           start_mu?: number | null
           start_sigma?: number | null

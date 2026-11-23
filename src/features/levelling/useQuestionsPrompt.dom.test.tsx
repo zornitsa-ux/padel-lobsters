@@ -13,7 +13,7 @@ vi.mock('../../context/useApp', () => ({
 vi.mock('@tanstack/react-query', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@tanstack/react-query')>()),
   useQuery: () => ({
-    data: { needsLevelling: false, levelOnFile: 2.3, questionsOpen: m.questionsOpen },
+    data: { needsLevelling: false, questionsOpen: m.questionsOpen },
   }),
 }))
 

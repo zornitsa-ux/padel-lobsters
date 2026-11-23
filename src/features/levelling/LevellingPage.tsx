@@ -63,27 +63,18 @@ export default function LevellingPage() {
       <Spinner />
     )
   }
-  return (
-    <LevellingFlow
-      userId={userId}
-      from={from}
-      mode={modeFor(levelling.data)}
-      levelOnFile={levelling.data.levelOnFile}
-    />
-  )
+  return <LevellingFlow userId={userId} from={from} mode={modeFor(levelling.data)} />
 }
 
 function LevellingFlow({
   userId,
   from,
   mode,
-  levelOnFile,
 }: {
   userId: string
   from: string
   /** Null once there's nothing left to answer. */
   mode: LevellingMode | null
-  levelOnFile: number | null
 }) {
   const navigate = useNavigate()
   const confirm = useConfirm()
@@ -95,9 +86,7 @@ function LevellingFlow({
   const finished = useRef(false)
   const [state, dispatch] = useReducer(levellingReducer, undefined, (): LevellingState => {
     const draft = readDraft({ userId })
-    return draft && draft.mode === mode
-      ? draft
-      : initialLevellingState({ levelOnFile, mode: mode ?? 'level' })
+    return draft && draft.mode === mode ? draft : initialLevellingState({ mode: mode ?? 'level' })
   })
 
   useEffect(() => {
@@ -165,7 +154,6 @@ function LevellingFlow({
       {onPlaytomicStep ? (
         <PlaytomicStep
           playtomic={state.playtomic}
-          prefilled={state.prefilled}
           onChoose={(choice) => dispatch({ type: 'choosePlaytomic', choice })}
           onType={(text) => dispatch({ type: 'typePlaytomic', text })}
         />

@@ -1,4 +1,4 @@
-import { givenLevel, hasLevel, levelProblem } from '../../lib/level'
+import { givenLevel, levelProblem } from '../../lib/level'
 import { QUESTIONS, TOTAL_STEPS, type QuestionKey } from './levellingQuestions'
 
 export type PlaytomicChoice = 'yes' | 'no' | null
@@ -15,8 +15,6 @@ export interface LevellingState {
   step: number
   answers: Partial<Record<QuestionKey, string>>
   playtomic: { choice: PlaytomicChoice; text: string }
-  /** Step 6 opened on a level already on the profile. */
-  prefilled: boolean
 }
 
 export type LevellingAction =
@@ -28,7 +26,6 @@ export type LevellingAction =
 // `type` alias, not interface, so it stays assignable to the RPC's Json argument.
 export type LevellingPayload = Record<QuestionKey, string> & {
   playtomic_level: number | null
-  prefilled: boolean
 }
 
 export const PLAYTOMIC_STEP = TOTAL_STEPS - 1
@@ -42,22 +39,9 @@ const lastStep = ({ mode }: { mode: LevellingMode }) => totalSteps({ mode }) - 1
 export const isFinalStep = (state: LevellingState) => state.step === lastStep(state)
 
 export function initialLevellingState({
-  levelOnFile,
   mode = 'level',
-}: {
-  levelOnFile: number | null
-  mode?: LevellingMode
-}): LevellingState {
-  const prefilled = mode === 'level' && hasLevel({ level: levelOnFile })
-  return {
-    mode,
-    step: 0,
-    answers: {},
-    playtomic: prefilled
-      ? { choice: 'yes', text: String(levelOnFile) }
-      : { choice: null, text: '' },
-    prefilled,
-  }
+}: { mode?: LevellingMode } = {}): LevellingState {
+  return { mode, step: 0, answers: {}, playtomic: { choice: null, text: '' } }
 }
 
 export function levellingReducer(state: LevellingState, action: LevellingAction): LevellingState {
@@ -100,6 +84,5 @@ export function toPayload(state: LevellingState): LevellingPayload | null {
       state.mode === 'level' && state.playtomic.choice === 'yes'
         ? givenLevel({ value: state.playtomic.text })
         : null,
-    prefilled: state.prefilled,
   }
 }

@@ -101,23 +101,12 @@ describe('LevellingPage', () => {
         racket_sports: 'casual',
         walls: 'slow_back_wall',
         playtomic_level: null,
-        prefilled: false,
       },
     })
     expect(m.showToast).toHaveBeenCalledWith({
       variant: 'success',
       message: 'Thanks, Sam! You’re all set and ready to register for an event.',
     })
-  })
-
-  it('prefills step 6 for a player with a level on file', () => {
-    levellingState.levelOnFile = 2.3
-    renderFlow()
-    answerFiveQuestions()
-    expect(
-      screen.getByRole('heading', { name: 'Is this still your Playtomic level?' }),
-    ).toBeTruthy()
-    expect((screen.getByLabelText(/Your Playtomic level/) as HTMLInputElement).value).toBe('2.3')
   })
 
   it('stays put with an error when the answers are refused', async () => {
@@ -181,7 +170,6 @@ describe('LevellingPage, questions only (S3c)', () => {
   beforeEach(() => {
     levellingState.needsLevelling = false
     levellingState.questionsOpen = true
-    levellingState.levelOnFile = 2.3
   })
 
   it('asks the five questions, with Finish on the last and no Playtomic step', async () => {
@@ -206,7 +194,6 @@ describe('LevellingPage, questions only (S3c)', () => {
       payload: expect.objectContaining({
         walls: 'corners',
         playtomic_level: null,
-        prefilled: false,
       }),
     })
     expect(m.showToast).toHaveBeenCalledWith({

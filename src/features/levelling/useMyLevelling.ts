@@ -34,10 +34,7 @@ export function useIsExistingPlayer(): boolean | undefined {
 /** `needsLevelling` is false until the read resolves, so the levelling card never flashes in. */
 export function useNeedsLevelling() {
   const { data } = useMyLevelling()
-  return {
-    needsLevelling: data?.needsLevelling ?? false,
-    levelOnFile: data?.levelOnFile ?? null,
-  }
+  return { needsLevelling: data?.needsLevelling ?? false }
 }
 
 const questionsDismissedKey = ({ userId }: { userId: string }) =>

@@ -76,10 +76,9 @@ guard (§2.4, C-7): a `rating_events` row of kind `tournament` or `seed`, or a
   or no). The Playtomic step is the only one with a submit button. Back keeps
   answers; closing asks to confirm and keeps answers in memory for the session
   only (nothing is saved until the end).
-- **Prefill.** For a player with `playtomic_level > 0`, step 6 starts on "yes"
-  with that level. Since D-16 the gate holds only players with no level, so
-  the gated flow never prefills; S3c's prompt for players with a level drops
-  step 6 and this path with it.
+- **No prefill.** Step 6 always starts empty. Since D-16 only players with no
+  level take the six-step flow, so there is never a level to prefill; the
+  prefill path and the `prefilled` column were removed (24 Nov).
 - **Finish.** `complete_levelling` (C-3) in one call. On success: invalidate
   the player and levelling queries, return to the return path, show the toast.
   The register action is then available. **Finishing never registers.**
