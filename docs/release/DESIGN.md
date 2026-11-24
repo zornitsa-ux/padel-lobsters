@@ -11,7 +11,8 @@ on a May build for months. Migrations and grants had the same shape: correct whe
 ## Flow
 
 1. **Preflight.** On `main`, clean tree, equal to `origin/main`; installed CLI equals the
-   `package.json` pin; project linked; every CI workflow run for the commit is green (newest run
+   `package.json` pin; linked project equals the production ref pinned in `release.ts` (the ref is already public in
+   migrations and templates); every CI workflow run for the commit is green (newest run
    per workflow wins). Any failure stops the release. There is no skip flag: the migration rule
    (merged and reviewed first) has no urgency exception.
 2. **Plan.** Pending migrations come from `migration list --remote` (local without remote). A

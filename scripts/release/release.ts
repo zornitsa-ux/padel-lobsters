@@ -24,6 +24,9 @@ import {
   type ReleasePlan,
 } from './plan.ts'
 
+// Already public in migrations and email templates; the pin stops a release against another link.
+const PRODUCTION_PROJECT_REF = 'enjhugmqjtfakwivpmvf'
+
 const root = new URL('../..', import.meta.url).pathname
 const supabaseCli = `${root}node_modules/.bin/supabase`
 const functionsDir = `${root}supabase/functions`
@@ -99,7 +102,14 @@ function linkedProjectRef(): string {
   const file = `${root}supabase/.temp/project-ref`
   if (!existsSync(file))
     fail({ message: 'no linked project', next: 'npx supabase link --project-ref <ref>' })
-  return readFileSync(file, 'utf8').trim()
+  const linked = readFileSync(file, 'utf8').trim()
+  if (linked !== PRODUCTION_PROJECT_REF) {
+    fail({
+      message: `linked project ${linked} is not production`,
+      next: `npx supabase link --project-ref ${PRODUCTION_PROJECT_REF}`,
+    })
+  }
+  return linked
 }
 
 function checkCi() {
