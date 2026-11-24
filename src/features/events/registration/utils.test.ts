@@ -114,6 +114,14 @@ describe('getAvailablePlayers', () => {
     expect(getAvailablePlayers({ players, regs }).map((p) => p.id)).toContain('p1')
   })
 
+  it('never offers a deleted account', () => {
+    const withDeleted = [
+      ...players,
+      ...normalisePlayers([{ id: 'p9', name: 'Anonymous Crab #9', status: 'deleted' }]),
+    ]
+    expect(getAvailablePlayers({ players: withDeleted }).map((p) => p.id)).not.toContain('p9')
+  })
+
   it('with no registrations, returns every active player', () => {
     expect(getAvailablePlayers({ players }).map((p) => p.id)).toEqual(['p1', 'p2', 'p4'])
   })

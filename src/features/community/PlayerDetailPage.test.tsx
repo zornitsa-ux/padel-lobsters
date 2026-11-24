@@ -11,6 +11,7 @@ const h = vi.hoisted(() => ({
   players: [
     { id: 'p1', name: 'Ada Lovelace', status: 'active', playtomicLevel: 3.5 },
     { id: 'p2', name: 'Ada Byron', status: 'active', playtomicLevel: 2 },
+    { id: 'p9', name: 'Anonymous Crab #9', status: 'deleted', playtomicLevel: null },
   ],
 }))
 
@@ -82,6 +83,15 @@ describe('PlayerDetailPage', () => {
     expect(screen.getByRole('link', { name: /Community/ }).getAttribute('href')).toBe('/community')
     expect(screen.getByText('3.5')).toBeTruthy()
     expect(screen.getByText('A steady lobster.')).toBeTruthy()
+  })
+
+  it('shows a deleted account as its name and nothing else, even to an admin', () => {
+    h.isAdmin = true
+    renderAt('p9')
+    expect(screen.getByRole('heading', { name: 'Anonymous Crab #9' })).toBeTruthy()
+    expect(screen.getByText('This account was deleted.')).toBeTruthy()
+    expect(screen.queryByText('A steady lobster.')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'resend' })).toBeNull()
   })
 
   it('explains when the player does not exist', () => {

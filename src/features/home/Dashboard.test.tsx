@@ -45,7 +45,9 @@ vi.mock('../settings/useSettings', () => ({
 }))
 vi.mock('../players/usePlayers', () => ({
   usePlayers: () => playersQuery(),
+  useMembers: () => playersQuery(),
 }))
+vi.mock('./DeletionFollowups', () => ({ default: () => null }))
 vi.mock('../events/useMatches', () => ({
   useRecentMatches: () => matchesQuery(),
 }))

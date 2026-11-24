@@ -218,16 +218,16 @@ whole flow is removed along with `admin_delete_player` and
 Each screen that reads players falls into one of three kinds. AD3 confirms
 the list with a grep before changing anything.
 
-| Kind                        | Rule for a deleted player                                                   | Screens (today's call sites)                                                                                                                                                                                                                                                                                                                                        |
-| --------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Pickers**: choose someone | Never offered. The server refuses the tables in C-6 anyway (§2.5).          | Admin add player and `PlayerPicker` (`Registration`, `AddPlayerCard`); team partner (`PartnerChoiceForm`, `AdminAddTeamCard`, change partner); transfer recipient (`TransferSpotModal`, `TransferSpotCard`, `AdminTransferPanel`); league `TeamForm`; manual swaps in `ScheduleRounds`; Oscars nominees (`useOscarsSession`); raffle eligibility; `LinkPlayerModal` |
-| **Member lists and counts** | Left out.                                                                   | Community roster (`Players`, `PlayersList`); birthdays and greetings on Home (`Dashboard`); admin counts (`AdminTools`, `AdminAlerts`); any member or newcomer count                                                                                                                                                                                                |
-| **History**: what happened  | Shown under the anonymised name, never as a link to a profile with details. | Results and scores (`Scores*`, `PastEventResults`, `Schedule`, `MyTournament`, `MyRounds`); King of the Court results; league tables and matches; raffle winners; Oscars results; payments and registered lists of an upcoming team event (the kept row); admin security panels                                                                                     |
+| Kind                        | Rule for a deleted player                                                   | Screens, and how each leaves deleted players out                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| --------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Pickers**: choose someone | Never offered. The server refuses the tables in C-6 anyway (§2.5).          | Active players only (`getAvailablePlayers`, `eligiblePlayers`): admin add player and `PlayerPicker` (`Registration`, `AddPlayerCard`), every team partner picker (`TeamSignup`, `TeamLists`, `AdminAddTeamCard`, `MyTournament`, change partner). Active only: transfer recipient (`TransferSpotModal`). `isSelectablePlayer`: league `TeamForm`. `useMembers`: Oscars nominees (`useOscarsSession`). Raffle eligibility leaves them out, and so does the server's draw (C-6). Manual swaps in `ScheduleRounds` only move players already in the schedule. |
+| **Member lists and counts** | Left out.                                                                   | Active players only: community roster (`Players`), the first-name count on `PlayerDetailPage`, admin counts (`AdminTools`). `useMembers`: birthdays in `AdminAlerts` (Home). Greetings read the viewer's own row.                                                                                                                                                                                                                                                                                                                                          |
+| **History**: what happened  | Shown under the anonymised name, never as a link to a profile with details. | Results and scores (`Scores*`, `PastEventResults`, `Schedule`, `MyTournament`, `MyRounds`, `RecentlyCompletedBanners`, `AccountStatsSection`); King of the Court results; league tables and matches; raffle winners; Oscars results; payments, transfers (`AdminTransferPanel`, `TransferAccept`) and registered lists of an upcoming team event (the kept row); shop orders; admin security panels                                                                                                                                                        |
 
 - **One roster, two views.** `usePlayers` keeps returning every row (history
-  needs names) and adds `members`, the roster without deleted players.
-  Pickers and member lists read `members`. `isSelectablePlayer` becomes the
-  one filter both use.
+  needs names). `useMembers` reads the same cache through `isSelectablePlayer`
+  and leaves deleted players out. Lists that already show only `active`
+  players (which also drops placeholders) keep that stricter filter.
 - **A deleted player's profile page** (`PlayerDetailPage`, `PlayerProfile`)
   shows only the anonymised name and that the account was deleted: no stats,
   no badges, no admin actions.
@@ -243,7 +243,8 @@ the list with a grep before changing anything.
 
 ### 3.4 Admin follow-ups
 
-Home's `AdminAlerts` gets one entry while any of these is open:
+Home shows admins one card, "After account deletions", under the admin
+alerts, while any of these is open. Each row links to where it's fixed:
 
 - **Teams with a deleted member:** league teams in an unfinished season, and
   teams in an upcoming team event. Worked out live from `status = 'deleted'`,

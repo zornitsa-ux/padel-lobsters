@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { User } from 'lucide-react'
+import { User, UserX } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { usePlayers, usePlayerActions } from '../players/usePlayers'
 import { useTournaments } from '../events/useTournaments'
@@ -20,6 +20,7 @@ import { LevelBadge } from '../../components/ui/LevelBadge'
 import { usePlayerEditor } from './usePlayerEditor'
 import { useResendInvite } from './useResendInvite'
 import { buildFirstNameCount, getDisplayName } from './playersSelectors'
+import { isSelectablePlayer } from '../players/playerSelectors'
 import type { CommunityPlayer } from './playersSelectors'
 import type { InviteSent } from './InviteSentModal'
 import { describeInviteError } from '../players/inviteErrors'
@@ -71,6 +72,18 @@ function PlayerHero({
   )
 }
 
+// A deleted account: its anonymised name and nothing else (DESIGN §3.3).
+function DeletedPlayerPage({ name }: { name: string }) {
+  return (
+    <div className="-mx-4">
+      <PageHeader title={name} eyebrow="Community" backLink={BACK_LINK} />
+      <div className="px-4 pt-4">
+        <EmptyState icon={<UserX />} title="This account was deleted." />
+      </div>
+    </div>
+  )
+}
+
 export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailPageProps) {
   const { session, role, isAdmin } = useApp()
   const { resendInvite } = usePlayerActions({ session, role })
@@ -108,6 +121,8 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
       </div>
     )
   }
+
+  if (!isSelectablePlayer(player)) return <DeletedPlayerPage name={player.name} />
 
   const handleResendInvite = async (p: CommunityPlayer) => {
     setError('')

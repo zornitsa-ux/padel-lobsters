@@ -3,12 +3,9 @@ import type { Player } from '../../lib/normalise'
 // Pure player-derivation logic, kept free of Supabase/React imports so it can be
 // unit-tested in isolation.
 
-// A player who can still be picked, registered or paired. Deleting a player is
-// a soft delete (20260806211102) so their history survives, which means the
-// roster query still returns them — every list that offers someone as a choice
-// has to exclude them, while name lookups over past events keep working.
-// 'placeholder' and 'pending' are separately excluded where they don't belong;
-// only 'deleted' is universal.
+// Not a deleted account (docs/account-deletion §3.3). The roster still
+// returns deleted accounts so history can name them; pickers and member lists
+// leave them out, through useMembers or a stricter 'active' filter.
 export function isSelectablePlayer(player: { status?: string | null }): boolean {
   return player.status !== 'deleted'
 }
