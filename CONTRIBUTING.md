@@ -76,7 +76,7 @@ npm run release        # preflight, confirm, apply, verify
 ```
 
 `release` refuses unless you are on a clean `main` equal to `origin/main`, CI is
-green on that commit, the CLI matches the pinned version and a person is at the
+green on that commit, the CLI matches the pinned version and a person is at a
 terminal. It lists pending migrations and functions committed since their last
 deploy, asks you to type the project ref, applies migrations then functions
 (`--functions-first` reverses that; `--redeploy-functions` ships every function),

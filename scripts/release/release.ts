@@ -39,8 +39,21 @@ function exec({ cmd, args, inherit = false }: Exec): string {
 const cli = ({ args, inherit }: { args: string[]; inherit?: boolean }) =>
   exec({ cmd: supabaseCli, args, inherit })
 const git = ({ args }: { args: string[] }) => exec({ cmd: 'git', args }).trim()
-const remoteJson = ({ args }: { args: string[] }): unknown =>
-  JSON.parse(cli({ args: [...args, '--remote', '--output-format', 'json'] }))
+function remoteJson({ args }: { args: string[] }): unknown {
+  const command = `supabase ${args.join(' ')} --remote --output-format json`
+  try {
+    return JSON.parse(cli({ args: [...args, '--remote', '--output-format', 'json'] }))
+  } catch (error) {
+    return fail({ message: `could not read the output of \`${command}\`: ${String(error)}` })
+  }
+}
+
+function nonEmpty<T>({ rows, command }: { rows: T[]; command: string }): T[] {
+  if (rows.length) return rows
+  return fail({
+    message: `\`${command}\` parsed to zero rows; the output shape is not what the parser expects`,
+  })
+}
 
 function fail({ message, next }: { message: string; next?: string }): never {
   console.error(`\nSTOP: ${message}`)
@@ -56,6 +69,12 @@ function checkGit() {
   const branch = git({ args: ['rev-parse', '--abbrev-ref', 'HEAD'] })
   if (branch !== 'main')
     fail({ message: `on '${branch}', not main`, next: 'git checkout main && git pull' })
+  if (git({ args: ['rev-parse', '--is-shallow-repository'] }) === 'true') {
+    fail({
+      message: 'shallow clone: function commit times would read as 0',
+      next: 'git fetch --unshallow',
+    })
+  }
   if (git({ args: ['status', '--porcelain'] }))
     fail({ message: 'working tree has uncommitted changes' })
   git({ args: ['fetch', '--quiet', 'origin', 'main'] })
@@ -68,7 +87,9 @@ function checkGit() {
 }
 
 function checkCli() {
-  const pinned = JSON.parse(readFileSync(`${root}package.json`, 'utf8')).devDependencies.supabase
+  const declared: string = JSON.parse(readFileSync(`${root}package.json`, 'utf8')).devDependencies
+    .supabase
+  const pinned = declared.replace(/^[^\d]*/, '')
   const installed = cli({ args: ['--version'] }).trim()
   if (installed !== pinned)
     fail({ message: `CLI is ${installed}, package.json pins ${pinned}`, next: 'npm ci' })
@@ -109,10 +130,21 @@ function localFunctions(): LocalFunction[] {
 }
 
 function readState() {
+  const local = localFunctions()
+  const remote = parseFunctionList({ json: remoteJson({ args: ['functions', 'list'] }) })
+  if (local.length && !remote.length) {
+    fail({
+      message:
+        '`functions list` parsed to zero rows but the repo has functions; the output shape is not what the parser expects',
+    })
+  }
   return {
-    migrations: parseMigrationList({ json: remoteJson({ args: ['migration', 'list'] }) }),
-    remoteFunctions: parseFunctionList({ json: remoteJson({ args: ['functions', 'list'] }) }),
-    localFunctions: localFunctions(),
+    migrations: nonEmpty({
+      rows: parseMigrationList({ json: remoteJson({ args: ['migration', 'list'] }) }),
+      command: 'migration list',
+    }),
+    remoteFunctions: remote,
+    localFunctions: local,
   }
 }
 
@@ -144,15 +176,31 @@ function deployFunctions({ names }: { names: string[] }) {
   }
 }
 
+function applySteps({ plan, functionsFirst }: { plan: ReleasePlan; functionsFirst: boolean }) {
+  const migrate = {
+    label: 'migrations',
+    run: () => plan.pendingMigrations.length && pushMigrations(),
+  }
+  const deploy = { label: 'functions', run: () => deployFunctions({ names: plan.staleFunctions }) }
+  return functionsFirst ? [deploy, migrate] : [migrate, deploy]
+}
+
+// A half-applied release must say what landed and show the remaining drift.
 function apply({ plan, functionsFirst }: { plan: ReleasePlan; functionsFirst: boolean }) {
-  const migrate = () => plan.pendingMigrations.length && pushMigrations()
-  const deploy = () => deployFunctions({ names: plan.staleFunctions })
-  if (functionsFirst) {
-    deploy()
-    migrate()
-  } else {
-    migrate()
-    deploy()
+  const done: string[] = []
+  for (const { label, run } of applySteps({ plan, functionsFirst })) {
+    try {
+      run()
+      done.push(label)
+    } catch (error) {
+      console.error(`\nFAILED while applying ${label}: ${String(error)}`)
+      console.error(`Applied before the failure: ${done.join(', ') || 'nothing'}`)
+      const problems = verificationProblems()
+      fail({
+        message: `release incomplete. Remaining drift:\n  ${problems.join('\n  ') || 'none detected'}`,
+        next: 'fix the cause and run npm run release again; a failed migration is never edited, write a new one',
+      })
+    }
   }
 }
 
@@ -172,7 +220,9 @@ function verificationProblems(): string[] {
     problems.push('grants for anon/authenticated drifted from supabase/expected_*_grants.txt')
   }
   step({ title: 'Auth integrity counts (informational)' })
-  succeeds({ cmd: `${root}scripts/prod-rehearsal/integrity.sh`, args: ['--remote'] })
+  if (!succeeds({ cmd: `${root}scripts/prod-rehearsal/integrity.sh`, args: ['--remote'] })) {
+    console.warn('WARNING: the auth integrity check did not run; check it by hand.')
+  }
   return problems
 }
 
