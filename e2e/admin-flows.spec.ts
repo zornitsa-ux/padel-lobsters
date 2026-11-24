@@ -414,3 +414,67 @@ test('Lobster Way admin saves an edit', { tag: '@seed-write' }, async ({ page })
     await admin.from('settings').update(saved).eq('id', 1).throwOnError()
   }
 })
+
+/* Invite emails (PIN plan T18): each send is confirmed in a dialog naming who
+   is emailed and at which address. The send itself is stubbed, so these never
+   reach the email function. */
+
+/** Stubs one RPC and records each call to it. */
+async function stubRpc({ page, name, body }: { page: Page; name: string; body: unknown }) {
+  const calls: unknown[] = []
+  await page.route(`**/rest/v1/rpc/${name}`, async (route) => {
+    calls.push(route.request().postDataJSON())
+    await route.fulfill({ json: body })
+  })
+  return calls
+}
+
+test('resend invite: the confirm names the player and address; cancel sends nothing', async ({
+  page,
+}) => {
+  const email = 'lena@lobsters.test'
+  const sends = await stubRpc({ page, name: 'admin_resend_invite', body: email })
+  await page.goto(`/community/${lena.id}`)
+  const resend = page.getByRole('button', { name: 'Resend invite' })
+
+  await resend.click()
+  const lines = [`To: ${lena.name}`, email, 'link to sign in']
+  const cancelled = await confirmDialog({ page, title: 'Resend invite email?', lines })
+  await cancelled.getByRole('button', { name: 'Cancel' }).click()
+  await expect(cancelled).toBeHidden()
+  expect(sends).toEqual([])
+
+  await resend.click()
+  const dialog = await confirmDialog({ page, title: 'Resend invite email?', lines })
+  await dialog.getByRole('button', { name: 'Send email' }).click()
+  await expect(page.getByText('Invite sent', { exact: true })).toBeVisible()
+  expect(sends).toEqual([{ input_player_id: lena.id }])
+})
+
+test('league invite: the confirm names the placeholder and address; cancel sends nothing', async ({
+  page,
+}) => {
+  const placeholder = 'Kit Morrow'
+  const sends = await stubRpc({ page, name: 'admin_invite_league_player', body: null })
+  await page.goto(`/league/${SEED_LEAGUE.id}/manage`)
+  await page.getByRole('button', { name: 'Teams' }).click()
+  await page.getByText(placeholder).getByRole('button', { name: '(invite)' }).click()
+  const form = page.getByRole('dialog', { name: 'Invite Player' })
+  await form.getByPlaceholder('player@example.com').fill(' Kit@Example.test ')
+  const send = form.getByRole('button', { name: 'Send Invite' })
+  const lines = [`To: ${placeholder}`, 'kit@example.test', 'in the league']
+
+  await send.click()
+  const cancelled = await confirmDialog({ page, title: 'Send invite email?', lines })
+  await cancelled.getByRole('button', { name: 'Cancel' }).click()
+  await expect(cancelled).toBeHidden()
+  expect(sends).toEqual([])
+
+  await send.click()
+  const dialog = await confirmDialog({ page, title: 'Send invite email?', lines })
+  await dialog.getByRole('button', { name: 'Send email' }).click()
+  await expect(form.getByText('Invite sent to kit@example.test.')).toBeVisible()
+  expect(sends).toEqual([
+    { input_player_id: '00000000-0000-4000-a000-000000000027', input_email: 'Kit@Example.test' },
+  ])
+})

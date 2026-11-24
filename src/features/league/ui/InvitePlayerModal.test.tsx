@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
 
-const { invite } = vi.hoisted(() => ({
+const { invite, confirmInviteEmail } = vi.hoisted(() => ({
+  confirmInviteEmail: vi.fn(),
   invite: {
     current: {} as {
       mutateAsync: ReturnType<typeof vi.fn>
@@ -16,6 +17,9 @@ const { invite } = vi.hoisted(() => ({
 }))
 
 vi.mock('../hooks/useLeagueMutations', () => ({ useInviteLeaguePlayer: () => invite.current }))
+vi.mock('../../players/useConfirmInviteEmail', () => ({
+  useConfirmInviteEmail: () => confirmInviteEmail,
+}))
 
 import { InvitePlayerModal } from './InvitePlayerModal'
 
@@ -34,6 +38,7 @@ const typeEmail = (email: string) =>
   fireEvent.change(screen.getByPlaceholderText('player@example.com'), { target: { value: email } })
 
 beforeEach(() => {
+  confirmInviteEmail.mockReset().mockResolvedValue(true)
   invite.current = {
     mutateAsync: vi.fn().mockResolvedValue(null),
     reset: vi.fn(),
@@ -45,15 +50,32 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('InvitePlayerModal', () => {
-  it('sends the trimmed email for this player', () => {
+  it('names the player and address, then sends the trimmed email', async () => {
     renderModal()
-    typeEmail('  ada@example.com ')
+    typeEmail('  Ada@example.com ')
     fireEvent.click(screen.getByRole('button', { name: /send invite/i }))
 
-    expect(invite.current.mutateAsync).toHaveBeenCalledWith({
-      input_player_id: 'ph1',
-      input_email: 'ada@example.com',
+    expect(confirmInviteEmail).toHaveBeenCalledWith({
+      kind: 'league_invite',
+      name: 'Ada Lovelace',
+      email: 'ada@example.com',
     })
+    await waitFor(() =>
+      expect(invite.current.mutateAsync).toHaveBeenCalledWith({
+        input_player_id: 'ph1',
+        input_email: 'Ada@example.com',
+      }),
+    )
+  })
+
+  it('sends nothing when the admin cancels the confirm', async () => {
+    confirmInviteEmail.mockResolvedValue(false)
+    renderModal()
+    typeEmail('ada@example.com')
+    fireEvent.click(screen.getByRole('button', { name: /send invite/i }))
+
+    await waitFor(() => expect(confirmInviteEmail).toHaveBeenCalled())
+    expect(invite.current.mutateAsync).not.toHaveBeenCalled()
   })
 
   it('confirms the sent invite, shows no PIN, and waits for Done', () => {

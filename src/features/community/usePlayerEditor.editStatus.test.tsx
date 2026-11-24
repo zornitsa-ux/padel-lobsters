@@ -31,7 +31,6 @@ vi.mock('../players/usePlayers', () => ({
   useEnsurePlayerPii: () => ensurePlayerPiiMock,
   useForgetPlayerPii: () => vi.fn(),
   usePlayerActions: () => ({
-    addPlayer: vi.fn(),
     updatePlayer: updatePlayerMock,
     deletePlayer: vi.fn(),
   }),

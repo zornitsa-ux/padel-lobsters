@@ -788,22 +788,23 @@ verify-pin`.
 
 Raised by the owner on 2026-11-07. Since R2, `admin_add_player` (with an email),
 `admin_invite_league_player` and `admin_resend_invite` email the player at
-once through `private.send_invite_email` → `send-invite-email`, with no step in
-between. That's a service email, not marketing, but the app can't tell whether
-the person asked to join. The "added" copy says only "An admin has set up your
-account".
+once through `private.send_invite_email` → `send-invite-email`. That's a
+service email, not marketing, but the app can't tell whether the person asked
+to join. Owner direction (2026-11-24):
 
-- **Confirm before sending:** the admin is asked "Send them an invite email?"
-  when saving a new player with an email, and can decline. Resend invite
-  already is an explicit action. The league invite is an admin action for a
-  player already in the league, so it keeps sending (confirm with the owner).
-- **Copy:** each email says why the player is getting it, with "Not you?
-  Ignore this email or reply and we'll remove you."
-- **Owner first:** whether this is enough, or whether the policy itself
-  changes (for example, admins only add people who asked to join). Not legal
-  advice; the owner decides.
-- No dependency on the PIN cutover. It can ship any time, but not within 3
-  days of an event if it touches the add-player flow.
+- **Confirm every send:** the admin confirms each invite email in a dialog
+  that names who is emailed and at which address, so a misclick sends nothing.
+  `useConfirmInviteEmail` (on `useConfirmOnBehalf`) covers the league invite
+  and Resend invite. Resend loads the player's email only for the dialog
+  (one audited PII read) and drops it after.
+- **Add player** has had no client since the add-player form was removed, so
+  there is nothing to confirm in the app. PR 11 deletes the unused client
+  `addPlayer`. `admin_add_player` itself stays until a migration drops it.
+- **Copy:** each email says an admin added or invited them, and why. The
+  closing line: "Not you, or didn't expect this? You can ignore this email.
+  To reach us, go to padelobsters.nl." There's no reply route.
+- **Release:** the client change and the `send-invite-email` deploy don't
+  depend on each other. Not within 3 days of an event.
 
 ### 3.7 PRs 0c and 0d: prod-data rehearsal kit (T13, T14)
 

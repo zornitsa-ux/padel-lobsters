@@ -3,6 +3,7 @@ import { Modal } from '../../../components/ui/Modal'
 import { AlertBox } from '../../../components/ui/AlertBox'
 import { useInviteLeaguePlayer } from '../hooks/useLeagueMutations'
 import { describeInviteError } from '../../players/inviteErrors'
+import { useConfirmInviteEmail } from '../../players/useConfirmInviteEmail'
 import { ActionRow } from '../../../components/ui/ActionRow'
 import { Button } from '../../../components/ui/Button'
 
@@ -23,6 +24,7 @@ export function InvitePlayerModal({
 }: InvitePlayerModalProps) {
   const [email, setEmail] = useState('')
   const invite = useInviteLeaguePlayer(leagueId)
+  const confirmInviteEmail = useConfirmInviteEmail()
 
   function handleClose() {
     setEmail('')
@@ -32,9 +34,16 @@ export function InvitePlayerModal({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (!email.trim()) return
+    const address = email.trim()
+    if (!address) return
+    const ok = await confirmInviteEmail({
+      kind: 'league_invite',
+      name: playerName,
+      email: address.toLowerCase(),
+    })
+    if (!ok) return
     try {
-      await invite.mutateAsync({ input_player_id: playerId, input_email: email.trim() })
+      await invite.mutateAsync({ input_player_id: playerId, input_email: address })
     } catch {
       // error is surfaced via invite.error
     }
