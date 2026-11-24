@@ -57,25 +57,33 @@ the client first (§2.4).
 ### 2.1 Checks before anything changes
 
 - The target exists and isn't already deleted.
+- **Admin path:** the caller is an admin, and the target isn't the caller
+  (`cannot_delete_self`, checked before the admin-target check). It works
+  for any non-admin player, placeholders included.
 - **The target isn't an admin** (`admin_must_step_down`). Admins ask Jon to
   remove the role by hand first; the app has no role management (D-6).
 - **Recent email code:** the caller's token has an `otp` entry in `amr` from
   the last 10 minutes (`code_required`). For an admin deletion, that's the
   admin's token: the code goes to the admin.
-- **Admin path:** the caller is an admin and the target isn't the caller.
-  It works for any non-admin player, placeholders included.
+- **Not in a live event** (`in_live_event`): the target holds no active
+  registration in an event dated today or earlier that isn't completed.
+  Its schedule, results and ratings are still being written, so the
+  member is asked to try again once it's completed. The summary says so
+  up front.
 
 ### 2.2 The anonymised name
 
 `Anonymous <Animal> #<N>`. N comes from a sequence
 (`private.deleted_player_number`) and is never reused. The animal is
-`animals[(N - 1) % 12]` from a fixed list of 12 one-word sea animals, kept in
+`animals[(N - 1) % 12 + 1]` (Postgres arrays start at 1) from a fixed list of 12 one-word sea animals, kept in
 the migration. Lobster isn't one of them, so the name never reads as a
 member. With one running number, no two deleted players share a name.
 
-Names that match the pattern are reserved (`private.is_anonymised_name`,
-C-1). Signup, profile edits and admin edits refuse them, so a name that
-matches is always a deleted account. The client relies on that: it shows
+Names that match the pattern are reserved (`private.is_reserved_name`,
+C-1). Every path that names a player refuses them, including league
+placeholders, so a name that matches is always a deleted account. The
+reserved check ignores case and extra spaces, so a lookalike such as
+"anonymous octopus #6" is refused too. The client relies on that: it shows
 the full name wherever it would otherwise shorten to a first name (§3.3).
 
 ### 2.3 Steps, in order
@@ -90,13 +98,15 @@ house lock order before any registration changes.
    word and ignoring case. Only the table, row id and column are stored, in
    `account_deletion_followups` (C-3), never the name. Admins review and
    dismiss them (§3.4). False positives are expected and cheap.
-2. **Upcoming individual registrations** (event not completed, status
+2. **Upcoming individual registrations** (event dated after today, status
    `registered` or `waitlist`, no team): cancelled through the same step as
    `cancel_registration`, so the waitlist moves up. No refund, as with any
    cancellation (D-4).
 3. **Upcoming team-event registrations:** the spot stays with the pair
-   (D-3). If the deleted member is the captain, `captain_id` moves to the
-   partner. The deleted member's row stays active under the anonymised name
+   (D-3). If the deleted member is the captain and the partner isn't
+   deleted, `captain_id` moves to the partner. If both members are now
+   deleted, the team is cancelled with `cancel_team_rows`, so the waitlist
+   moves up. The deleted member's row stays active under the anonymised name
    until the captain or an admin replaces them with `change_team_partner`.
    The team shows on the admin follow-ups (§3.4) until then.
 4. **Pending spot transfers** from or to them: `status = 'cancelled'`,
@@ -147,7 +157,9 @@ success. Only someone who kept a copy of the token could still use it,
 and three checks stop it from writing anything (D-8):
 
 - **The deleted row is frozen:** a `players` trigger refuses any update to a
-  row whose status is already `deleted` (`player_deleted`). This stops
+  row whose status is already `deleted` (`player_deleted`), except one that
+  changes only `mm_rating`, `mm_sigma` and `mm_rating_updated_at`. Applying
+  and reviewing ratings for an event they played in still works. This stops
   `update_my_profile` from writing a name or phone back.
 - **No new reference to a deleted player:** a trigger on the tables that
   attach a player to something refuses inserts, and updates that change the
@@ -206,7 +218,7 @@ the list with a grep before changing anything.
 
 | Kind                        | Rule for a deleted player                                                   | Screens (today's call sites)                                                                                                                                                                                                                                                                                                                                        |
 | --------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Pickers**: choose someone | Never offered. The server refuses anyway (§2.5).                            | Admin add player and `PlayerPicker` (`Registration`, `AddPlayerCard`); team partner (`PartnerChoiceForm`, `AdminAddTeamCard`, change partner); transfer recipient (`TransferSpotModal`, `TransferSpotCard`, `AdminTransferPanel`); league `TeamForm`; manual swaps in `ScheduleRounds`; Oscars nominees (`useOscarsSession`); raffle eligibility; `LinkPlayerModal` |
+| **Pickers**: choose someone | Never offered. The server refuses the tables in C-6 anyway (§2.5).          | Admin add player and `PlayerPicker` (`Registration`, `AddPlayerCard`); team partner (`PartnerChoiceForm`, `AdminAddTeamCard`, change partner); transfer recipient (`TransferSpotModal`, `TransferSpotCard`, `AdminTransferPanel`); league `TeamForm`; manual swaps in `ScheduleRounds`; Oscars nominees (`useOscarsSession`); raffle eligibility; `LinkPlayerModal` |
 | **Member lists and counts** | Left out.                                                                   | Community roster (`Players`, `PlayersList`); birthdays and greetings on Home (`Dashboard`); admin counts (`AdminTools`, `AdminAlerts`); any member or newcomer count                                                                                                                                                                                                |
 | **History**: what happened  | Shown under the anonymised name, never as a link to a profile with details. | Results and scores (`Scores*`, `PastEventResults`, `Schedule`, `MyTournament`, `MyRounds`); King of the Court results; league tables and matches; raffle winners; Oscars results; payments and registered lists of an upcoming team event (the kept row); admin security panels                                                                                     |
 

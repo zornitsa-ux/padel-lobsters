@@ -72,7 +72,7 @@ e2e grows with AD4 and AD5, and the rehearsal runs before AD4 ships.
   confirm GoTrue treats the account as gone.
 - **DB test** (`account_deletion.sql`, invented players only):
   - Refusals: `code_required` with no `amr`, with a stale `amr` and with a
-    `password` one. `admin_must_step_down`, `cannot_delete_self`,
+    `password` one. `admin_must_step_down`, `cannot_delete_self` (an admin targeting themselves), `in_live_event`,
     `already_deleted`.
   - A full deletion: every column in §2.3 step 8 wiped. The rows in step 7
     gone. Completed-event registrations, matches and rating events
@@ -85,8 +85,16 @@ e2e grows with AD4 and AD5, and the rehearsal runs before AD4 ships.
   - Leftover token, with a JWT set from before: `update_my_profile` raises
     `player_deleted`; registering the deleted player, transferring to them,
     pairing them and voting for them all raise `player_deleted`.
-  - Reserved names: signup, `update_my_profile` and `admin_update_player`
-    refuse "Anonymous Octopus #3".
+  - Reserved names: signup, `update_my_profile`, `admin_update_player` and a
+    league placeholder refuse "Anonymous Octopus #3" and
+    "anonymous octopus #3".
+  - Ratings: `apply_tournament_ratings` and `admin_review_rating_event`
+    still work for an event a deleted player played in.
+  - Teams: both members of an upcoming team delete in turn; the second
+    deletion cancels the team. A waitlisted team with a deleted member is
+    promoted when another team cancels.
+  - A stale schedule can't swap a deleted player into a match, but a score
+    can still be entered on a match they're already in.
   - Re-joining: a new signup with the old email creates a new active row.
 
 ### AD3
