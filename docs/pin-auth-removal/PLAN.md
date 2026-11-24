@@ -12,7 +12,7 @@ signed in gets logged out.
 
 **Constraints**
 
-- **Migrations:** review → merge → `npx supabase db push` from `main`
+- **Migrations:** review → merge → `npx supabase db push --remote` from `main`
   (CLAUDE.md). There are no MCP or dashboard writes to production. Edge
   functions are deployed from `main` after merge (CONTRIBUTING.md).
 - **The owner reviews, merges and does every production step:** db push,
@@ -162,7 +162,7 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   the auth excludes from production's catalog and refuses a list missing the
   copied or token tables. After the load, every other local auth table must
   be empty, which replaces a Vault check after the load that could never
-  fail. `integrity.sh` refuses `--linked --details`, so names never come
+  fail. `integrity.sh` refuses `--remote --details`, so names never come
   straight from production. The unconfirmed-account threshold follows D-17's
   1-hour OTP expiry (it was 30 minutes).
 
@@ -271,7 +271,7 @@ up` refuses it alone; a PR branch must contain `main`'s migrations. Noted:
   - auth logs show no errors.
 
   **Still open:** no real signup has gone through the hook yet. Rerun
-  `npm run rehearsal:integrity -- --linked` once one has. The owner is to
+  `npm run rehearsal:integrity -- --remote` once one has. The owner is to
   confirm that the 3 admins were told invites now send an email.
 
 - 2026-10-21: **C-7 redefined (owner).** `password_count` is dropped rather
@@ -816,7 +816,7 @@ before T6.
   `auth_sets.sql` (the row sets shared by the counts and the names),
   `auth_integrity.sql` (+ `_details`) and `integrity.sh`, which together run
   §4.5 steps 1–2. Run them as `npm run rehearsal:sync` and
-  `npm run rehearsal:integrity -- --local|--linked`.
+  `npm run rehearsal:integrity -- --local|--remote`.
 - **T14:** `scripts/prod-rehearsal/parity.ts`, run with `tsx` and supabase-js
   against the local stack (§4.5 steps 3 and 5). For every account with a real
   email, it gets a code from `auth.admin.generateLink` (no email is sent), signs
@@ -979,7 +979,7 @@ before production, that every account still signs in and sees the same data.
   With no secret they fail closed.
 - **After the load, every auth table except the three copied is empty**
   (GoTrue's `schema_migrations` aside). This proves the excludes held.
-- **Names stay local.** `integrity.sh` refuses `--linked --details`.
+- **Names stay local.** `integrity.sh` refuses `--remote --details`.
 
 **What is copied (`scrub_credentials.sql` runs in the load transaction):**
 
@@ -1004,7 +1004,7 @@ before production, that every account still signs in and sees the same data.
 3. **Baseline (T14).** Run `parity.ts --record baseline`.
 4. **Apply the PR.** Check out the PR branch, which must contain every
    migration on `main` (otherwise `migration up` refuses), then
-   `npx supabase migration up --local`. If `config.toml` changed, restart the
+   `npx supabase migration up`. If `config.toml` changed, restart the
    stack.
 5. **After (T14).** Run `npm run rehearsal:integrity -- --local`, then
    `parity.ts --record after --compare baseline`.

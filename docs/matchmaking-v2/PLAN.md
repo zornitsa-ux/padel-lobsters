@@ -116,7 +116,7 @@ leaned on, previously unasserted) and `court.players` must equal the flattened
   raised head and **pushed to prod 2026-08-05**. Repo and prod histories match.
   Note for any future un-pushed migration: anything hand-applied to prod raises
   the remote head and strands older local timestamps — check
-  `npx supabase migration list --linked` before assuming `db push` will work.
+  `npx supabase migration list --remote` before assuming `db push` will work.
 - **Migration `20260713000001_matchmaking_v2.sql` is live in production**
   (pushed 2026-07-25). Carries the whole V2 schema plus, in its own marked
   section, the unrelated pre-existing `settings` write-grant fix — settings

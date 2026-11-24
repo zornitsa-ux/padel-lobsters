@@ -5,7 +5,7 @@
 #   scripts/prod-rehearsal/sync.sh [--yes]
 #
 # Run it from a checkout whose migrations match production (normally main).
-# Afterwards, check out the PR branch and run `npx supabase migration up --local`
+# Afterwards, check out the PR branch and run `npx supabase migration up`
 # to rehearse exactly what `db push` will do. `npm run db:reset` puts the seed
 # data back.
 #
@@ -56,7 +56,7 @@ service_key="$(local_var SERVICE_ROLE_KEY)"
 
 [[ -f supabase/.temp/project-ref ]] || die "no linked project. Run npx supabase link"
 project_ref="$(cat supabase/.temp/project-ref)"
-prod_anon_key="$("$supabase_cli" projects api-keys --project-ref "$project_ref" -o json |
+prod_anon_key="$("$supabase_cli" projects api-keys --remote="$project_ref" -o json |
   jq -er '.[] | select(.name == "anon") | .api_key')" || die "couldn't fetch production's anon key"
 prod_gotrue="$(gotrue_version "https://$project_ref.supabase.co" "$prod_anon_key")" ||
   die "couldn't read production's GoTrue version"
@@ -65,9 +65,9 @@ local_gotrue="$(gotrue_version "$local_api" "$local_anon_key")" || die "couldn't
   die "GoTrue is $local_gotrue locally but $prod_gotrue in production. Run npx supabase link, then npx supabase stop && npx supabase start"
 
 echo "Comparing local migrations with production..."
-mismatched="$("$supabase_cli" migration list --linked --output-format json |
+mismatched="$("$supabase_cli" migration list --remote --output-format json |
   jq -r '.migrations[] | select(.local != .remote) | "\(.local // "-") / \(.remote // "-")"')" ||
-  die "couldn't compare migrations with production (supabase migration list --linked)"
+  die "couldn't compare migrations with production (supabase migration list --remote)"
 [[ -z "$mismatched" ]] ||
   die "local and production migrations differ (local / remote):
 $mismatched
@@ -80,7 +80,7 @@ fi
 
 # Excludes are built from production's catalog, the side being dumped, so an
 # auth table that exists only there is still left out.
-prod_auth_tables="$("$supabase_cli" db query --linked --output-format json "
+prod_auth_tables="$(db_query remote --output-format json "
     select c.relname as auth_table
       from pg_class c join pg_namespace n on n.oid = c.relnamespace
      where n.nspname = 'auth' and c.relkind in ('r', 'p')" |
@@ -94,7 +94,7 @@ for table in $prod_auth_tables; do
   [[ " $auth_tables_copied " == *" $table "* ]] || exclude+=(-x "auth.$table")
 done
 
-"$supabase_cli" db reset --local --no-seed
+"$supabase_cli" db reset --no-seed
 [[ "$(local_sql -c 'select count(*) from vault.secrets')" == "0" ]] || die "Vault isn't empty locally"
 
 umask 077
@@ -102,7 +102,7 @@ dump_dir="$(mktemp -d)"
 trap 'rm -rf "$dump_dir"' EXIT
 
 echo "Dumping production data..."
-"$supabase_cli" db dump --linked --data-only --schema public,auth "${exclude[@]}" -f "$dump_dir/prod.sql"
+"$supabase_cli" db dump --remote --data-only --schema public,auth "${exclude[@]}" -f "$dump_dir/prod.sql"
 
 echo "Loading it locally (one transaction)..."
 cat "$dump_dir/prod.sql" "$here/scrub_credentials.sql" | local_sql -q --single-transaction -f - >/dev/null
@@ -132,5 +132,5 @@ echo "Loaded $(local_sql -c 'select count(*) from public.players') players and $
 echo
 "$here/integrity.sh" --local
 echo
-echo "Next: check out the PR branch, run npx supabase migration up --local, then"
+echo "Next: check out the PR branch, run npx supabase migration up, then"
 echo "scripts/prod-rehearsal/integrity.sh --local. Run npm run db:reset when done."

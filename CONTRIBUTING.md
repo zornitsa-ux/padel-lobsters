@@ -16,7 +16,7 @@ over them. The table lists the files this project uses.
 | `npm run db:migration -- <name>`                   | Create a new empty migration file                          |
 | `npm run db:test`                                  | Run the database tests in `supabase/tests`                 |
 | `npm run rehearsal:sync`                           | Replace the local DB with production data (see below)      |
-| `npm run rehearsal:integrity -- --local\|--linked` | Auth integrity counts, local or production (read-only)     |
+| `npm run rehearsal:integrity -- --local\|--remote` | Auth integrity counts, local or production (read-only)     |
 
 ### Seed data
 
@@ -52,7 +52,7 @@ before review:
 
 ```bash
 git checkout main && npm run rehearsal:sync   # production data, credentials wiped
-git checkout <pr-branch> && npx supabase migration up --local
+git checkout <pr-branch> && npx supabase migration up
 npm run rehearsal:integrity -- --local
 npm run db:reset                               # back to seed data when done
 ```
@@ -73,8 +73,11 @@ what was reviewed and merged gets applied):
 
 ```bash
 git checkout main && git pull
-npx supabase db push
+npx supabase db push --remote
 ```
+
+`--remote` is required: since CLI v3 a bare `db push` targets the local stack. It
+asks for confirmation before it touches production; the default answer is No.
 
 `db push` diffs local `supabase/migrations/` against the remote
 `supabase_migrations.schema_migrations` table and applies only unapplied

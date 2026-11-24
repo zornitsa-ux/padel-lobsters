@@ -11,7 +11,7 @@ shipped and the funnel has been measured.
 
 **Constraints**
 
-- **Migrations:** review → merge → `npx supabase db push` from `main`
+- **Migrations:** review → merge → `npx supabase db push --remote` from `main`
   (CLAUDE.md). There are no MCP or dashboard writes to production.
 - **Testing is local only** (local stack plus `npm run rehearsal:sync`).
 - **No player names, emails or IDs** on public surfaces, in previews, or in

@@ -9,6 +9,19 @@ if [[ ! -x "$supabase_cli" ]]; then
   exit 1
 fi
 
+# `db query` for $1 (local|remote), then the CLI's own arguments. Remote adds
+# --read-only: v3 refuses a hosted statement without consent unless it is
+# read-only, and nothing here may write to production.
+db_query() {
+  local target="$1"
+  shift
+  if [[ "$target" == remote ]]; then
+    "$supabase_cli" db query --remote --read-only "$@"
+  else
+    "$supabase_cli" db query "$@"
+  fi
+}
+
 # Reads `db query --output-format json` on stdin and prints every object
 # carrying the key $1 at any depth, one per line. This survives the CLI
 # wrapping its rows differently (bare array vs `{rows: [...]}` vs the current

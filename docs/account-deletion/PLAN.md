@@ -10,7 +10,7 @@ name, and nothing breaks.
 
 **Constraints**
 
-- **Migrations:** review → merge → `npx supabase db push` from `main`
+- **Migrations:** review → merge → `npx supabase db push --remote` from `main`
   (CLAUDE.md). No MCP or dashboard writes to production.
 - **Testing is local only** (local stack plus `npm run rehearsal:sync`).
 - **No sign-in-facing release within 3 days of a tournament.** AD2 to AD5 are

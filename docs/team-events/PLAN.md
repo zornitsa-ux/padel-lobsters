@@ -16,7 +16,7 @@ Status is tracked outside the repo; this plan holds the work breakdown and how t
 
 **Constraints**
 
-- **Migrations:** review → merge → `npx supabase db push` from `main`
+- **Migrations:** review → merge → `npx supabase db push --remote` from `main`
   (CLAUDE.md). There are no MCP or dashboard writes to production. Edge
   functions are deployed from `main` after merge, **before** the `db push`
   that calls them.
@@ -74,7 +74,7 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
   (clean apply: 14 integrity counts unchanged, 29 `team_events.sql` checks,
   `db:grants:check` matched). `npm run db:reset` puts the seed data back. For
   a new migration, rehearse the same way: `rehearsal:sync` from `main`, then
-  `npx supabase migration up --local` from the branch (CONTRIBUTING.md).
+  `npx supabase migration up` from the branch (CONTRIBUTING.md).
 - The local integration branch `kotc-test` and the per-PR worktrees are no
   longer needed.
 - **Code map (Phase 2).** Domain: `src/features/events/kingOfCourt/domain/`.

@@ -36,7 +36,7 @@ fi
 # object on stdout with exit 0, which prettier then rejects as a syntax error.
 # Both halves have to be checked, hence the pipeline plus the empty guard below.
 generate() {
-  "$supabase_cli" gen types typescript --local \
+  "$supabase_cli" gen types typescript \
     | "$repo_root/node_modules/.bin/prettier" --stdin-filepath database.types.ts
 }
 
