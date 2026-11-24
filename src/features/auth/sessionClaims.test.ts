@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Session } from '@supabase/supabase-js'
-import { sessionRole, sessionUsedPassword } from './sessionClaims'
+import { hasRecentEmailCode, sessionRole, sessionUsedPassword } from './sessionClaims'
 
 const sessionWith = (payload: object) =>
   ({ access_token: `h.${btoa(JSON.stringify(payload))}.s` }) as unknown as Session
@@ -44,5 +44,30 @@ describe('sessionUsedPassword', () => {
   it('is false without a session or with a malformed token', () => {
     expect(sessionUsedPassword({ session: null })).toBe(false)
     expect(sessionUsedPassword({ session: { access_token: 'junk' } as Session })).toBe(false)
+  })
+})
+
+describe('hasRecentEmailCode', () => {
+  const NOW = 1_800_000_000_000
+  const withAmr = (amr: unknown[]) =>
+    ({ access_token: `h.${btoa(JSON.stringify({ amr }))}.s` }) as unknown as Session
+  const at = (secondsAgo: number) => NOW / 1000 - secondsAgo
+
+  it('is true for a code sign-in inside the window', () => {
+    expect(
+      hasRecentEmailCode({
+        session: withAmr([{ method: 'otp', timestamp: at(100) }]),
+        maxAgeSeconds: 540,
+        now: NOW,
+      }),
+    ).toBe(true)
+  })
+
+  it('is false for an old code, a password or no session', () => {
+    const check = (session: Session | null) =>
+      hasRecentEmailCode({ session, maxAgeSeconds: 540, now: NOW })
+    expect(check(withAmr([{ method: 'otp', timestamp: at(541) }]))).toBe(false)
+    expect(check(withAmr([{ method: 'password', timestamp: at(10) }]))).toBe(false)
+    expect(check(null)).toBe(false)
   })
 })

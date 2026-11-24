@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 //
 // Caching the resolved name per player id lets the correct greeting paint on
 // the first frame of every subsequent load. Name only — no PII.
-const KEY = 'pl_greeting_name'
+export const GREETING_NAME_KEY = 'pl_greeting_name'
 
 interface Args {
   playerId: string | null
@@ -22,7 +22,7 @@ interface Cache {
 
 function read(playerId: string): string | null {
   try {
-    const raw = localStorage.getItem(KEY)
+    const raw = localStorage.getItem(GREETING_NAME_KEY)
     if (!raw) return null
     const { id, name } = JSON.parse(raw)
     return id === playerId && typeof name === 'string' ? name : null
@@ -33,7 +33,7 @@ function read(playerId: string): string | null {
 
 function write(playerId: string, name: string): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify({ id: playerId, name }))
+    localStorage.setItem(GREETING_NAME_KEY, JSON.stringify({ id: playerId, name }))
   } catch {
     // Private-mode / quota — the greeting just falls back to the skeleton.
   }

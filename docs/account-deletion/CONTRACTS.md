@@ -93,14 +93,25 @@ null on these rows.
 
 ## C-5. Avatar storage policies
 
-- New: `Player or admin delete avatar` on DELETE, with the same condition
-  as the update policy.
 - Changed: the INSERT and UPDATE avatar policies also require
-  `not public.is_deleted_player(auth.uid())`.
+  `not public.is_deleted_player(auth.uid())`. Uploads stay limited to
+  `player-<uid>.webp`, or any name for an admin.
+- New (AD4): `Player or admin read avatar` on SELECT. Storage writes with
+  `RETURNING` and deletes only rows the caller can select, so without it
+  every upload was refused and every remove matched nothing.
+- New: `Player or admin delete avatar` on DELETE: not a deleted player, and
+  `public.is_own_avatar(name)` or admin. The SELECT policy uses the same
+  condition without the deleted check.
+- `public.is_own_avatar(input_name text) returns boolean` (AD4): true for
+  `player-<uid>.webp`, and for the file the caller's own `avatar_url` names
+  when it's a random name that no other player's `avatar_url` names. Admins
+  upload a player's photo under a random name, so the stable name alone would
+  miss it. Members can write any `avatar_url`, hence the other-player check.
 - `public.is_deleted_player(input_id uuid) returns boolean`: stable,
   security definer, executable by `authenticated`. In `public` because
   storage policies run as the browser role, which has no usage on
-  `private`. It tells no more than `players_public.status`.
+  `private`. It tells no more than `players_public.status`. The same goes
+  for `is_own_avatar`, which tells a player only about their own photo.
 
 ## C-6. Triggers
 

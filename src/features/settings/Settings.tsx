@@ -7,14 +7,21 @@ import { levelFieldValue, levelPolicy, levelProblem } from '../../lib/level'
 import { errorMessage } from '../../lib/errors'
 import { processAvatar } from '../../lib/processAvatar'
 import { ownAvatarFilename } from '../players/playerQueries'
-import { GROUP_SETTINGS_PATH, LOBBY_PROMPTS, type ProfileForm } from './settingsHelpers'
+import {
+  GROUP_SETTINGS_PATH,
+  LOBBY_PROMPTS,
+  playtomicCheckKey,
+  type ProfileForm,
+} from './settingsHelpers'
 import AccountSection from './AccountSection'
 import SignInSecuritySection from './SignInSecuritySection'
 import ProfileSection from './ProfileSection'
 import AccountStatsSection from './AccountStatsSection'
 import AccountOrdersSection from './AccountOrdersSection'
+import DeleteAccountSection from '../account-deletion/DeleteAccountSection'
 import { PageHeader } from '../../components/ui/PageHeader'
 import LobsterWayLink from '../../components/LobsterWayLink'
+import ClubLogo from '../../components/ClubLogo'
 import { useToast } from '../../lib/toastBus'
 import { Section } from '../../components/ui/Section'
 import { ListCard, LinkRow } from '../../components/ui/ListCard'
@@ -103,7 +110,7 @@ export default function Settings() {
   const myPlayerId = myPlayer?.id
   useEffect(() => {
     if (!hasPii || !myPlayerId) return
-    const lastCheck = localStorage.getItem(`lobster_playtomic_check_${claimedId}`)
+    const lastCheck = localStorage.getItem(playtomicCheckKey({ playerId: claimedId }))
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
     if (!lastCheck || parseInt(lastCheck) < thirtyDaysAgo) setShowPlaytomicPrompt(true)
   }, [myPlayerId, hasPii, claimedId])
@@ -210,7 +217,7 @@ export default function Settings() {
       // Edits are persisted — clear dirty so the seed effect can re-initialise
       // from the freshly-invalidated server values.
       profileDirty.current = false
-      localStorage.setItem(`lobster_playtomic_check_${claimedId}`, String(Date.now()))
+      localStorage.setItem(playtomicCheckKey({ playerId: claimedId }), String(Date.now()))
       setShowPlaytomicPrompt(false)
       setProfileExpanded(false)
       showToast({ variant: 'success', message: 'Profile saved.' })
@@ -222,7 +229,7 @@ export default function Settings() {
   }
 
   const dismissPlaytomicPrompt = () => {
-    localStorage.setItem(`lobster_playtomic_check_${claimedId}`, String(Date.now()))
+    localStorage.setItem(playtomicCheckKey({ playerId: claimedId }), String(Date.now()))
     setShowPlaytomicPrompt(false)
   }
 
@@ -273,14 +280,12 @@ export default function Settings() {
           </Button>
         )}
 
+        {session && <DeleteAccountSection />}
+
         <footer className="text-center space-y-1 py-5">
-          <img
-            src="/logo-256.webp"
-            alt="Padel Lobsters"
-            width="56"
-            height="56"
-            className="w-14 h-14 rounded-full bg-white p-1 object-contain mx-auto mb-2"
-          />
+          <div className="pb-2">
+            <ClubLogo />
+          </div>
           <p className="font-bold text-lob-slate">Padel Lobsters</p>
           <p className="caption">Tournament Manager · v1.0</p>
           <p className="text-xs text-lob-muted-light/60 mt-2">Made with 🦞 for the crew</p>

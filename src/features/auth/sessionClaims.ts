@@ -2,6 +2,7 @@ import type { Session } from '@supabase/supabase-js'
 
 interface AmrEntry {
   method?: string
+  timestamp?: number
 }
 
 interface AccessTokenClaims {
@@ -32,4 +33,30 @@ export function sessionUsedPassword({ session }: { session: Session | null }): b
   if (!session) return false
   const amr = decodePayload({ token: session.access_token })?.amr
   return Array.isArray(amr) && amr.some((entry) => entry?.method === 'password')
+}
+
+/**
+ * Whether the session holds an email-code sign-in from the last `maxAgeSeconds`.
+ * Mirrors private.has_recent_email_code (docs/account-deletion C-2), which decides.
+ */
+export function hasRecentEmailCode({
+  session,
+  maxAgeSeconds,
+  now = Date.now(),
+}: {
+  session: Session | null
+  maxAgeSeconds: number
+  now?: number
+}): boolean {
+  if (!session) return false
+  const amr = decodePayload({ token: session.access_token })?.amr
+  return (
+    Array.isArray(amr) &&
+    amr.some(
+      (entry) =>
+        entry?.method === 'otp' &&
+        typeof entry.timestamp === 'number' &&
+        entry.timestamp >= now / 1000 - maxAgeSeconds,
+    )
+  )
 }

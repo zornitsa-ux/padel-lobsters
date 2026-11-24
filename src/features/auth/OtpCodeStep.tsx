@@ -15,7 +15,10 @@ const RESEND_SECONDS = 60
 export interface OtpCodeStepProps {
   email: string
   onVerified: (session: Session) => void
-  onChangeEmail: () => void
+  /** Omit where the email can't change (confirming who you are). */
+  onChangeEmail?: () => void
+  /** False where only the code works: the link would sign in on another page. */
+  linkHint?: boolean
   type?: EmailOtpType
   submitLabel?: string
   resend?: () => Promise<AuthResult>
@@ -27,6 +30,7 @@ export function OtpCodeStep({
   onChangeEmail,
   type = 'email',
   submitLabel = 'Sign in',
+  linkHint = true,
   resend,
 }: OtpCodeStepProps) {
   const [code, setCode] = useState('')
@@ -111,7 +115,7 @@ export function OtpCodeStep({
         {busy ? 'Checking…' : submitLabel}
       </Button>
 
-      <p className="caption text-center">Or tap the link in the email.</p>
+      {linkHint && <p className="caption text-center">Or tap the link in the email.</p>}
 
       <div className="flex items-center justify-between text-xs">
         <TextButton onClick={handleResend} disabled={remaining > 0}>
@@ -119,9 +123,11 @@ export function OtpCodeStep({
             ? `Resend code (in ${formatCountdown({ seconds: remaining })})`
             : 'Resend code'}
         </TextButton>
-        <TextButton tone="neutral" onClick={onChangeEmail}>
-          Change email
-        </TextButton>
+        {onChangeEmail && (
+          <TextButton tone="neutral" onClick={onChangeEmail}>
+            Change email
+          </TextButton>
+        )}
       </div>
     </form>
   )

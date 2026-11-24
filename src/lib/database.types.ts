@@ -2256,6 +2256,7 @@ export type Database = {
         }[]
       }
       is_deleted_player: { Args: { input_id: string }; Returns: boolean }
+      is_own_avatar: { Args: { input_name: string }; Returns: boolean }
       lobster_oscars_admin_end: {
         Args: { input_tournament_id: string }
         Returns: string

@@ -55,6 +55,7 @@ public.get_my_team_invites() authenticated
 public.get_payment_reminder_link(input_registration_id uuid) authenticated
 public.get_transfer_recipient_phone(input_transfer_id uuid) authenticated
 public.is_deleted_player(input_id uuid) authenticated
+public.is_own_avatar(input_name text) authenticated
 public.lobster_oscars_admin_end(input_tournament_id uuid) authenticated
 public.lobster_oscars_admin_get_category_voters(input_category_id uuid) authenticated
 public.lobster_oscars_admin_get_results(input_tournament_id uuid) authenticated

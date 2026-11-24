@@ -2,6 +2,10 @@ import { formatLevel, knownLevel } from '../../lib/level'
 
 export const GROUP_SETTINGS_PATH = '/admin/settings'
 
+/** When this device last asked the player to check their Playtomic level. */
+export const playtomicCheckKey = ({ playerId }: { playerId: string | null }) =>
+  `lobster_playtomic_check_${playerId}`
+
 // The 30-day "Has your Playtomic level changed?" prompt; no level shows none (D-14).
 export const refreshPromptText = ({ level }: { level: number | null | undefined }) => {
   const value = knownLevel({ level })
