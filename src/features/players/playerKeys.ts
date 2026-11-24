@@ -11,7 +11,7 @@ export const playerKeys = {
 // invalidates playerKeys.all() (see usePlayerActions), and PII must not
 // refetch as a side effect of an unrelated write (renaming someone,
 // approving a different player) — only a write that actually touches THIS
-// player's PII should refetch it (see updatePlayer/deletePlayer in
+// player's PII should refetch it (see updatePlayer in
 // usePlayers.ts). A shared prefix would make that distinction impossible.
 export const playerPiiKeys = {
   all: () => ['player-pii'] as const,

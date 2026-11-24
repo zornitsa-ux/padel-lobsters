@@ -9,7 +9,6 @@ vi.mock('./playerQueries', () => ({
   fetchPlayers: vi.fn(),
   fetchMyProfile: vi.fn(),
   updatePlayer: vi.fn(),
-  deletePlayer: vi.fn(),
   resendInvite: vi.fn(),
   fetchPlayerPii: vi.fn(),
   uploadAvatar: vi.fn(),
@@ -80,31 +79,6 @@ describe('usePlayerActions — updatePlayer', () => {
 
     expect(res).toEqual({ ok: true })
     expect(q.updatePlayer).toHaveBeenCalledWith('other-id', { name: 'Updated by admin' }, adminRole)
-    expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey: playerKeys.all() })
-  })
-})
-
-// ── deletePlayer ──────────────────────────────────────────────────────────────
-
-describe('usePlayerActions — deletePlayer', () => {
-  it('calls mutation and invalidates playerKeys.all()', async () => {
-    ;(q.deletePlayer as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
-
-    const client = makeTestQueryClient()
-    vi.spyOn(client, 'invalidateQueries')
-
-    const { result } = renderHookWithClient(
-      () => usePlayerActions({ session: authedSession, role: adminRole }),
-      client,
-    )
-
-    let res: unknown
-    await act(async () => {
-      res = await result.current.deletePlayer('some-id')
-    })
-
-    expect(res).toEqual({ ok: true })
-    expect(q.deletePlayer).toHaveBeenCalledWith('some-id')
     expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey: playerKeys.all() })
   })
 })

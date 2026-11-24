@@ -4,11 +4,11 @@ import type { PlayerPii } from '../players/playerQueries'
 import type { CommunityPlayer } from './playersSelectors'
 
 // Shared state machine behind every "reveal this player's contact details"
-// control (PlayerProfile, PendingApprovalsList, LinkPlayerModal).
+// control (PlayerProfile today).
 // Nothing is fetched until `reveal()` is called — mounting a component that
 // uses this hook costs zero PII reads. Each surface owns its own markup
-// (a block, an inline chip, a per-row icon) since the three look nothing
-// alike; this only owns revealed/loading/error/hide.
+// (a block, an inline chip, a per-row icon); this only owns
+// revealed/loading/error/hide.
 export function useRevealPii(playerId: string) {
   const [revealed, setRevealed] = useState(false)
   const forget = useForgetPlayerPii()
@@ -25,8 +25,7 @@ export function useRevealPii(playerId: string) {
 
   // Purge on unmount too — a drawer that closes (rather than being
   // explicitly hidden first) shouldn't leave this player's PII cached.
-  // onlyIfUnobserved: a sibling surface (e.g. the pending-approvals row
-  // behind a closing LinkPlayerModal) may still be observing this same
+  // onlyIfUnobserved: a sibling surface may still be observing this same
   // player's PII — unmounting here must not blank it out from under them.
   useEffect(() => () => forget(playerId, { onlyIfUnobserved: true }), [playerId, forget])
 

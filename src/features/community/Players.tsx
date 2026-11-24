@@ -1,16 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useApp } from '../../context/useApp'
-import { usePlayers, usePlayerActions } from '../players/usePlayers'
-import { errorMessage } from '../../lib/errors'
-import { useConfirm } from '../../lib/confirmBus'
-import { useResolveWithPii } from './useRevealPii'
+import { usePlayers } from '../players/usePlayers'
 import { AlertBox } from '../../components/ui/AlertBox'
-import { Badge } from '../../components/ui/Badge'
 import { Section } from '../../components/ui/Section'
 import { Spinner } from '../../components/ui/Spinner'
 import { SearchInput } from '../../components/ui/SearchInput'
-import LinkPlayerModal from './LinkPlayerModal'
-import PendingApprovalsList from './PendingApprovalsList'
 import PlayersList from './PlayersList'
 import {
   buildFirstNameCount,
@@ -20,28 +14,20 @@ import {
 } from './playersSelectors'
 import type { CommunityPlayer } from './playersSelectors'
 import { loadFailed } from '../../lib/queryState'
-import { knownLevel } from '../../lib/level'
 
 // The roster only needs the public player rows; stats, reviews and admin
 // actions load on the player's own page (PlayerDetailPage).
 export default function Players() {
-  const confirm = useConfirm()
-  const { session, role, isAdmin } = useApp()
-  const { updatePlayer, deletePlayer } = usePlayerActions({ session, role })
+  const { session } = useApp()
   const playersQuery = usePlayers()
   const players = playersQuery.data ?? []
   const playersPending = playersQuery.isPending
   const playersFailed = loadFailed(playersQuery)
-  const resolveWithPii = useResolveWithPii()
   const claimedId = session?.user?.id ?? null
 
   const [search, setSearch] = useState('')
-  const [linkModal, setLinkModal] = useState<CommunityPlayer | null>(null)
-  const [linkSearch, setLinkSearch] = useState('')
-  const [error, setError] = useState('')
 
   const activePlayers = players.filter((p) => (p.status || 'active') === 'active')
-  const pendingPlayers = players.filter((p) => p.status === 'pending')
   const filtered = activePlayers.filter((p) => p.name?.toLowerCase().includes(search.toLowerCase()))
   const sorted = useMemo(() => sortPlayersChronological(filtered), [filtered])
   // Self is pinned to the top when no search is active.
@@ -52,122 +38,9 @@ export default function Players() {
   const firstNameCount = useMemo(() => buildFirstNameCount(activePlayers), [activePlayers])
   const displayName = (p: CommunityPlayer) => getDisplayName(p.name, firstNameCount)
 
-  const handleApprove = async (p: CommunityPlayer) => {
-    setError('')
-    try {
-      // Explicit status transition only — approving a signup should never
-      // also rewrite name/level/contact fields. Previously this spread the
-      // whole player record, which meant an unresolved PII overlay could
-      // silently blank fields on save (same class of bug as the edit form).
-      await updatePlayer(p.id, { status: 'active' })
-    } catch (err) {
-      setError(errorMessage(err, 'Could not approve player.'))
-    }
-  }
-
-  const handleReject = async (id: string) => {
-    if (
-      !(await confirm({
-        message: 'Reject and remove this registration request?',
-        destructive: true,
-      }))
-    )
-      return
-    setError('')
-    try {
-      await deletePlayer(id)
-    } catch (err) {
-      setError(errorMessage(err, 'Could not reject player.'))
-    }
-  }
-
-  // Admin links a pending new joiner to an existing player profile:
-  // copies their contact info onto the existing player, deletes the pending entry, sends existing PIN
-  const handleLinkConfirm = async (existingPlayer: CommunityPlayer) => {
-    const pending = linkModal
-    if (!pending || !existingPlayer) return
-
-    setError('')
-    try {
-      // Resolve full PII for BOTH records before merging — this used to
-      // read existingPlayer.email/phone/notes straight from the (possibly
-      // PII-unresolved) list props via `||`, which turns "unknown" into
-      // "blank" and can wipe the existing player's real contact info with
-      // no visible tell in the UI. Never merge from unresolved records.
-      const [existingFull, pendingFull] = await Promise.all([
-        resolveWithPii(existingPlayer),
-        resolveWithPii(pending),
-      ])
-      // Only fill genuinely-empty fields on the existing player from the
-      // pending signup — never overwrite a value the existing player
-      // already has.
-      const merged = {
-        name: existingFull.name,
-        email: existingFull.email || pendingFull.email || '',
-        phone: existingFull.phone || pendingFull.phone || '',
-        country: existingFull.country || pendingFull.country || '',
-        gender: existingFull.gender || pendingFull.gender || '',
-        playtomicLevel:
-          knownLevel({ level: existingFull.playtomicLevel }) ??
-          knownLevel({ level: pendingFull.playtomicLevel }) ??
-          '',
-        playtomicUsername: existingFull.playtomicUsername || pendingFull.playtomicUsername || '',
-        isLeftHanded: existingFull.isLeftHanded || pendingFull.isLeftHanded || false,
-        avatarUrl: existingFull.avatarUrl || pendingFull.avatarUrl || '',
-        notes: existingFull.notes || pendingFull.notes || '',
-      }
-      await updatePlayer(existingPlayer.id, merged)
-      await deletePlayer(pending.id)
-      setLinkModal(null)
-      setLinkSearch('')
-    } catch (err) {
-      setError(errorMessage(err, 'Could not link player.'))
-    }
-  }
-
   return (
     <div className="space-y-4">
-      {error && (
-        <AlertBox variant="error" onDismiss={() => setError('')}>
-          {error}
-        </AlertBox>
-      )}
-      {/* Link-to-existing modal */}
-      <LinkPlayerModal
-        linkModal={linkModal}
-        linkSearch={linkSearch}
-        setLinkSearch={setLinkSearch}
-        activePlayers={activePlayers}
-        onClose={() => {
-          setLinkModal(null)
-          setLinkSearch('')
-        }}
-        onConfirm={handleLinkConfirm}
-      />
-
-      <Section
-        title={
-          <>
-            Players ({activePlayers.length})
-            {pendingPlayers.length > 0 && isAdmin && (
-              <Badge tone="warning" label={`${pendingPlayers.length} pending`} />
-            )}
-          </>
-        }
-      >
-        {/* Pending approvals */}
-        {isAdmin && (
-          <PendingApprovalsList
-            pendingPlayers={pendingPlayers}
-            onApprove={handleApprove}
-            onReject={handleReject}
-            onLink={(p) => {
-              setLinkModal(p)
-              setLinkSearch('')
-            }}
-          />
-        )}
-
+      <Section title={<>Players ({activePlayers.length})</>}>
         <SearchInput
           label="Search players"
           placeholder="Search players…"

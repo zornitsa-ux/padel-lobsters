@@ -279,38 +279,9 @@ begin
   end;
   raise notice 'CHECK 9 ok  — deleting an event with registrations raises 23503';
 
-  -- ── 10. admin_delete_player is a soft delete ──────────────────────────────
-  if not public.admin_delete_player(v_players[2]) then
-    raise exception 'CHECK 10 FAILED: admin_delete_player reported no change';
-  end if;
-  select status into v_status from public.players where id = v_players[2];
-  if v_status <> 'deleted' then
-    raise exception 'CHECK 10 FAILED: expected status deleted, got %', v_status;
-  end if;
-  select count(*) into v_count from public.registrations
-   where tournament_id = v_t and player_id = v_players[2];
-  if v_count = 0 then
-    raise exception 'CHECK 10 FAILED: soft-deleting a player removed their registrations';
-  end if;
-  raise notice 'CHECK 10 ok — a deleted player keeps their registration history';
-
-  -- ── 11. A soft-deleted player frees their email for re-signup ─────────────
-  -- Both layers matter: players_email_lower_unique *and* auth.users' own
-  -- unique constraint, which the email sync trigger writes through to.
-  update public.players set email = 'capacity-test@example.com' where id = v_players[5];
-  perform public.admin_delete_player(v_players[5]);
-
-  select email into v_err from public.players where id = v_players[5];
-  if v_err is not null then
-    raise exception 'CHECK 11 FAILED: deleted player kept their email (%)', v_err;
-  end if;
-  select email into v_err from auth.users where id = v_players[5];
-  if v_err = 'capacity-test@example.com' then
-    raise exception 'CHECK 11 FAILED: auth.users still holds the address, login not revoked';
-  end if;
-
-  update public.players set email = 'capacity-test@example.com' where id = v_players[6];
-  raise notice 'CHECK 11 ok — a deleted player releases their address at both layers';
+  -- ── 10–11. Deleting a player keeps their history and frees their email ───
+  -- admin_delete_player is gone (20261124150000); account_deletion.sql
+  -- checks both for the account deletion that replaced it (D7, J1).
 
   -- ── 12. The self-delete policy is gone ────────────────────────────────────
   select exists(

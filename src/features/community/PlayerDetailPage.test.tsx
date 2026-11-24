@@ -5,7 +5,6 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { renderWithClient } from '../../test/renderWithClient'
 
 const h = vi.hoisted(() => ({
-  deletePlayer: vi.fn(),
   confirmAndResend: vi.fn(),
   confirm: vi.fn(),
   isAdmin: false,
@@ -23,7 +22,7 @@ vi.mock('../../context/useApp', () => ({
 }))
 vi.mock('../players/usePlayers', () => ({
   usePlayers: () => ({ data: h.players, isLoading: false }),
-  usePlayerActions: () => ({ deletePlayer: h.deletePlayer }),
+  usePlayerActions: () => ({}),
 }))
 vi.mock('./usePlayerEditor', () => ({
   usePlayerEditor: () => ({
@@ -38,18 +37,11 @@ vi.mock('./PlayerForm', () => ({ default: () => null }))
 vi.mock('./PlayerProfile', () => ({
   default: ({
     player,
-    onDelete,
     onResendInvite,
   }: {
     player: { id: string }
-    onDelete: (id: string) => void
     onResendInvite: (p: { id: string }) => void
-  }) => (
-    <>
-      <button onClick={() => onDelete(player.id)}>remove</button>
-      <button onClick={() => onResendInvite(player)}>resend</button>
-    </>
-  ),
+  }) => <button onClick={() => onResendInvite(player)}>resend</button>,
 }))
 vi.mock('./reviewScenarios', () => ({
   corpReview: () => ({ hasLabel: false, scenarioLabel: '', body: 'A steady lobster.' }),
@@ -79,7 +71,6 @@ beforeEach(() => {
   vi.clearAllMocks()
   h.isAdmin = false
   h.confirm.mockResolvedValue(true)
-  h.deletePlayer.mockResolvedValue(undefined)
 })
 
 afterEach(cleanup)
@@ -96,14 +87,6 @@ describe('PlayerDetailPage', () => {
   it('explains when the player does not exist', () => {
     renderAt('missing')
     expect(screen.getByText('This player could not be found.')).toBeTruthy()
-  })
-
-  it('returns to the roster after removing the player', async () => {
-    h.isAdmin = true
-    renderAt('p1')
-    fireEvent.click(screen.getByText('remove'))
-    await waitFor(() => expect(screen.getByText('ROSTER')).toBeTruthy())
-    expect(h.deletePlayer).toHaveBeenCalledWith('p1')
   })
 
   it('shows the sent dialog only after the admin confirms the resend', async () => {

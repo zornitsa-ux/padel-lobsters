@@ -10,7 +10,6 @@ import type { ReviewBucket } from '../community/ReviewBreakdownModal'
 import { REVIEW_SCENARIOS, corpReview } from '../community/reviewScenarios'
 import type { LucideIcon } from 'lucide-react'
 import {
-  Users,
   Settings,
   ShoppingBag,
   BarChart3,
@@ -56,11 +55,6 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
   const { data: interests = [] } = useMerchInterests()
 
   // ── Pending-action counts ───────────────────────────────────────────────────
-  const pendingSignups = useMemo(
-    () => players.filter((p) => p.status === 'pending').length,
-    [players],
-  )
-
   const nextEvent = useMemo(() => upcomingEvents({ events: tournaments })[0], [tournaments])
 
   const unpaidForNextEvent = useMemo(() => {
@@ -89,13 +83,6 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
       icon: Wallet,
       target: 'payments',
       event: nextEvent,
-    },
-    {
-      id: 'signups',
-      count: pendingSignups,
-      title: `${plural({ count: pendingSignups, one: 'player signup' })} awaiting approval`,
-      icon: Users,
-      target: 'players',
     },
     {
       id: 'orders',
@@ -153,14 +140,6 @@ export default function AdminTools({ onNavigate }: AdminToolsProps) {
         description: `${personalisedCount} personalised vs ${genericCount} generic reviews. Inspect scenarios and message variants.`,
         icon: BarChart3,
         onClick: () => setShowReviewBreakdown(true),
-      },
-      {
-        id: 'approvals',
-        title: 'Player Approvals',
-        description:
-          'Review pending signups, approve/reject requests, or link them to an existing player.',
-        icon: Users,
-        to: '/community',
       },
       {
         id: 'group-settings',

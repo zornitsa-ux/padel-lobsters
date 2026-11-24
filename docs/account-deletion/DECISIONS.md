@@ -8,14 +8,17 @@ them and how the code carries them out.
   hold ids in arrays that no foreign key protects. `status = 'deleted'` plus a
   wiped row keeps every result intact.
 - **D-2. Name: "Anonymous <Animal> #N"** (owner). N is a running number from a
-  sequence; the animal cycles through 12 with it. The pattern is reserved,
-  so the client can tell a deleted account from its name alone, including
-  in RPCs that return only names (Oscars, security panels).
+  sequence; the animal cycles through 12 with it. Any name containing
+  "anonymous" is refused (owner, 24 Nov), so the client can tell a deleted
+  account from its name alone, including in RPCs that return only names
+  (Oscars, security panels).
 - **D-3. Team spots stay with the remaining player** (owner). A team must have
   two active rows (`registrations_team_consistent`), so the deleted member's
   row stays active under the anonymised name until it's replaced through
   `change_team_partner`. The captain role moves to the partner so they can
-  replace them. Admins see the team in follow-ups.
+  replace them. Admins see the team in follow-ups. A partner who hasn't
+  accepted yet never agreed to play, so when the captain goes first the
+  team is cancelled instead of handed to them.
 - **D-4. Cancellation is the normal one, with no refund** (owner: "same as a
   normal cancellation"). Paid spots aren't refunded on any cancellation, so
   the summary tells the member and points them to a spot transfer first.
@@ -28,8 +31,9 @@ them and how the code carries them out.
   last-admin problem can't arise.
 - **D-7. One path for every removal.** `admin_delete_player` (the old soft
   delete) and `admin_purge_player` (service-role hard delete) are dropped,
-  and so is the pending-approval Reject and Link UI, which only they served.
-  Nothing creates `pending` players since self-signup.
+  and so is the pending-approval flow (the roster's list with Approve,
+  Reject and Link, and its two Admin entries), whose Reject and Link used
+  them. Nothing creates `pending` players since self-signup.
 - **D-8. Shut out the leftover token with three checks, not a global hook.**
   A `db_pre_request` check on every PostgREST request would also close the
   hour, but it costs a lookup on every request and a bug in it locks
@@ -55,3 +59,7 @@ them and how the code carries them out.
 - **D-13. Admin deletion:** non-admin members only, from the player's admin
   page, with `useConfirmOnBehalf`, the player's name typed, and a code sent
   to the admin (owner).
+- **D-14. Reserved names by trigger, not in each writer.** Eight functions
+  write `players.name`; one trigger covers them all, and any added later.
+  Only the signup hook and `create_partner_player` check first, to answer
+  in their own terms.

@@ -79,12 +79,12 @@ the client first (§2.4).
 the migration. Lobster isn't one of them, so the name never reads as a
 member. With one running number, no two deleted players share a name.
 
-Names that match the pattern are reserved (`private.is_reserved_name`,
-C-1). Every path that names a player refuses them, including league
-placeholders, so a name that matches is always a deleted account. The
-reserved check ignores case and extra spaces, so a lookalike such as
-"anonymous octopus #6" is refused too. The client relies on that: it shows
-the full name wherever it would otherwise shorten to a first name (§3.3).
+Any name containing "anonymous", in any case, is reserved
+(`private.is_reserved_name`, C-1). Every path that names a player refuses
+it, including league placeholders, so a name that matches the pattern is
+always a deleted account and no lookalike can pass for one. The client
+relies on that: it shows the full name wherever it would otherwise shorten
+to a first name (§3.3).
 
 ### 2.3 Steps, in order
 
@@ -104,9 +104,10 @@ house lock order before any registration changes.
    cancellation (D-4).
 3. **Upcoming team-event registrations:** the spot stays with the pair
    (D-3). If the deleted member is the captain and the partner isn't
-   deleted, `captain_id` moves to the partner. If both members are now
-   deleted, the team is cancelled with `cancel_team_rows`, so the waitlist
-   moves up. The deleted member's row stays active under the anonymised name
+   deleted, `captain_id` moves to the partner. The team is cancelled with
+   `cancel_team_rows` instead, so the waitlist moves up, when both members
+   are now deleted, or when the captain goes before the partner accepted:
+   the partner never agreed to play. The deleted member's row stays active under the anonymised name
    until the captain or an admin replaces them with `change_team_partner`.
    The team shows on the admin follow-ups (§3.4) until then.
 4. **Pending spot transfers** from or to them: `status = 'cancelled'`,
@@ -206,10 +207,11 @@ This replaces the **Remove player** action on the player admin page
 - Then the avatar is removed and `admin_delete_account` runs, and the page
   shows the player as deleted.
 
-The pending-approval **Reject** and **Link** actions in `Players.tsx` also
-call `admin_delete_player`. Nothing creates `pending` players any more (signup
-inserts `active`, and production has none), so they're removed along with
-`admin_delete_player` and `admin_purge_player` (D-7).
+The pending-approval list in `Players.tsx` (Approve, Reject, Link) and its
+Admin entries also relied on `admin_delete_player`. Nothing creates `pending`
+players any more (signup inserts `active`, and production has none), so the
+whole flow is removed along with `admin_delete_player` and
+`admin_purge_player` (D-7).
 
 ### 3.3 Everywhere else: three kinds of reader
 

@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { User } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { usePlayers, usePlayerActions } from '../players/usePlayers'
@@ -12,8 +11,6 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { Spinner } from '../../components/ui/Spinner'
 import Avatar from '../../components/ui/Avatar'
 import { FlagImg } from '../../components/ui/CountryPicker'
-import { errorMessage } from '../../lib/errors'
-import { useConfirm } from '../../lib/confirmBus'
 import PlayerProfile from './PlayerProfile'
 import PlayerForm from './PlayerForm'
 import InviteSentModal from './InviteSentModal'
@@ -75,10 +72,8 @@ function PlayerHero({
 }
 
 export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailPageProps) {
-  const navigate = useNavigate()
-  const confirm = useConfirm()
   const { session, role, isAdmin } = useApp()
-  const { deletePlayer, resendInvite } = usePlayerActions({ session, role })
+  const { resendInvite } = usePlayerActions({ session, role })
   const { data: players = [], isLoading } = usePlayers()
   const { data: tournaments = [] } = useTournaments()
   const { data: matches = [] } = useAllMatches()
@@ -112,17 +107,6 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
         </div>
       </div>
     )
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!(await confirm({ message: 'Remove this player?', destructive: true }))) return
-    setError('')
-    try {
-      await deletePlayer(id)
-      navigate('/community', { replace: true })
-    } catch (err) {
-      setError(errorMessage(err, 'Could not remove player.'))
-    }
   }
 
   const handleResendInvite = async (p: CommunityPlayer) => {
@@ -169,7 +153,6 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
             isAdmin={isAdmin}
             onNavigate={onNavigate}
             onEdit={editor.openEdit}
-            onDelete={handleDelete}
             onResendInvite={handleResendInvite}
           />
         </div>

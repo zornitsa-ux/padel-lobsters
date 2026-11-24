@@ -38,8 +38,8 @@ interface BuildEditPatchArgs {
 // because the admin left it alone or because it hadn't loaded yet when the
 // form opened. Structural fix for the 2026-08-15 email-wipe incident: as
 // long as `source` is the real pre-edit record (guaranteed by resolving PII
-// before the form opens — see openEdit/acceptMerge/handleLinkConfirm in
-// Players.tsx), a field that was never touched is byte-identical to itself
+// before the form opens — see openEdit/acceptMerge in
+// usePlayerEditor.ts), a field that was never touched is byte-identical to itself
 // and gets omitted, so it cannot be mistaken for an intentional clear.
 export function buildPlayerEditPatch({
   form,

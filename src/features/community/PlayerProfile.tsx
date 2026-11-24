@@ -1,5 +1,5 @@
 import React from 'react'
-import { Pencil, Trash2, Mail, EyeOff, AlertTriangle } from 'lucide-react'
+import { Pencil, Mail, EyeOff, AlertTriangle } from 'lucide-react'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { useRevealPii } from './useRevealPii'
@@ -51,7 +51,6 @@ interface PlayerProfileProps {
   isAdmin: boolean
   onNavigate?: EventNavigate
   onEdit: (player: CommunityPlayer) => void
-  onDelete: (id: string) => void
   onResendInvite: (player: CommunityPlayer) => void
 }
 
@@ -71,7 +70,6 @@ export default function PlayerProfile({
   isAdmin,
   onNavigate,
   onEdit,
-  onDelete,
   onResendInvite,
 }: PlayerProfileProps) {
   // Learned level (mm_rating/mm_sigma) is admin-only — it lives behind
@@ -434,14 +432,6 @@ export default function PlayerProfile({
             <Button onClick={() => onEdit(p)} variant="secondary" icon={<Pencil />}>
               Edit
             </Button>
-            <TextButton
-              onClick={() => onDelete(p.id)}
-              tone="destructive"
-              size="sm"
-              icon={<Trash2 size={14} />}
-            >
-              Remove
-            </TextButton>
           </ActionRow>
         </div>
       )}

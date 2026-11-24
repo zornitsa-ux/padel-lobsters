@@ -2,12 +2,10 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { renderWithClient } from '../../test/renderWithClient'
 
 // D-028: every roster/registration badge reads playtomicLevel.
 
 import PlayersList from './PlayersList'
-import PendingApprovalsList from './PendingApprovalsList'
 import RegisteredSection from '../events/registration/RegisteredSection'
 import { normalisePlayers } from '../../lib/normalise'
 import { mkRegistration } from '../../test/factories'
@@ -37,22 +35,6 @@ describe('roster level badges read the Playtomic level', () => {
     )
 
     expect(screen.getByText('3.5')).toBeTruthy()
-  })
-
-  it('PendingApprovalsList shows the Playtomic level', () => {
-    // Needs a QueryClientProvider — each pending row's email reveal control
-    // is backed by usePlayerPii/useForgetPlayerPii now (not fetched until
-    // tapped, but the hooks still need a client in the tree).
-    renderWithClient(
-      <PendingApprovalsList
-        pendingPlayers={[player]}
-        onApprove={() => {}}
-        onReject={() => {}}
-        onLink={() => {}}
-      />,
-    )
-
-    expect(screen.getByText(/Lv 3\.5/)).toBeTruthy()
   })
 
   it('RegisteredSection shows the Playtomic level', () => {

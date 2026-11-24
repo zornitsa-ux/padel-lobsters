@@ -18,13 +18,7 @@ test('Admin shows what needs attention and every section', async ({ page }) => {
   await expect(page.getByRole('button', { name: /new merch orders/ })).toBeVisible()
   await expect(page.getByText(/Sign-in readiness/)).toBeVisible()
   await expect(page.getByRole('button', { name: /Lobster Review Breakdown/ })).toBeVisible()
-  for (const section of [
-    'Player Approvals',
-    'Group Settings',
-    'Merch Admin',
-    'The Lobster Way',
-    'League',
-  ]) {
+  for (const section of ['Group Settings', 'Merch Admin', 'The Lobster Way', 'League']) {
     await expect(page.getByRole('link', { name: new RegExp(`^${section} `) })).toBeVisible()
   }
 })

@@ -25,7 +25,6 @@ const drawer = (isAdmin: boolean) => (
     isAdmin={isAdmin}
     onNavigate={() => {}}
     onEdit={() => {}}
-    onDelete={() => {}}
     onResendInvite={() => {}}
   />
 )

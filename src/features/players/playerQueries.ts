@@ -200,16 +200,6 @@ export async function updatePlayer(id: string, data: PlayerInput, role: string) 
   }
 }
 
-export async function deletePlayer(id: string) {
-  const { error } = await supabase.rpc('admin_delete_player', {
-    input_target_id: id,
-  })
-  if (error) {
-    console.error('admin_delete_player error:', error)
-    throw error
-  }
-}
-
 // ── Invite ───────────────────────────────────────────────────────
 // Returns the address the invite was mailed to.
 export async function resendInvite(playerId: string) {
