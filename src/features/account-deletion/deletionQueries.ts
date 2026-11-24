@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { supabase } from '../../supabase'
 
-// get_my_deletion_summary (docs/account-deletion CONTRACTS C-2).
+// get_my_deletion_summary and admin_get_deletion_summary (docs/account-deletion CONTRACTS C-2).
 const summarySchema = z.object({
   is_admin: z.boolean(),
   in_live_event: z.boolean(),
@@ -31,14 +31,23 @@ export const DELETE_STATUSES = [
   'already_deleted',
   'in_live_event',
   'not_found',
+  'cannot_delete_self',
 ] as const
 
 export type DeleteStatus = (typeof DELETE_STATUSES)[number]
 
-export const myDeletionSummaryKey = ['account-deletion', 'summary', 'me'] as const
+/** `targetId` for an admin deleting a member's account; none for the member's own. */
+export const deletionSummaryKey = ({ targetId }: { targetId?: string }) =>
+  ['account-deletion', 'summary', targetId ?? 'me'] as const
 
-export async function fetchMyDeletionSummary(): Promise<DeletionSummary> {
-  const { data, error } = await supabase.rpc('get_my_deletion_summary')
+export async function fetchDeletionSummary({
+  targetId,
+}: {
+  targetId?: string
+}): Promise<DeletionSummary> {
+  const { data, error } = targetId
+    ? await supabase.rpc('admin_get_deletion_summary', { input_target_id: targetId })
+    : await supabase.rpc('get_my_deletion_summary')
   if (error) throw error
   return summarySchema.parse(data)
 }
@@ -48,4 +57,19 @@ export async function deleteMyAccount(): Promise<DeleteStatus> {
   if (error) throw error
   const [row] = z.array(z.object({ status: z.enum(DELETE_STATUSES) })).parse(data ?? [])
   return row?.status ?? 'not_found'
+}
+
+export async function adminDeleteAccount({
+  targetId,
+}: {
+  targetId: string
+}): Promise<{ status: DeleteStatus; anonymisedName: string | null }> {
+  const { data, error } = await supabase.rpc('admin_delete_account', {
+    input_target_id: targetId,
+  })
+  if (error) throw error
+  const [row] = z
+    .array(z.object({ status: z.enum(DELETE_STATUSES), anonymised_name: z.string().nullable() }))
+    .parse(data ?? [])
+  return { status: row?.status ?? 'not_found', anonymisedName: row?.anonymised_name ?? null }
 }

@@ -202,7 +202,9 @@ Settings gets a **Delete account** section at the bottom.
 This replaces the **Remove player** action on the player admin page
 (`PlayerDetailPage`).
 
-- Hidden for admins and for players who are already deleted.
+- Hidden on the admin's own page and for players who are already deleted.
+  The roster doesn't carry roles, so for an admin the summary says they must
+  step down first and offers no way on.
 - It shows the same summary for that player (`admin_get_deletion_summary`).
 - `useConfirmOnBehalf` names the player and restates what happens. The admin
   types the player's name, then gets a code at their own email and enters it.

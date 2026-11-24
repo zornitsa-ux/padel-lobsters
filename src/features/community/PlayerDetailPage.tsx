@@ -27,6 +27,7 @@ import { describeInviteError } from '../players/inviteErrors'
 import type { EventNavigate } from '../events/eventHelpers'
 import { hasLevel } from '../../lib/level'
 import { firstName } from '../../lib/playerName'
+import AdminDeleteAccount from '../account-deletion/AdminDeleteAccount'
 
 const BACK_LINK = { to: '/community', label: 'Community' }
 
@@ -171,6 +172,9 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
             onResendInvite={handleResendInvite}
           />
         </div>
+        {isAdmin && player.id !== session?.user?.id && (
+          <AdminDeleteAccount player={{ id: player.id, name: player.name }} />
+        )}
       </div>
       <InviteSentModal inviteSent={inviteSent} onClose={() => setInviteSent(null)} />
       <PlayerForm {...editor.formProps} />
