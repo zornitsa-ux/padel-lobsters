@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useApp } from '../../context/useApp'
-import { usePlayers } from '../players/usePlayers'
+import { useMembers, usePlayers } from '../players/usePlayers'
 import { useRegistrations } from '../events/useRegistrations'
 import { useMatches } from '../events/useMatches'
 import { useConfirm } from '../../lib/confirmBus'
@@ -94,6 +94,7 @@ export function useOscarsSession(
   const confirm = useConfirm()
   const { session: authSession, isAdmin } = useApp()
   const { data: players = [] } = usePlayers()
+  const { data: members = [] } = useMembers()
   const claimedId = authSession?.user?.id ?? null
   const tournamentId = tournament?.id || ''
   const { data: regsData = [] } = useRegistrations(tournamentId || null)
@@ -107,9 +108,10 @@ export function useOscarsSession(
   const [error, setError] = useState<string | null>(null)
 
   const regs = useMemo(() => regsData.filter((r) => r.status === 'registered'), [regsData])
+  // Nominees: a deleted account keeps its past registration but can't be voted for.
   const regPlayers = useMemo(
-    () => players.filter((p) => regs.some((r) => r.playerId === p.id)),
-    [players, regs],
+    () => members.filter((p) => regs.some((r) => r.playerId === p.id)),
+    [members, regs],
   )
   const amRegistered = useMemo(
     () => !!claimedId && regs.some((r) => String(r.playerId) === String(claimedId)),

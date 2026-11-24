@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, Users, Save, Clock, Trophy } from 'lucide-react'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { PlayerRow } from '../../components/ui/PlayerRow'
 import { CheckRow, ListCard } from '../../components/ui/ListCard'
 import { usePlayers } from '../players/usePlayers'
+import { isSelectablePlayer } from '../players/playerSelectors'
 import { useRegistrations } from '../events/useRegistrations'
 import { useExclusions, useIneligible, useSetExclusions } from './useRaffle'
 import type { IneligibleReason } from './raffleQueries'
@@ -50,20 +51,23 @@ export default function RaffleEligibilityContainer({
     }
   }, [isLoading, seeded, excludedIds])
 
-  const nameOf = useMemo(() => {
-    const byId = new Map(players.map((p) => [String(p.id), p]))
-    return (id: string) => byId.get(String(id))?.name ?? null
-  }, [players])
+  const byId = useMemo(() => new Map(players.map((p) => [String(p.id), p])), [players])
+  const nameOf = useCallback((id: string) => byId.get(String(id))?.name ?? null, [byId])
 
-  // Registered players for this tournament, name-sorted.
+  // Registered players for this tournament, name-sorted. A deleted account
+  // keeps its registration in a past event, but the draw skips it.
   const registered = useMemo(() => {
     const seen = new Set<string>()
     return regsData
       .filter((r) => r.status === 'registered')
       .map((r) => r.playerId)
       .filter((id) => (seen.has(id) ? false : (seen.add(id), true)))
+      .filter((id) => {
+        const player = byId.get(String(id))
+        return !player || isSelectablePlayer(player)
+      })
       .sort((a, b) => fullNameOf(nameOf(a)).localeCompare(fullNameOf(nameOf(b))))
-  }, [regsData, nameOf])
+  }, [regsData, byId, nameOf])
 
   const toggle = (id: string) => {
     if (autoSkip.has(id)) return // locked — the draw skips them regardless

@@ -3,7 +3,7 @@ import { useApp } from '../../context/useApp'
 import { useSettings } from '../settings/useSettings'
 import { useTournaments } from '../events/useTournaments'
 import { useTransfers, useTransferActions } from '../events/useTransfers'
-import { usePlayers } from '../players/usePlayers'
+import { useMembers, usePlayers } from '../players/usePlayers'
 import { useRecentMatches } from '../events/useMatches'
 import { useAllRegistrations } from '../events/useRegistrations'
 import DEFAULT_TIPS from '../../data/padelTips'
@@ -40,6 +40,7 @@ import { useNeedsLevelling, useQuestionsPrompt } from '../levelling/useMyLevelli
 
 // Only mounts after the player taps "share" on an outgoing transfer offer.
 const TransferPendingModal = lazy(() => import('../../components/TransferPendingModal'))
+const DeletionFollowups = lazy(() => import('./DeletionFollowups'))
 
 interface DashboardProps {
   onNavigate: (page: string, payload?: NormalisedTournament) => void
@@ -63,6 +64,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   const { respondToTransfer, cancelTransfer } = useTransferActions({ session })
   const { data: settings, isError: settingsError } = useSettings()
   const { data: players = [], isPending: playersPending, isError: playersError } = usePlayers()
+  const { data: members = [] } = useMembers()
   // Only the recently-completed banners read matches, and only for events
   // inside their 48h window — the all-time set is ~110KB the home screen has
   // no use for.
@@ -290,9 +292,15 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           isAdmin={isAdmin}
           unpaid={unpaid}
           upcomingEvent={upcoming}
-          players={players}
+          players={members}
           onNavigate={onNavigate}
         />
+
+        {isAdmin && (
+          <Suspense fallback={null}>
+            <DeletionFollowups />
+          </Suspense>
+        )}
 
         <LobsterWayLink />
       </div>

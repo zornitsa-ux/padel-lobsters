@@ -10,7 +10,7 @@ import {
 } from './playerQueries'
 import * as mut from './playerQueries'
 import type { PlayerInput } from './playerQueries'
-import { mergeMyProfile } from './playerSelectors'
+import { isSelectablePlayer, mergeMyProfile } from './playerSelectors'
 
 // Full redacted roster. One shared cache across every list view — TanStack
 // Query dedupes concurrent callers, so it doesn't matter how many components
@@ -26,6 +26,19 @@ const ROSTER_OPTIONS = {
 
 export function usePlayers() {
   return useQuery({ queryKey: playerKeys.list(), queryFn: fetchPlayers, ...ROSTER_OPTIONS })
+}
+
+// The roster without deleted accounts: for pickers and member lists. Reads the
+// same cache as usePlayers; history keeps usePlayers, which still names them.
+const selectMembers = (list: Player[]) => list.filter(isSelectablePlayer)
+
+export function useMembers() {
+  return useQuery({
+    queryKey: playerKeys.list(),
+    queryFn: fetchPlayers,
+    select: selectMembers,
+    ...ROSTER_OPTIONS,
+  })
 }
 
 // Start the roster request before React mounts. Declared here so it can't drift

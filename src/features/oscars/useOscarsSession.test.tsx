@@ -31,10 +31,12 @@ const { mockSession, mockPlayers, mockRegistrations, mockMatches } = vi.hoisted(
   mockPlayers: [
     { id: 'p1', name: 'Ada Lovelace' },
     { id: 'p2', name: 'Grace Hopper' },
+    { id: 'p5', name: 'Anonymous Crab #5', status: 'deleted' },
   ],
   mockRegistrations: [
     { playerId: 'p1', status: 'registered' },
     { playerId: 'p2', status: 'registered' },
+    { playerId: 'p5', status: 'registered' },
   ],
   mockMatches: [
     { round: 1, team1Ids: ['p1', 'p2'], team2Ids: ['p3', 'p4'] },
@@ -45,7 +47,13 @@ const { mockSession, mockPlayers, mockRegistrations, mockMatches } = vi.hoisted(
 vi.mock('../../context/useApp', () => ({
   useApp: () => fixtureAuth(mockSession),
 }))
-vi.mock('../players/usePlayers', () => ({ usePlayers: () => ({ data: mockPlayers }) }))
+vi.mock('../players/usePlayers', async () => {
+  const { isSelectablePlayer } = await import('../players/playerSelectors')
+  return {
+    usePlayers: () => ({ data: mockPlayers }),
+    useMembers: () => ({ data: mockPlayers.filter(isSelectablePlayer) }),
+  }
+})
 vi.mock('../events/useRegistrations', () => ({
   useRegistrations: () => ({ data: mockRegistrations }),
 }))
@@ -200,7 +208,7 @@ describe('useOscarsSession', () => {
     )
   })
 
-  it('exposes only the registered players, with disambiguated short names', async () => {
+  it('nominates only registered members, with disambiguated short names', async () => {
     const { result } = renderHookWithClient(() => useOscarsSession(tournament))
 
     await waitFor(() => expect(result.current.phase).toBe('active'))
