@@ -1,4 +1,5 @@
-import { firstName } from '../../lib/playerName'
+import { firstName, nameParts } from '../../lib/playerName'
+
 /* ─── Match-history helper: rounds where voter played WITH or AGAINST target  */
 
 export type OscarMatch = {
@@ -46,7 +47,7 @@ type LabelablePlayer = { id: string | number; name?: string | null }
 export function shortLabelMap(players: LabelablePlayer[] = []): Record<string, string> {
   const firstOf = (p: LabelablePlayer) => firstName({ name: p.name })
   const lastOf = (p: LabelablePlayer) => {
-    const parts = (p.name || '').trim().split(/\s+/)
+    const parts = nameParts(p.name)
     return parts.length > 1 ? parts.slice(1).join(' ') : ''
   }
   const byFirst: Record<string, LabelablePlayer[]> = {}

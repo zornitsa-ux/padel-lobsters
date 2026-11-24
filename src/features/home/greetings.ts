@@ -1,4 +1,5 @@
 import { firstName } from '../../lib/playerName'
+
 // ── Fun greetings ────────────────────────────────────────────────────────────
 
 // [hello, subtitle] — the two lines the Greeting component renders.

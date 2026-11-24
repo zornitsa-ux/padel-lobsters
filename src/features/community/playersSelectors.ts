@@ -1,4 +1,4 @@
-import { firstName, isAnonymisedName } from '../../lib/playerName'
+import { firstName, isAnonymisedName, nameParts } from '../../lib/playerName'
 
 export type PlayerLike = {
   // `players.id` is a uuid — string, never a number.
@@ -83,7 +83,7 @@ export function getDisplayName(
 ): string {
   const fn = firstName({ name, fallback: '?' })
   if (isAnonymisedName(name)) return fn
-  const parts = (name || '').trim().split(/\s+/)
+  const parts = nameParts(name)
   if (firstNameCount[fn] > 1 && parts.length > 1) {
     return `${fn} ${parts[1][0].toUpperCase()}`
   }

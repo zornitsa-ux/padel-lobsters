@@ -14,8 +14,13 @@ export function firstName({
   name: string | null | undefined
   fallback?: string
 }): string {
+  const parts = nameParts(name)
+  if (parts.length === 0) return fallback
+  if (isAnonymisedName(name)) return parts.join(' ')
+  return parts[0]
+}
+
+export function nameParts(name: string | null | undefined): string[] {
   const trimmed = String(name ?? '').trim()
-  if (!trimmed) return fallback
-  if (isAnonymisedName(trimmed)) return trimmed
-  return trimmed.split(/\s+/)[0]
+  return trimmed ? trimmed.split(/\s+/) : []
 }

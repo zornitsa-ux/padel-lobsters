@@ -1,4 +1,3 @@
-import { firstName } from './playerName'
 // Helpers for the registration-transfer share flow.
 //
 // Two share actions are supported:
@@ -14,6 +13,8 @@ import { firstName } from './playerName'
 // react-router paths (/transfer/:id, /events/:id). Legacy ?transfer=<id>
 // links sent in old WhatsApp messages still work — App.jsx redirects them
 // to the new path on first paint.
+
+import { firstName } from './playerName'
 
 export const APP_BASE_URL = 'https://padelobsters.nl'
 

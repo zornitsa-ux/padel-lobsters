@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import nameCases from '../../supabase/tests/anonymised_name_cases.json'
-import { firstName, isAnonymisedName } from './playerName'
+import { firstName, isAnonymisedName, nameParts } from './playerName'
 
 describe('isAnonymisedName', () => {
   it.each(nameCases.cases)('$name → $anonymised', ({ name, anonymised }) => {
@@ -35,5 +35,17 @@ describe('firstName', () => {
 
   it('shortens a real name that only starts with Anonymous', () => {
     expect(firstName({ name: 'Anonymous Smith' })).toBe('Anonymous')
+  })
+})
+
+describe('nameParts', () => {
+  it('splits on any whitespace after trimming', () => {
+    expect(nameParts('  Sam   de  Lee ')).toEqual(['Sam', 'de', 'Lee'])
+  })
+
+  it('is empty for a missing or blank name', () => {
+    expect(nameParts('')).toEqual([])
+    expect(nameParts('   ')).toEqual([])
+    expect(nameParts(null)).toEqual([])
   })
 })

@@ -1,4 +1,4 @@
-import { firstName, isAnonymisedName } from '../../lib/playerName'
+import { firstName, isAnonymisedName, nameParts } from '../../lib/playerName'
 
 export interface ShortNamePlayer {
   id: string
@@ -10,7 +10,7 @@ export interface ShortNamePlayer {
  * Avoids "Gonzalo" being ambiguous when we have "Gonzalo U" and "Gonzalo E".
  */
 export function shortName(player: ShortNamePlayer, allPlayers: readonly ShortNamePlayer[]): string {
-  const parts = (player.name || '').trim().split(/\s+/)
+  const parts = nameParts(player.name)
   const first = firstName({ name: player.name, fallback: player.name })
   const hasDupe = allPlayers.some(
     (other) => other.id !== player.id && firstName({ name: other.name }) === first,

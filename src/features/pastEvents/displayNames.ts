@@ -1,5 +1,7 @@
-import { firstName } from '../../lib/playerName'
+import { firstName, nameParts } from '../../lib/playerName'
+
 // Build a {fullName: displayName} map.
+// • A deleted account's anonymised name is kept whole (firstName).
 // • If a first name is unique in the input, display = first name only.
 // • If multiple players share a first name, append the rest of the name —
 //   the original last token if it's already short (≤2 chars, e.g. "Alex M"),
@@ -21,7 +23,7 @@ export function buildDisplayNames(names: readonly string[]): Record<string, stri
       })
     } else {
       unique.forEach((n) => {
-        const tokens = n.trim().split(/\s+/)
+        const tokens = nameParts(n)
         const rest = tokens.slice(1).join(' ')
         if (!rest) {
           out[n] = n

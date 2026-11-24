@@ -1,5 +1,6 @@
 import { isE164 } from '../../lib/whatsapp'
 import { levelFieldValue, levelProblem, type LevelPolicy } from '../../lib/level'
+import { nameParts } from '../../lib/playerName'
 
 // The profile every member fills in: self-signup and a captain-created
 // account finishing setup (D-021) use the same fields and rules.
@@ -47,7 +48,7 @@ export const fullName = ({ form }: { form: Pick<ProfileFieldValues, 'firstName' 
 // A stored single-line name back into the two fields: the last word is the
 // last name.
 export const splitName = ({ name }: { name: string }) => {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
+  const parts = nameParts(name)
   if (parts.length < 2) return { firstName: parts[0] ?? '', lastName: '' }
   return { firstName: parts.slice(0, -1).join(' '), lastName: parts.at(-1)! }
 }
