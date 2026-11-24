@@ -86,7 +86,7 @@ const DesignGallery = DESIGN_GALLERY_ENABLED
 export default function App() {
   useEffect(() => mark('react-mount'), [])
   // After deleting an account: no app shell, so nothing leads back in.
-  if (window.location.pathname === GOODBYE_PATH)
+  if (window.location.pathname.replace(/\/+$/, '') === GOODBYE_PATH)
     return (
       <Suspense fallback={<RouteFallback />}>
         <Goodbye />

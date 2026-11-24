@@ -9,7 +9,7 @@ export interface SummaryLine {
 const plural = ({ count, one, many }: { count: number; one: string; many: string }) =>
   count === 1 ? one : many
 
-const listNames = (names: string[]) =>
+const listNames = ({ names }: { names: string[] }) =>
   names.length <= 1
     ? (names[0] ?? '')
     : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
@@ -20,16 +20,16 @@ function upcomingLines({ upcoming }: Pick<DeletionSummary, 'upcoming'>): Summary
   const lines: SummaryLine[] = [
     {
       id: 'upcoming',
-      text: `Your ${plural({ count: solo.length, one: 'spot', many: 'spots' })} in ${listNames(
-        solo.map((spot) => `${spot.name} (${formatDate(spot.date)})`),
-      )} will be cancelled.`,
+      text: `Your ${plural({ count: solo.length, one: 'spot', many: 'spots' })} in ${listNames({
+        names: solo.map((spot) => `${spot.name} (${formatDate(spot.date)})`),
+      })} will be cancelled.`,
     },
   ]
   const paid = solo.filter((spot) => spot.paid)
   if (paid.length > 0) {
     lines.push({
       id: 'paid',
-      text: `You've paid for ${listNames(paid.map((spot) => spot.name))}. Cancelled spots aren't refunded, so if you'd like someone to take your place, transfer the spot to them first.`,
+      text: `You've paid for ${listNames({ names: paid.map((spot) => spot.name) })}. Cancelled spots aren't refunded, so if you'd like someone to take your place, transfer the spot to them first.`,
     })
   }
   return lines

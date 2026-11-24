@@ -8,7 +8,10 @@
 -- one, scoped like the delete policy.
 --
 -- Admins upload a player's photo under a random name, so "own" also covers the
--- file the player's own avatar_url names. Uploads keep the stable-name rule.
+-- file the player's own avatar_url names. Members can write any avatar_url, so
+-- that counts only for a random-named file no other player's avatar_url names:
+-- nobody can claim another player's photo. A file nobody uses can be claimed,
+-- which costs no one anything. Uploads keep the stable-name rule.
 -- ============================================================================
 
 -- Public: storage policies run as the browser role, which has no usage on
@@ -23,11 +26,20 @@ as $function$
   select auth.uid() is not null
      and (
        input_name = 'player-' || auth.uid()::text || '.webp'
-       or exists (
-         select 1
-           from public.players p
-          where p.id = auth.uid()
-            and substring(p.avatar_url from '/storage/v1/object/public/avatars/([^?#]+)') = input_name
+       or (
+         input_name !~* '^player-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$'
+         and exists (
+           select 1
+             from public.players p
+            where p.id = auth.uid()
+              and substring(p.avatar_url from '/storage/v1/object/public/avatars/([^?#]+)') = input_name
+         )
+         and not exists (
+           select 1
+             from public.players p
+            where p.id <> auth.uid()
+              and substring(p.avatar_url from '/storage/v1/object/public/avatars/([^?#]+)') = input_name
+         )
        )
      )
 $function$;

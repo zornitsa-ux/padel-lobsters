@@ -9,6 +9,7 @@ const h = vi.hoisted(() => ({
   requestEmailCode: vi.fn(),
   verifyEmailCode: vi.fn(),
   removeAvatar: vi.fn(),
+  updatePlayer: vi.fn(),
   fetchSummary: vi.fn(),
   deleteMyAccount: vi.fn(),
   leave: vi.fn(),
@@ -20,7 +21,10 @@ vi.mock('../auth/authActions', () => ({
   requestEmailCode: h.requestEmailCode,
   verifyEmailCode: h.verifyEmailCode,
 }))
-vi.mock('../players/playerQueries', () => ({ removeAvatar: h.removeAvatar }))
+vi.mock('../players/playerQueries', () => ({
+  removeAvatar: h.removeAvatar,
+  updatePlayer: h.updatePlayer,
+}))
 vi.mock('./deletionQueries', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./deletionQueries')>()),
   fetchMyDeletionSummary: () => h.fetchSummary(),
@@ -42,15 +46,22 @@ const SUMMARY: DeletionSummary = {
   pending_transfers: 0,
 }
 
-const signedIn = ({ isAdmin = false } = {}) =>
-  h.useApp.mockReturnValue({ session: { user: { id: 'p1', email: 'ada@example.com' } }, isAdmin })
+// codeAge: seconds since the email-code sign-in in the token's amr.
+const signedIn = ({ isAdmin = false, codeAge = 30 } = {}) => {
+  const amr = [{ method: 'otp', timestamp: Math.floor(Date.now() / 1000) - codeAge }]
+  h.useApp.mockReturnValue({
+    session: {
+      access_token: `h.${btoa(JSON.stringify({ amr }))}.s`,
+      user: { id: 'p1', email: 'ada@example.com' },
+    },
+    isAdmin,
+  })
+}
 
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole('button', { name }))
 
-const PHOTO = 'http://127.0.0.1:54321/storage/v1/object/public/avatars/player-123-ab.webp'
-
 async function reachConfirm() {
-  renderWithClient(<DeleteAccountSection avatarUrl={PHOTO} />)
+  renderWithClient(<DeleteAccountSection />)
   click('Delete my account')
   await screen.findByText(/Your spot in Autumn Cup/)
   click('Email me a code')
@@ -67,6 +78,7 @@ beforeEach(() => {
   h.requestEmailCode.mockResolvedValue({ error: null })
   h.verifyEmailCode.mockResolvedValue({ session: { user: { id: 'p1' } }, error: null })
   h.removeAvatar.mockImplementation(async () => void h.calls.push('avatar'))
+  h.updatePlayer.mockResolvedValue(undefined)
   h.deleteMyAccount.mockImplementation(async () => {
     h.calls.push('delete')
     return 'deleted'
@@ -103,7 +115,8 @@ describe('DeleteAccountSection', () => {
 
     await waitFor(() => expect(h.leave).toHaveBeenCalledWith({ playerId: 'p1' }))
     expect(h.calls).toEqual(['avatar', 'delete'])
-    expect(h.removeAvatar).toHaveBeenCalledWith({ playerId: 'p1', avatarUrl: PHOTO })
+    expect(h.removeAvatar).toHaveBeenCalledWith({ playerId: 'p1' })
+    expect(h.updatePlayer).not.toHaveBeenCalled()
   })
 
   it('deletes nothing when the photo cannot be removed', async () => {
@@ -123,6 +136,7 @@ describe('DeleteAccountSection', () => {
 
     expect(await screen.findByText(/You're still signed in/)).toBeTruthy()
     expect(h.leave).not.toHaveBeenCalled()
+    expect(h.updatePlayer).toHaveBeenCalledWith('p1', { avatarUrl: '' }, 'player')
   })
 
   it('asks for a new code when the last one is too old', async () => {
@@ -131,8 +145,19 @@ describe('DeleteAccountSection', () => {
     click('Delete account')
 
     expect(await screen.findByText(/more than 10 minutes old/)).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Email me a code' })).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'Email me a code' })).toBeTruthy()
     expect(h.leave).not.toHaveBeenCalled()
+    expect(h.updatePlayer).toHaveBeenCalledWith('p1', { avatarUrl: '' }, 'player')
+  })
+
+  it('keeps the photo when the code is already too old', async () => {
+    signedIn({ codeAge: 600 })
+    await reachConfirm()
+    click('Delete account')
+
+    expect(await screen.findByText(/more than 10 minutes old/)).toBeTruthy()
+    expect(h.removeAvatar).not.toHaveBeenCalled()
+    expect(h.deleteMyAccount).not.toHaveBeenCalled()
   })
 
   it('offers no code while the member is in an event under way', async () => {

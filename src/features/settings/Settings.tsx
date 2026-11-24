@@ -21,6 +21,7 @@ import AccountOrdersSection from './AccountOrdersSection'
 import DeleteAccountSection from '../account-deletion/DeleteAccountSection'
 import { PageHeader } from '../../components/ui/PageHeader'
 import LobsterWayLink from '../../components/LobsterWayLink'
+import ClubLogo from '../../components/ClubLogo'
 import { useToast } from '../../lib/toastBus'
 import { Section } from '../../components/ui/Section'
 import { ListCard, LinkRow } from '../../components/ui/ListCard'
@@ -279,16 +280,12 @@ export default function Settings() {
           </Button>
         )}
 
-        {session && <DeleteAccountSection avatarUrl={myPlayer?.avatarUrl} />}
+        {session && <DeleteAccountSection />}
 
         <footer className="text-center space-y-1 py-5">
-          <img
-            src="/logo-256.webp"
-            alt="Padel Lobsters"
-            width="56"
-            height="56"
-            className="w-14 h-14 rounded-full bg-white p-1 object-contain mx-auto mb-2"
-          />
+          <div className="pb-2">
+            <ClubLogo />
+          </div>
           <p className="font-bold text-lob-slate">Padel Lobsters</p>
           <p className="caption">Tournament Manager · v1.0</p>
           <p className="text-xs text-lob-muted-light/60 mt-2">Made with 🦞 for the crew</p>

@@ -2,7 +2,8 @@
 -- Avatar storage policies (20261124170000, docs/account-deletion AD4, C-5).
 -- Storage writes with RETURNING and deletes only rows the caller can select:
 -- a player sees and removes their stable file and the file their avatar_url
--- names (an admin's random upload), nobody else's. Admins see and remove any.
+-- names (an admin's random upload) when no other player's names it, nobody
+-- else's. Admins see and remove any.
 -- A deleted player can't remove or upload.
 --
 -- Invented players only. One transaction, rolled back.
@@ -56,6 +57,7 @@ insert into ids values
   ('ben', pg_temp.player('Ben Avatar',
      'https://x.supabase.co/storage/v1/object/public/avatars/player-1700000000-ben.webp')),
   ('cleo', pg_temp.player('Cleo Avatar')),
+  ('eve', pg_temp.player('Eve Avatar')),
   ('admin', pg_temp.player('Ann Admin', '', 'admin'));
 
 insert into storage.objects (bucket_id, name)
@@ -114,6 +116,41 @@ select pg_temp.check(
     where name in ('player-' || (select id from ids where key = 'ben') || '.webp',
                    'player-1700000000-ben.webp')),
   'another player''s files are untouched');
+
+-- ── Pointing avatar_url at someone else's photo claims nothing ───────────
+-- Members write avatar_url freely, so it counts only for a random-named file
+-- no other player's avatar_url names.
+
+update public.players
+   set avatar_url = 'https://x.supabase.co/storage/v1/object/public/avatars/player-1700000000-ben.webp'
+ where id = (select id from ids where key = 'eve');
+select pg_temp.act((select id from ids where key = 'eve'));
+set local role authenticated;
+select pg_temp.check((select count(*) = 0 from avatar_names),
+  'a player can''t see a random file another player''s avatar_url names');
+with gone as (
+  delete from storage.objects where bucket_id = 'avatars' and name like 'player-%' returning name)
+select pg_temp.check((select count(*) = 0 from gone),
+  'a player can''t remove a random file another player''s avatar_url names');
+reset role;
+
+update public.players
+   set avatar_url = 'https://x.supabase.co/storage/v1/object/public/avatars/player-'
+                    || (select id from ids where key = 'ben') || '.webp'
+ where id = (select id from ids where key = 'eve');
+select pg_temp.act((select id from ids where key = 'eve'));
+set local role authenticated;
+with gone as (
+  delete from storage.objects where bucket_id = 'avatars' and name like 'player-%' returning name)
+select pg_temp.check((select count(*) = 0 from gone),
+  'a player can''t remove another player''s stable file through avatar_url');
+reset role;
+
+select pg_temp.check(
+  (select count(*) = 2 from storage.objects
+    where name in ('player-' || (select id from ids where key = 'ben') || '.webp',
+                   'player-1700000000-ben.webp')),
+  'both of the other player''s files are still there');
 
 -- ── Admins see and remove any ──────────────────────────────────────────────
 

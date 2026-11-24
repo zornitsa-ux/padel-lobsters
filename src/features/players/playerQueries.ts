@@ -126,16 +126,17 @@ export function avatarObjectName({ url }: { url: string | null | undefined }): s
 
 // Before an account deletion (docs/account-deletion DESIGN §2.4): the stable
 // file and the one avatar_url names, which an admin may have uploaded under a
-// random name. Storage policies let the owner or an admin remove either; a
+// random name. avatar_url is read here, not taken from a profile that may not
+// have loaded. Storage policies let the owner or an admin remove either; a
 // missing object is not an error.
-export async function removeAvatar({
-  playerId,
-  avatarUrl,
-}: {
-  playerId: string
-  avatarUrl: string | null | undefined
-}): Promise<void> {
-  const named = avatarObjectName({ url: avatarUrl })
+export async function removeAvatar({ playerId }: { playerId: string }): Promise<void> {
+  const { data, error: readError } = await supabase
+    .from('players_public')
+    .select('avatar_url')
+    .eq('id', playerId)
+    .maybeSingle()
+  if (readError) throw readError
+  const named = avatarObjectName({ url: data?.avatar_url })
   const own = ownAvatarFilename(playerId)
   const { error } = await supabase.storage
     .from('avatars')

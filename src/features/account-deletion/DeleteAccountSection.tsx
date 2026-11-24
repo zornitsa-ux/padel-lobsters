@@ -13,7 +13,8 @@ import { TextButton } from '../../components/ui/TextButton'
 import { requestEmailCode } from '../auth/authActions'
 import { describeSignInError } from '../auth/authErrors'
 import { OtpCodeStep } from '../auth/OtpCodeStep'
-import { removeAvatar } from '../players/playerQueries'
+import { removeAvatar, updatePlayer } from '../players/playerQueries'
+import { hasRecentEmailCode } from '../auth/sessionClaims'
 import {
   deleteMyAccount,
   fetchMyDeletionSummary,
@@ -24,6 +25,9 @@ import { describeDeletion } from './deletionSummary'
 import { leaveAfterDeletion } from './leaveDevice'
 
 type Step = 'idle' | 'summary' | 'code' | 'confirm'
+
+// A minute under the server's 10, so a code doesn't expire between check and call.
+const CODE_MAX_AGE_SECONDS = 540
 
 const ADMIN_LINE =
   "Admins can't delete their own account. Ask Jon to remove your admin role first, then come back here."
@@ -40,7 +44,7 @@ const REFUSALS: Partial<Record<DeleteStatus, string>> = {
 }
 
 /** Settings: a member deletes their own account (docs/account-deletion DESIGN §3.1). */
-export default function DeleteAccountSection({ avatarUrl }: { avatarUrl?: string | null }) {
+export default function DeleteAccountSection() {
   const { session, isAdmin } = useApp()
   const [step, setStep] = useState<Step>('idle')
   const [notice, setNotice] = useState('')
@@ -75,7 +79,6 @@ export default function DeleteAccountSection({ avatarUrl }: { avatarUrl?: string
               setStep={setStep}
               email={email}
               playerId={playerId}
-              avatarUrl={avatarUrl}
               notice={notice}
               onCancel={() => restart()}
               onRefused={restart}
@@ -92,7 +95,6 @@ interface DeleteFlowProps {
   setStep: (step: Step) => void
   email: string
   playerId: string
-  avatarUrl?: string | null
   notice: string
   onCancel: () => void
   onRefused: (message: string) => void
@@ -103,7 +105,6 @@ function DeleteFlow({
   setStep,
   email,
   playerId,
-  avatarUrl,
   notice,
   onCancel,
   onRefused,
@@ -119,14 +120,7 @@ function DeleteFlow({
     )
   if (step === 'code')
     return <CodeStep email={email} onVerified={() => setStep('confirm')} onCancel={onCancel} />
-  return (
-    <ConfirmStep
-      playerId={playerId}
-      avatarUrl={avatarUrl}
-      onCancel={onCancel}
-      onRefused={onRefused}
-    />
-  )
+  return <ConfirmStep playerId={playerId} onCancel={onCancel} onRefused={onRefused} />
 }
 
 function SummaryStep({
@@ -148,7 +142,8 @@ function SummaryStep({
   } = useQuery({
     queryKey: myDeletionSummaryKey,
     queryFn: fetchMyDeletionSummary,
-    staleTime: 0,
+    // Never shown from cache: after a refusal the summary must be read again.
+    gcTime: 0,
   })
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
@@ -268,22 +263,26 @@ function CodeStep({
 
 function ConfirmStep({
   playerId,
-  avatarUrl,
   onCancel,
   onRefused,
 }: {
   playerId: string
-  avatarUrl?: string | null
   onCancel: () => void
   onRefused: (message: string) => void
 }) {
+  const { session } = useApp()
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
 
   async function handleDelete() {
+    // The server would refuse a stale code anyway; checking first keeps the photo.
+    if (!hasRecentEmailCode({ session, maxAgeSeconds: CODE_MAX_AGE_SECONDS })) {
+      onRefused(REFUSALS.code_required ?? '')
+      return
+    }
     setDeleting(true)
     setError('')
-    const outcome = await runDeletion({ playerId, avatarUrl })
+    const outcome = await runDeletion({ playerId })
     if (outcome.done) return leaveAfterDeletion({ playerId })
     setDeleting(false)
     if (outcome.refusal) onRefused(outcome.refusal)
@@ -324,20 +323,21 @@ function CancelRow({ onCancel }: { onCancel: () => void }) {
 
 type Outcome = { done: true } | { done: false; refusal?: string; error: string }
 
-// The photo goes first (DESIGN §2.4): if that fails nothing has changed, and if
-// the delete fails after it, only the photo is lost and the member can retry.
-async function runDeletion({
-  playerId,
-  avatarUrl,
-}: {
-  playerId: string
-  avatarUrl?: string | null
-}): Promise<Outcome> {
+// The photo goes first (DESIGN §2.4): if that fails nothing has changed. If
+// the delete fails after it, only the photo is lost, and avatar_url is cleared
+// so no profile shows a broken image.
+async function runDeletion({ playerId }: { playerId: string }): Promise<Outcome> {
   try {
-    await removeAvatar({ playerId, avatarUrl })
+    await removeAvatar({ playerId })
   } catch {
     return { done: false, error: "Couldn't remove your photo, so nothing was deleted. Try again." }
   }
+  const outcome = await deleteAfterPhoto()
+  if (!outcome.done) await updatePlayer(playerId, { avatarUrl: '' }, 'player').catch(() => {})
+  return outcome
+}
+
+async function deleteAfterPhoto(): Promise<Outcome> {
   try {
     const status = await deleteMyAccount()
     if (status === 'deleted' || status === 'already_deleted') return { done: true }

@@ -103,9 +103,10 @@ null on these rows.
   `public.is_own_avatar(name)` or admin. The SELECT policy uses the same
   condition without the deleted check.
 - `public.is_own_avatar(input_name text) returns boolean` (AD4): true for
-  `player-<uid>.webp` and for the file the caller's own `avatar_url` names.
-  Admins upload a player's photo under a random name, so the stable name
-  alone would miss it.
+  `player-<uid>.webp`, and for the file the caller's own `avatar_url` names
+  when it's a random name that no other player's `avatar_url` names. Admins
+  upload a player's photo under a random name, so the stable name alone would
+  miss it. Members can write any `avatar_url`, hence the other-player check.
 - `public.is_deleted_player(input_id uuid) returns boolean`: stable,
   security definer, executable by `authenticated`. In `public` because
   storage policies run as the browser role, which has no usage on
