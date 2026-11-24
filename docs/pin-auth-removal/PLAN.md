@@ -802,7 +802,7 @@ to join. Owner direction (2026-11-24):
   `addPlayer`. `admin_add_player` itself stays until a migration drops it.
 - **Copy:** each email says an admin added or invited them, and why. The
   closing line: "Not you, or didn't expect this? You can ignore this email.
-  To reach us, go to padelobsters.nl." There's no reply route.
+  To reach us, go to padelobsters.nl." Replies aren't a contact route.
 - **Release:** the client change and the `send-invite-email` deploy don't
   depend on each other. Not within 3 days of an event.
 

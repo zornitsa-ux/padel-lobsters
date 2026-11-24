@@ -29,7 +29,6 @@ export const inviteEmailConfirm = ({
   confirmLabel: 'Send email',
 })
 
-// Every invite email is confirmed first, naming who gets it (PIN plan T18).
 export function useConfirmInviteEmail() {
   const confirmOnBehalf = useConfirmOnBehalf()
   return useCallback(

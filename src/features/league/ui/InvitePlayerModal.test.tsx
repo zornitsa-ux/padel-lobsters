@@ -88,6 +88,23 @@ describe('InvitePlayerModal', () => {
     expect(screen.getByRole('button', { name: /done/i })).toBeTruthy()
   })
 
+  it('refuses a malformed address before asking to confirm', () => {
+    renderModal()
+    typeEmail('kit@example')
+    fireEvent.click(screen.getByRole('button', { name: /send invite/i }))
+
+    expect(screen.getByText(/valid email address/i)).toBeTruthy()
+    expect(confirmInviteEmail).not.toHaveBeenCalled()
+  })
+
+  it('clears an earlier refusal before asking again', () => {
+    renderModal()
+    typeEmail('ada@example.com')
+    fireEvent.click(screen.getByRole('button', { name: /send invite/i }))
+
+    expect(invite.current.reset).toHaveBeenCalled()
+  })
+
   it.each([
     ['invalid email', /valid email address/i],
     ['email in use', /already belongs to another/i],
