@@ -9,6 +9,9 @@ import { deletionSummaryKey, fetchDeletionSummary, type DeleteStatus } from './d
 
 export type DeletionStep = 'idle' | 'summary' | 'code' | 'confirm'
 
+export const CODE_REQUIRED_LINE =
+  'Your code is more than 10 minutes old. Ask for a new one to carry on.'
+
 // A minute under the server's 10, so a code doesn't expire between check and call.
 const CODE_MAX_AGE_SECONDS = 540
 

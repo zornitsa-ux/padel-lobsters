@@ -146,13 +146,22 @@ describe('AdminDeleteAccount', () => {
     expect(h.toast).not.toHaveBeenCalled()
   })
 
-  it('keeps the photo when the code is already too old', async () => {
+  it('sends a stale code back before the confirmation, keeping the photo', async () => {
     signedInAdmin({ codeAge: 600 })
     await reachConfirm()
     click('Delete account')
 
     expect(await screen.findByText(/more than 10 minutes old/)).toBeTruthy()
+    expect(h.confirm).not.toHaveBeenCalled()
     expect(h.removeAvatar).not.toHaveBeenCalled()
+  })
+
+  it('hides the section once the account is deleted', async () => {
+    await reachConfirm()
+    click('Delete account')
+
+    await waitFor(() => expect(screen.queryByText('Last step')).toBeNull())
+    expect(screen.queryByRole('button', { name: 'Delete account' })).toBeNull()
   })
 
   it('offers no way on for an admin', async () => {
