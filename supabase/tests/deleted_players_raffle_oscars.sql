@@ -1,7 +1,8 @@
 -- ============================================================================
--- Deleted accounts in the raffle and the Oscars (20261125090000,
+-- Deleted accounts in the raffle and the Oscars (20261124160000,
 -- docs/account-deletion AD3). A deleted account keeps its registration in a
 -- past event; the draw must skip it and a vote for it is invalid_target.
+-- A notes follow-up stops being listed once the noted player is deleted too.
 --
 -- Invented players only. One transaction, rolled back.
 --
@@ -44,6 +45,7 @@ declare
   v_admin uuid := pg_temp.player('Ada Rafflecase', 'admin');
   v_voter uuid := pg_temp.player('Vic Rafflecase');
   v_gone uuid := pg_temp.player('Gwen Rafflecase');
+  v_noter uuid := pg_temp.player('Nell Rafflecase');
   v_t uuid;
   v_session uuid;
   v_category uuid;
@@ -61,6 +63,7 @@ begin
   insert into public.lobster_oscars_categories(session_id, name)
   values (v_session, 'Best smash') returning id into v_category;
 
+  update public.players set notes = 'Partnered Gwen Rafflecase in October' where id = v_noter;
   perform private.delete_account(v_gone, true);
   perform pg_temp.check((select status from public.players where id = v_gone) = 'deleted',
                         'setup: the account is deleted');
@@ -80,6 +83,16 @@ begin
                         'O1: a vote for a deleted account is invalid_target');
   perform pg_temp.check(not exists (select 1 from public.lobster_oscars_votes where category_id = v_category),
                         'O2: no vote recorded');
+
+  -- A note naming the deleted account is listed until the noted player is deleted too.
+  perform pg_temp.act(v_admin, true);
+  perform pg_temp.check(exists (select 1 from public.admin_list_deletion_followups() x
+                                 where x.ref_table = 'players' and x.ref_id = v_noter::text),
+                        'F1: the note is listed');
+  perform private.delete_account(v_noter, true);
+  perform pg_temp.check(not exists (select 1 from public.admin_list_deletion_followups() x
+                                     where x.ref_table = 'players' and x.ref_id = v_noter::text),
+                        'F2: not listed once the noted player is deleted');
 
   raise notice 'deleted players in the raffle and the Oscars ok';
 end $$;

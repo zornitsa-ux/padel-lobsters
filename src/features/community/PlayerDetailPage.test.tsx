@@ -91,7 +91,7 @@ describe('PlayerDetailPage', () => {
     expect(screen.getByRole('heading', { name: 'Anonymous Crab #9' })).toBeTruthy()
     expect(screen.getByText('This account was deleted.')).toBeTruthy()
     expect(screen.queryByText('A steady lobster.')).toBeNull()
-    expect(screen.queryByRole('button', { name: 'resend' })).toBeNull()
+    expect(screen.queryAllByRole('button')).toHaveLength(0)
   })
 
   it('explains when the player does not exist', () => {

@@ -5,7 +5,10 @@
 -- lobster_oscars_votes refuse a deleted player (refuse_link_to_deleted_player),
 -- so a draw that picked one failed as a whole, and a vote raised instead of
 -- answering. The draw now skips deleted players; a vote for one is
--- invalid_target. Grants are unchanged (create or replace keeps them).
+-- invalid_target.
+-- Follow-ups: a note on a player who was deleted afterwards is no longer
+-- listed, since that deletion wiped the note and the page can't edit it.
+-- Grants are unchanged (create or replace keeps them).
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION public.admin_draw_raffle_winners(input_tournament_id uuid, input_num_winners integer, input_prizes text[] DEFAULT NULL::text[])
@@ -149,4 +152,41 @@ BEGIN
     SET target_id = EXCLUDED.target_id, updated_at = now();
   RETURN CASE WHEN v_existed THEN 'updated' ELSE 'voted' END;
 END
+$function$;
+
+CREATE OR REPLACE FUNCTION public.admin_list_deletion_followups()
+ RETURNS TABLE(kind text, ref_table text, ref_id text, ref_column text, player_name text, followup_id bigint, context_id text)
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+begin
+  perform public.require_admin();
+  return query
+  select 'league_team'::text, 'league_teams'::text, lt.id::text, null::text, p.name, null::bigint, lt.league_id::text
+    from public.league_teams lt
+    join public.leagues l on l.id = lt.league_id
+    join public.players p on p.id in (lt.player1_id, lt.player2_id) and p.status = 'deleted'
+   where l.status <> 'completed'
+  union all
+  select 'event_team', 'event_teams', et.id::text, null, p.name, null, et.tournament_id::text
+    from public.event_teams et
+    join public.tournaments t on t.id = et.tournament_id
+    join public.registrations r on r.team_id = et.id and r.status in ('registered', 'waitlist')
+    join public.players p on p.id = r.player_id and p.status = 'deleted'
+   where t.status <> 'completed' and et.cancelled_at is null
+  union all
+  select 'free_text', f.ref_table, f.ref_id, f.ref_column, p.name, f.id,
+         case f.ref_table
+           when 'league_teams' then (select lt.league_id::text from public.league_teams lt where lt.id::text = f.ref_id)
+           when 'merch_interests' then (select mi.merch_item_id::text from public.merch_interests mi where mi.id::text = f.ref_id)
+           else f.ref_id
+         end
+    from public.account_deletion_followups f
+    join public.players p on p.id = f.player_id
+   where f.dismissed_at is null
+     -- notes on a player deleted since: the deletion wiped them
+     and not (f.ref_table = 'players' and public.is_deleted_player(f.ref_id::uuid))
+   order by 1, 5, 3;
+end
 $function$;

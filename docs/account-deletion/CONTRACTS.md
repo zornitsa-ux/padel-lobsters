@@ -138,7 +138,7 @@ null on these rows.
 - `raffle_exclusions` is added to the table above (`player_id`).
 - A deleted account keeps its registration in a past event, so the two
   writers that pick from those registrations skip it first (AD3,
-  `20261125090000`): `admin_draw_raffle_winners` leaves deleted players out
+  `20261124160000`): `admin_draw_raffle_winners` leaves deleted players out
   of the pool, and `lobster_oscars_cast_vote` returns `invalid_target` for
   one. Without this, a draw that picked one failed as a whole, and a vote
   raised `player_deleted`.

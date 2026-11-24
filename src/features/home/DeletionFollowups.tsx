@@ -17,18 +17,32 @@ import {
 // Teams clear themselves once the member is replaced; text is dismissed by hand.
 export default function DeletionFollowups() {
   const qc = useQueryClient()
-  const { data: rows = [], isError } = useQuery({
+  // staleTime 0: a team fixed elsewhere drops off as soon as Home is back.
+  const {
+    data: rows = [],
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: deletionFollowupsKey,
     queryFn: fetchDeletionFollowups,
+    staleTime: 0,
   })
   const dismiss = useMutation({
     mutationFn: dismissDeletionFollowup,
     onSettled: () => qc.invalidateQueries({ queryKey: deletionFollowupsKey }),
+    meta: { suppressErrorToast: true },
   })
 
   if (isError) {
     return (
-      <AlertBox variant="error">
+      <AlertBox
+        variant="error"
+        action={
+          <TextButton tone="destructive" onClick={() => void refetch()}>
+            Try again
+          </TextButton>
+        }
+      >
         Couldn&apos;t load the follow-ups after account deletions.
       </AlertBox>
     )

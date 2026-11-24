@@ -101,11 +101,10 @@ describe('DeletionFollowups', () => {
     await waitFor(() => expect(screen.queryByText('After account deletions')).toBeNull())
   })
 
-  it('says so when the list fails to load', async () => {
-    h.fetch.mockRejectedValue(new Error('boom'))
+  it('says so when the list fails to load, and can try again', async () => {
+    h.fetch.mockRejectedValueOnce(new Error('boom')).mockResolvedValue([LEAGUE])
     renderCard()
-    expect(
-      await screen.findByText("Couldn't load the follow-ups after account deletions."),
-    ).toBeTruthy()
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }))
+    expect(await screen.findByText('After account deletions')).toBeTruthy()
   })
 })
