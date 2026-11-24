@@ -79,12 +79,12 @@ the client first (§2.4).
 the migration. Lobster isn't one of them, so the name never reads as a
 member. With one running number, no two deleted players share a name.
 
-Names that match the pattern are reserved (`private.is_reserved_name`,
-C-1). Every path that names a player refuses them, including league
-placeholders, so a name that matches is always a deleted account. The
-reserved check ignores case and extra spaces, so a lookalike such as
-"anonymous octopus #6" is refused too. The client relies on that: it shows
-the full name wherever it would otherwise shorten to a first name (§3.3).
+Any name containing "anonymous", in any case, is reserved
+(`private.is_reserved_name`, C-1). Every path that names a player refuses
+it, including league placeholders, so a name that matches the pattern is
+always a deleted account and no lookalike can pass for one. The client
+relies on that: it shows the full name wherever it would otherwise shorten
+to a first name (§3.3).
 
 ### 2.3 Steps, in order
 

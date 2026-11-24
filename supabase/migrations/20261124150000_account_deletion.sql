@@ -39,14 +39,14 @@ as $function$
   select coalesce(regexp_replace(input_name, '^\s+|\s+$', '', 'g') ~ '^Anonymous [A-Z][a-z]+ #[0-9]+$', false)
 $function$;
 
--- Loose: refused as anyone's name, so lookalikes can't pass for a deleted account.
+-- Refused as anyone's name, so nothing can pass for a deleted account.
 create function private.is_reserved_name(input_name text)
 returns boolean
 language sql
 immutable
 set search_path to 'pg_catalog'
 as $function$
-  select coalesce(lower(regexp_replace(btrim(input_name), '\s+', ' ', 'g')) ~ '^anonymous [a-z]+ #[0-9]+$', false)
+  select coalesce(strpos(lower(input_name), 'anonymous') > 0, false)
 $function$;
 
 revoke all on function private.anonymised_name(bigint) from public, anon, authenticated;

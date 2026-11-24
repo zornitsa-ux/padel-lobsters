@@ -10,9 +10,8 @@ Grants go in the grants files in the same PR.
 - `private.is_anonymised_name(input_name text) returns boolean`: true for
   `^Anonymous [A-Z][a-z]+ #[0-9]+$` after trimming. Strict: it tells a
   deleted account apart.
-- `private.is_reserved_name(input_name text) returns boolean`: the same
-  pattern, ignoring case, after trimming and collapsing whitespace. Used to
-  refuse names.
+- `private.is_reserved_name(input_name text) returns boolean`: true for
+  any name containing "anonymous", ignoring case. Used to refuse names.
 - `private.deleted_player_number`: a sequence starting at 1.
 - `private.anonymised_name(input_number bigint) returns text`:
   `'Anonymous ' || animals[(input_number - 1) % 12 + 1] || ' #' || input_number`.

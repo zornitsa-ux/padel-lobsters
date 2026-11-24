@@ -8,9 +8,10 @@ them and how the code carries them out.
   hold ids in arrays that no foreign key protects. `status = 'deleted'` plus a
   wiped row keeps every result intact.
 - **D-2. Name: "Anonymous <Animal> #N"** (owner). N is a running number from a
-  sequence; the animal cycles through 12 with it. The pattern is reserved,
-  so the client can tell a deleted account from its name alone, including
-  in RPCs that return only names (Oscars, security panels).
+  sequence; the animal cycles through 12 with it. Any name containing
+  "anonymous" is refused (owner, 24 Nov), so the client can tell a deleted
+  account from its name alone, including in RPCs that return only names
+  (Oscars, security panels).
 - **D-3. Team spots stay with the remaining player** (owner). A team must have
   two active rows (`registrations_team_consistent`), so the deleted member's
   row stays active under the anonymised name until it's replaced through

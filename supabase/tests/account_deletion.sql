@@ -291,8 +291,8 @@ begin
                           'user_metadata', jsonb_build_object('name', 'Anonymous Octopus #3'))))
                         #>> '{error,message}' = 'Please enter your own name.', 'N1: signup refuses');
   perform pg_temp.act(v_y, false);
-  perform pg_temp.check(pg_temp.raises('select public.update_my_profile(''{"name":"anonymous  octopus #3"}'')',
-                                       'reserved_name'), 'N2: profile refuses a lookalike');
+  perform pg_temp.check(pg_temp.raises('select public.update_my_profile(''{"name":"Yuki anonymous"}'')',
+                                       'reserved_name'), 'N2: profile refuses any name with anonymous');
   perform pg_temp.act(v_admin, true);
   perform pg_temp.check(pg_temp.raises(format('select public.admin_update_player(%L, ''{"name":"Anonymous Octopus #3"}'')', v_y),
                                        'reserved_name'), 'N3: admin edit refuses');
