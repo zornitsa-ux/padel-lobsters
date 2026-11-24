@@ -17,11 +17,16 @@ Grants go in the grants files in the same PR.
 - `private.anonymised_name(input_number bigint) returns text`:
   `'Anonymous ' || animals[(input_number - 1) % 12 + 1] || ' #' || input_number`.
   The 12 animals are one word each, and Lobster isn't one of them.
-- **Reserved:** the signup hook (`before_user_created_hook`),
-  `create_player_for_confirmed_user`, `update_my_profile`,
-  `admin_update_player`, `admin_add_player`, `create_partner_player`,
-  and the league placeholders in `admin_create_league_team` and
-  `admin_update_league_team` (`player1_name`, `player2_name`) refuse a matching name with `reserved_name`.
+- **Reserved:** the trigger `players_reserved_name` (BEFORE INSERT OR
+  UPDATE OF name on `players`) raises `reserved_name` (P0001) for a reserved
+  name, unless `app.deleting_player` holds the row's id, which only the
+  deletion sets. It covers every writer: `update_my_profile`,
+  `admin_update_player`, `admin_add_player`, the league placeholders in
+  `admin_create_league_team` and `admin_update_league_team`, and signup.
+  Two say it in their own terms first: `before_user_created_hook` rejects
+  the signup with a message, and `create_partner_player` returns
+  `invalid_name`. An unchanged name passes, so an existing row is never
+  stuck.
 - Client: `isAnonymisedName(name)` in `src/lib`, tested against the same
   cases file as the SQL function (`supabase/tests/anonymised_name_cases.json`).
 
@@ -29,7 +34,7 @@ Grants go in the grants files in the same PR.
 
 | RPC                                                                    | Who           | Result                                                                                                                                                                |
 | ---------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `delete_my_account()`                                                  | authenticated | `table(status text)`: `deleted`, `code_required`, `admin_must_step_down`, `already_deleted`, `in_live_event`                                                          |
+| `delete_my_account()`                                                  | authenticated | `table(status text)`: `deleted`, `code_required`, `admin_must_step_down`, `already_deleted`, `in_live_event`, `not_found`                                             |
 | `admin_delete_account(input_target_id uuid)`                           | admin         | `table(status text, anonymised_name text)`: `deleted`, `code_required`, `admin_must_step_down`, `already_deleted`, `not_found`, `cannot_delete_self`, `in_live_event` |
 | `get_my_deletion_summary()`                                            | authenticated | `jsonb` (below)                                                                                                                                                       |
 | `admin_get_deletion_summary(input_target_id uuid)`                     | admin         | `jsonb` (below)                                                                                                                                                       |
@@ -73,9 +78,11 @@ create table public.account_deletion_followups (
 
 - RLS on, no grants to `authenticated`. Read and dismiss through RPCs only.
 - `admin_list_deletion_followups()` returns
-  `table(kind text, ref_table text, ref_id text, ref_column text, player_name text, followup_id bigint)`.
+  `table(kind text, ref_table text, ref_id text, ref_column text, player_name text, followup_id bigint, context_id text)`.
   `kind` is `league_team`, `event_team` (both worked out live) or
   `free_text` (open table rows). `player_name` is the anonymised name.
+  `context_id` is where the row is edited: the league, the event, the shop
+  item or the player.
 - `admin_dismiss_deletion_followup(input_followup_id bigint)` returns
   `table(status text)`: `dismissed` or `not_found`.
 
@@ -90,9 +97,11 @@ null on these rows.
 - New: `Player or admin delete avatar` on DELETE, with the same condition
   as the update policy.
 - Changed: the INSERT and UPDATE avatar policies also require
-  `not private.is_deleted_player(auth.uid())`.
-- `private.is_deleted_player(input_id uuid) returns boolean`: stable,
-  security definer, executable by `authenticated`.
+  `not public.is_deleted_player(auth.uid())`.
+- `public.is_deleted_player(input_id uuid) returns boolean`: stable,
+  security definer, executable by `authenticated`. In `public` because
+  storage policies run as the browser role, which has no usage on
+  `private`. It tells no more than `players_public.status`.
 
 ## C-6. Triggers
 
@@ -128,3 +137,9 @@ null on these rows.
   swap one in. Ids already there pass, so scores on existing matches can
   still be entered.
 - `raffle_exclusions` is added to the table above (`player_id`).
+
+## C-7. Team cancel reason
+
+`event_teams.cancelled_reason` gains `account_deleted`: both members of a
+team deleted their accounts. The client's `TeamCancelReason` has it too; no
+ended-team notice is shown for it, since there's nobody left to see one.

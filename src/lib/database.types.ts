@@ -28,6 +28,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_followups: {
+        Row: {
+          created_at: string
+          dismissed_at: string | null
+          dismissed_by: string | null
+          id: number
+          player_id: string
+          ref_column: string
+          ref_id: string
+          ref_table: string
+        }
+        Insert: {
+          created_at?: string
+          dismissed_at?: string | null
+          dismissed_by?: string | null
+          id?: never
+          player_id: string
+          ref_column: string
+          ref_id: string
+          ref_table: string
+        }
+        Update: {
+          created_at?: string
+          dismissed_at?: string | null
+          dismissed_by?: string | null
+          id?: never
+          player_id?: string
+          ref_column?: string
+          ref_id?: string
+          ref_table?: string
+        }
+        Relationships: []
+      }
       event_teams: {
         Row: {
           cancelled_at: string | null
@@ -1742,6 +1775,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_delete_account: {
+        Args: { input_target_id: string }
+        Returns: {
+          anonymised_name: string
+          status: string
+        }[]
+      }
       admin_delete_league: {
         Args: { input_league_id: string }
         Returns: string
@@ -1750,13 +1790,15 @@ export type Database = {
         Args: { input_team_id: string }
         Returns: boolean
       }
-      admin_delete_player: {
-        Args: { input_target_id: string }
-        Returns: boolean
-      }
       admin_delete_raffle_winner: {
         Args: { input_winner_id: string }
         Returns: boolean
+      }
+      admin_dismiss_deletion_followup: {
+        Args: { input_followup_id: number }
+        Returns: {
+          status: string
+        }[]
       }
       admin_draw_raffle_winners: {
         Args: {
@@ -1786,6 +1828,10 @@ export type Database = {
         Returns: {
           status: string
         }[]
+      }
+      admin_get_deletion_summary: {
+        Args: { input_target_id: string }
+        Returns: Json
       }
       admin_get_mm_ratings: {
         Args: never
@@ -1819,6 +1865,18 @@ export type Database = {
       admin_invite_league_player: {
         Args: { input_email: string; input_player_id: string }
         Returns: string
+      }
+      admin_list_deletion_followups: {
+        Args: never
+        Returns: {
+          context_id: string
+          followup_id: number
+          kind: string
+          player_name: string
+          ref_column: string
+          ref_id: string
+          ref_table: string
+        }[]
       }
       admin_list_partner_invites: {
         Args: { input_tournament_id?: string }
@@ -1854,10 +1912,6 @@ export type Database = {
         Returns: {
           status: string
         }[]
-      }
-      admin_purge_player: {
-        Args: { input_target_id: string }
-        Returns: boolean
       }
       admin_record_league_match_result: {
         Args: { input_payload: Json }
@@ -2118,6 +2172,12 @@ export type Database = {
         }[]
       }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      delete_my_account: {
+        Args: never
+        Returns: {
+          status: string
+        }[]
+      }
       get_group_link: { Args: never; Returns: string }
       get_my_account_setup: {
         Args: never
@@ -2127,6 +2187,7 @@ export type Database = {
           tournament_name: string
         }[]
       }
+      get_my_deletion_summary: { Args: never; Returns: Json }
       get_my_levelling: {
         Args: never
         Returns: {
@@ -2194,6 +2255,7 @@ export type Database = {
           status: string
         }[]
       }
+      is_deleted_player: { Args: { input_id: string }; Returns: boolean }
       lobster_oscars_admin_end: {
         Args: { input_tournament_id: string }
         Returns: string

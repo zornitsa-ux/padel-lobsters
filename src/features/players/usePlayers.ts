@@ -144,8 +144,8 @@ export function useForgetPlayerPii() {
   return useCallback(
     (id?: string, { onlyIfUnobserved = false }: { onlyIfUnobserved?: boolean } = {}) => {
       // onlyIfUnobserved guards the automatic unmount purge: a component
-      // unmounting must not blank a sibling surface (e.g. a still-open
-      // PendingApprovalsList row) that's showing the same player's PII —
+      // unmounting must not blank a sibling surface that's showing the same
+      // player's PII —
       // that immediately re-triggers another audited read. By the time this
       // runs from useRevealPii's unmount cleanup, this component's own
       // usePlayerPii observer has already unsubscribed (its cleanup runs
@@ -202,22 +202,10 @@ export function usePlayerActions({
     [session, role, invalidatePlayers, qc],
   )
 
-  const deletePlayer = useCallback(
-    async (id: string) => {
-      await mut.deletePlayer(id)
-      await invalidatePlayers()
-      // Removed outright, not just invalidated — never refetch PII for a
-      // player who no longer exists.
-      qc.removeQueries({ queryKey: playerPiiKeys.detail(id) })
-      return { ok: true }
-    },
-    [invalidatePlayers, qc],
-  )
-
   const resendInvite = useCallback(async (playerId: string) => {
     const email = await mut.resendInvite(playerId)
     return { ok: true, email }
   }, [])
 
-  return { updatePlayer, deletePlayer, resendInvite }
+  return { updatePlayer, resendInvite }
 }

@@ -206,10 +206,11 @@ This replaces the **Remove player** action on the player admin page
 - Then the avatar is removed and `admin_delete_account` runs, and the page
   shows the player as deleted.
 
-The pending-approval **Reject** and **Link** actions in `Players.tsx` also
-call `admin_delete_player`. Nothing creates `pending` players any more (signup
-inserts `active`, and production has none), so they're removed along with
-`admin_delete_player` and `admin_purge_player` (D-7).
+The pending-approval list in `Players.tsx` (Approve, Reject, Link) and its
+Admin entries also relied on `admin_delete_player`. Nothing creates `pending`
+players any more (signup inserts `active`, and production has none), so the
+whole flow is removed along with `admin_delete_player` and
+`admin_purge_player` (D-7).
 
 ### 3.3 Everywhere else: three kinds of reader
 

@@ -17,7 +17,11 @@ export interface EventTeam {
   cancelledReason: TeamCancelReason | null
 }
 
-export type TeamCancelReason = 'partner_declined' | 'captain_cancelled' | 'admin_cancelled'
+export type TeamCancelReason =
+  | 'partner_declined'
+  | 'captain_cancelled'
+  | 'admin_cancelled'
+  | 'account_deleted'
 
 export interface TeamEntry {
   team: EventTeam

@@ -27,7 +27,9 @@ const eventTeamRowSchema = z.object({
   final_rank: z.number().nullable(),
   created_at: z.string(),
   cancelled_at: z.string().nullable(),
-  cancelled_reason: z.enum(['partner_declined', 'captain_cancelled', 'admin_cancelled']).nullable(),
+  cancelled_reason: z
+    .enum(['partner_declined', 'captain_cancelled', 'admin_cancelled', 'account_deleted'])
+    .nullable(),
 })
 
 const teamInviteRowSchema = z.object({
