@@ -119,6 +119,30 @@ export function ownAvatarFilename(playerId: string): string {
   return `player-${playerId}.webp`
 }
 
+// The file an avatar URL points at in the avatars bucket, or null for any other URL.
+export function avatarObjectName({ url }: { url: string | null | undefined }): string | null {
+  return /\/storage\/v1\/object\/public\/avatars\/([^?#]+)/.exec(url ?? '')?.[1] ?? null
+}
+
+// Before an account deletion (docs/account-deletion DESIGN §2.4): the stable
+// file and the one avatar_url names, which an admin may have uploaded under a
+// random name. Storage policies let the owner or an admin remove either; a
+// missing object is not an error.
+export async function removeAvatar({
+  playerId,
+  avatarUrl,
+}: {
+  playerId: string
+  avatarUrl: string | null | undefined
+}): Promise<void> {
+  const named = avatarObjectName({ url: avatarUrl })
+  const own = ownAvatarFilename(playerId)
+  const { error } = await supabase.storage
+    .from('avatars')
+    .remove(named && named !== own ? [own, named] : [own])
+  if (error) throw error
+}
+
 // Requires a session for `playerId`. The cache buster makes the CDN serve the
 // new image over the stable filename.
 export async function setOwnAvatar({ playerId, file }: { playerId: string; file: Blob }) {

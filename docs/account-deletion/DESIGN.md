@@ -144,8 +144,10 @@ received, registration status events, and every uuid others' rows hold
 
 ### 2.4 Avatar
 
-The client removes `avatars/player-<id>.webp` through the Storage API before
-calling the RPC. A new DELETE policy lets the owner or an admin do it (C-5).
+The client removes `avatars/player-<id>.webp`, and the file `avatar_url`
+names if that's another one (an admin's upload uses a random name), through
+the Storage API before calling the RPC. SELECT and DELETE policies let the
+owner or an admin do it (C-5).
 If removal fails, the client stops and shows an error, and nothing else has
 changed. If the RPC fails after removal, the member has lost only the photo
 and can try again. Removing a missing object counts as success.

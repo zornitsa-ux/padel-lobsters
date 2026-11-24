@@ -30,6 +30,7 @@ import { LEVELLING_PATH } from './features/levelling/levellingRoutes'
 import { DESIGN_GALLERY_ENABLED, DESIGN_GALLERY_PATH } from './lib/designGallery'
 import { GROUP_SETTINGS_PATH } from './features/settings/settingsHelpers'
 import { useApp } from './context/useApp'
+import { GOODBYE_PATH } from './features/account-deletion/accountDeletionRoutes'
 
 // Code-split every route off the first paint. The app shell (Layout,
 // VerificationGate) and the landing (Dashboard, GuestHome) stay
@@ -37,6 +38,7 @@ import { useApp } from './context/useApp'
 // route is hit. Each lazy() becomes its own Rollup chunk — see the bundle
 // treemap (`npm run build:analyze`) for the split.
 const AuthConfirm = lazy(() => import('./components/AuthConfirm'))
+const Goodbye = lazy(() => import('./features/account-deletion/Goodbye'))
 const GuestAnalytics = lazy(() => import('./features/growth/GuestAnalytics'))
 const Players = lazy(() => import('./features/community/Players'))
 const PlayerDetailPage = lazy(() => import('./features/community/PlayerDetailPage'))
@@ -83,6 +85,13 @@ const DesignGallery = DESIGN_GALLERY_ENABLED
 // directly and the adapter can be deleted then.
 export default function App() {
   useEffect(() => mark('react-mount'), [])
+  // After deleting an account: no app shell, so nothing leads back in.
+  if (window.location.pathname === GOODBYE_PATH)
+    return (
+      <Suspense fallback={<RouteFallback />}>
+        <Goodbye />
+      </Suspense>
+    )
   return (
     <AppProvider>
       <BrowserRouter>
