@@ -7,7 +7,7 @@
 #
 #   npm run db:grants        — rewrites both files from the local stack
 #   npm run db:grants:check  — fails if the local stack differs (also CI)
-#   npm run db:grants:prod   — compares production, read-only (--linked)
+#   npm run db:grants:prod   — compares production, read-only (--remote)
 #
 # Production runs older Supabase default privileges than the local image (#102),
 # so a migration that forgets a grant or revoke behaves differently there. The
@@ -32,22 +32,22 @@ tables_file="$repo_root/supabase/expected_table_grants.txt"
 source "$repo_root/scripts/lib/supabase-cli.sh"
 
 mode=print
-target=--local
+target=local
 for arg in "$@"; do
   case "$arg" in
     --write) mode=write ;;
     --check) mode=check ;;
-    --linked) target=--linked ;;
-    *) echo "usage: $0 [--write|--check] [--linked]" >&2; exit 2 ;;
+    --remote) target=remote ;;
+    *) echo "usage: $0 [--write|--check] [--remote]" >&2; exit 2 ;;
   esac
 done
-if [[ "$mode" == write && "$target" == --linked ]]; then
+if [[ "$mode" == write && "$target" == remote ]]; then
   echo "error: the expected files are written from the local stack only." >&2
   exit 2
 fi
 
 query() {
-  "$supabase_cli" db query "$target" --output-format json "$1" | json_rows line | jq -r .line | LC_ALL=C sort
+  db_query "$target" --output-format json "$1" | json_rows line | jq -r .line | LC_ALL=C sort
 }
 
 grantee_sql="case a.grantee when 0 then 'PUBLIC' else a.grantee::regrole::text end"

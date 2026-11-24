@@ -10,12 +10,7 @@ export type Database = {
     }
     Functions: {
       graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
+        Args: { extensions?: Json; operationName?: string; query?: string; variables?: Json }
         Returns: Json
       }
     }
@@ -39,6 +34,7 @@ export type Database = {
           ref_id: string
           ref_table: string
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           dismissed_at?: string | null
@@ -73,6 +69,7 @@ export type Database = {
           seed: number | null
           tournament_id: string
         }
+        ComputedFields: never
         Insert: {
           cancelled_at?: string | null
           cancelled_reason?: string | null
@@ -143,6 +140,7 @@ export type Database = {
           player_id: string
           status: string
         }
+        ComputedFields: never
         Insert: {
           created_at?: string | null
           division: string
@@ -199,6 +197,7 @@ export type Database = {
           team2_id: string | null
           winner_id: string | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           division: string
@@ -271,6 +270,7 @@ export type Database = {
           team_name: string | null
           team_song: string | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           division: string
@@ -360,6 +360,7 @@ export type Database = {
           starts_at: string | null
           status: string
         }
+        ComputedFields: never
         Insert: {
           created_at?: string | null
           created_by?: string | null
@@ -430,6 +431,7 @@ export type Database = {
           name: string
           session_id: string
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           display_order?: number
@@ -465,6 +467,7 @@ export type Database = {
           started_at: string | null
           tournament_id: string
         }
+        ComputedFields: never
         Insert: {
           closed_at?: string | null
           created_at?: string
@@ -500,6 +503,7 @@ export type Database = {
           updated_at: string
           voter_id: string
         }
+        ComputedFields: never
         Insert: {
           category_id: string
           created_at?: string
@@ -570,6 +574,7 @@ export type Database = {
           tournament_id: string
           updated_at: string
         }
+        ComputedFields: never
         Insert: {
           completed?: boolean | null
           court?: string | null
@@ -625,6 +630,7 @@ export type Database = {
           size: string | null
           status: string | null
         }
+        ComputedFields: never
         Insert: {
           admin_comment?: string | null
           cancelled_at?: string | null
@@ -670,6 +676,7 @@ export type Database = {
           price: number | null
           sizes: string[] | null
         }
+        ComputedFields: never
         Insert: {
           active?: boolean | null
           category?: string | null
@@ -712,6 +719,7 @@ export type Database = {
           requested_by: string
           tournament_id: string
         }
+        ComputedFields: never
         Insert: {
           account_acknowledged_at?: string | null
           consent_confirmed_at: string
@@ -793,6 +801,7 @@ export type Database = {
           player_id: string | null
           skipped: boolean
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           historical_name: string
@@ -831,6 +840,7 @@ export type Database = {
           old_email: string
           player_id: string
         }
+        ComputedFields: never
         Insert: {
           cleared_at?: string
           cleared_by?: string | null
@@ -863,6 +873,7 @@ export type Database = {
           walls: string
           years_playing: string
         }
+        ComputedFields: never
         Insert: {
           completed_at?: string
           frequency: string
@@ -913,6 +924,7 @@ export type Database = {
           player_id: string
           source: string
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           detail?: string | null
@@ -967,6 +979,7 @@ export type Database = {
           tagline: string | null
           tagline_label: string | null
         }
+        ComputedFields: never
         Insert: {
           avatar_url?: string | null
           birthday?: string | null
@@ -1023,6 +1036,7 @@ export type Database = {
           player_id: string
           tournament_id: string
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           player_id: string
@@ -1068,6 +1082,7 @@ export type Database = {
           tournament_label: string | null
           won_at_date: string
         }
+        ComputedFields: never
         Insert: {
           cooldown_offset?: number
           created_at?: string
@@ -1115,7 +1130,7 @@ export type Database = {
       rating_events: {
         Row: {
           applied_delta: number
-          breakdown: Json
+          breakdown: NonNullable<Json>
           created_at: string | null
           flagged: boolean
           id: string
@@ -1129,9 +1144,10 @@ export type Database = {
           reviewed_by: string | null
           tournament_id: string | null
         }
+        ComputedFields: never
         Insert: {
           applied_delta: number
-          breakdown: Json
+          breakdown: NonNullable<Json>
           created_at?: string | null
           flagged?: boolean
           id?: string
@@ -1147,7 +1163,7 @@ export type Database = {
         }
         Update: {
           applied_delta?: number
-          breakdown?: Json
+          breakdown?: NonNullable<Json>
           created_at?: string | null
           flagged?: boolean
           id?: string
@@ -1198,6 +1214,7 @@ export type Database = {
           source: string
           tournament_id: string
         }
+        ComputedFields: never
         Insert: {
           actor_id?: string | null
           actor_role?: string | null
@@ -1236,6 +1253,7 @@ export type Database = {
           to_player_id: string
           tournament_id: string
         }
+        ComputedFields: never
         Insert: {
           closed_at?: string | null
           closed_reason?: string | null
@@ -1308,6 +1326,7 @@ export type Database = {
           team_id: string | null
           tournament_id: string
         }
+        ComputedFields: never
         Insert: {
           accepted_at?: string | null
           created_at?: string | null
@@ -1363,26 +1382,27 @@ export type Database = {
       }
       schedule_runs: {
         Row: {
-          config: Json
+          config: NonNullable<Json>
           created_at: string | null
           id: string
-          report: Json
+          report: NonNullable<Json>
           seed: number
           tournament_id: string
         }
+        ComputedFields: never
         Insert: {
-          config: Json
+          config: NonNullable<Json>
           created_at?: string | null
           id?: string
-          report: Json
+          report: NonNullable<Json>
           seed: number
           tournament_id: string
         }
         Update: {
-          config?: Json
+          config?: NonNullable<Json>
           created_at?: string | null
           id?: string
-          report?: Json
+          report?: NonNullable<Json>
           seed?: number
           tournament_id?: string
         }
@@ -1407,6 +1427,7 @@ export type Database = {
           succeeded: boolean
           user_agent: string | null
         }
+        ComputedFields: never
         Insert: {
           attempt_kind: string
           attempted_at?: string
@@ -1438,6 +1459,7 @@ export type Database = {
           raffle_cooldown_tournaments: number
           whatsapp_link: string | null
         }
+        ComputedFields: never
         Insert: {
           group_name?: string | null
           id?: number
@@ -1465,6 +1487,7 @@ export type Database = {
           status: string
           tournament_id: string
         }
+        ComputedFields: never
         Insert: {
           error?: string | null
           net_request_id?: number | null
@@ -1529,6 +1552,7 @@ export type Database = {
           time: string | null
           total_price: number | null
         }
+        ComputedFields: never
         Insert: {
           completed_at?: string | null
           courts?: Json | null
@@ -1588,16 +1612,17 @@ export type Database = {
           country: string | null
           created_at: string | null
           gender: string | null
-          id: string | null
+          id: string
           is_left_handed: boolean | null
-          name: string | null
+          name: string
           playtomic_level: number | null
           preferred_position: string | null
-          role: Database['public']['Enums']['player_role'] | null
+          role: Database['public']['Enums']['player_role']
           status: string | null
           tagline: string | null
           tagline_label: string | null
         }
+        ComputedFields: never
         Insert: {
           avatar_url?: string | null
           birthday_day?: never
@@ -1641,8 +1666,9 @@ export type Database = {
           cancelled_count: number | null
           registered_count: number | null
           total_count: number | null
-          tournament_id: string | null
+          tournament_id: string
         }
+        ComputedFields: never
         Relationships: [
           {
             foreignKeyName: 'registrations_tournament_id_fkey'
@@ -1657,7 +1683,7 @@ export type Database = {
     Functions: {
       _url_encode: { Args: { input: string }; Returns: string }
       acknowledge_my_account: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           status: string
         }[]
@@ -1695,11 +1721,8 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      admin_apply_tournament_ratings: {
-        Args: { input_payload: Json }
-        Returns: number
-      }
-      admin_auth_readiness: { Args: never; Returns: Json }
+      admin_apply_tournament_ratings: { Args: { input_payload: Json }; Returns: number }
+      admin_auth_readiness: { Args: Record<PropertyKey, never>; Returns: Json }
       admin_cancel_team: {
         Args: { input_team_id: string }
         Returns: {
@@ -1713,10 +1736,7 @@ export type Database = {
           status: string
         }[]
       }
-      admin_confirm_league_groups: {
-        Args: { input_payload: Json }
-        Returns: string
-      }
+      admin_confirm_league_groups: { Args: { input_payload: Json }; Returns: string }
       admin_create_bracket_matches: {
         Args: { input_league_id: string; input_payload: Json }
         Returns: string
@@ -1782,18 +1802,9 @@ export type Database = {
           status: string
         }[]
       }
-      admin_delete_league: {
-        Args: { input_league_id: string }
-        Returns: string
-      }
-      admin_delete_league_team: {
-        Args: { input_team_id: string }
-        Returns: boolean
-      }
-      admin_delete_raffle_winner: {
-        Args: { input_winner_id: string }
-        Returns: boolean
-      }
+      admin_delete_league: { Args: { input_league_id: string }; Returns: string }
+      admin_delete_league_team: { Args: { input_team_id: string }; Returns: boolean }
+      admin_delete_raffle_winner: { Args: { input_winner_id: string }; Returns: boolean }
       admin_dismiss_deletion_followup: {
         Args: { input_followup_id: number }
         Returns: {
@@ -1801,11 +1812,7 @@ export type Database = {
         }[]
       }
       admin_draw_raffle_winners: {
-        Args: {
-          input_num_winners: number
-          input_prizes?: string[]
-          input_tournament_id: string
-        }
+        Args: { input_num_winners: number; input_prizes?: string[]; input_tournament_id: string }
         Returns: {
           cooldown_offset: number
           created_at: string
@@ -1829,12 +1836,9 @@ export type Database = {
           status: string
         }[]
       }
-      admin_get_deletion_summary: {
-        Args: { input_target_id: string }
-        Returns: Json
-      }
+      admin_get_deletion_summary: { Args: { input_target_id: string }; Returns: Json }
       admin_get_mm_ratings: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           mm_rating: number
           mm_sigma: number
@@ -1851,10 +1855,7 @@ export type Database = {
           phone: string
         }[]
       }
-      admin_get_raffle_exclusions: {
-        Args: { input_tournament_id: string }
-        Returns: string[]
-      }
+      admin_get_raffle_exclusions: { Args: { input_tournament_id: string }; Returns: string[] }
       admin_get_raffle_ineligible: {
         Args: { input_tournament_id: string }
         Returns: {
@@ -1867,7 +1868,7 @@ export type Database = {
         Returns: string
       }
       admin_list_deletion_followups: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           context_id: string
           followup_id: number
@@ -1935,23 +1936,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      admin_record_schedule_run: {
-        Args: { input_payload: Json }
-        Returns: string
-      }
-      admin_resend_invite: {
-        Args: { input_player_id: string }
-        Returns: string
-      }
+      admin_record_schedule_run: { Args: { input_payload: Json }; Returns: string }
+      admin_resend_invite: { Args: { input_player_id: string }; Returns: string }
       admin_review_rating_event: {
-        Args: {
-          input_action: string
-          input_delta?: number
-          input_event_id: string
-        }
+        Args: { input_action: string; input_delta?: number; input_event_id: string }
         Returns: {
           applied_delta: number
-          breakdown: Json
+          breakdown: NonNullable<Json>
           created_at: string | null
           flagged: boolean
           id: string
@@ -2110,10 +2101,7 @@ export type Database = {
         Args: { input_prize: string; input_winner_id: string }
         Returns: boolean
       }
-      apply_registration_transfer: {
-        Args: { input_transfer_id: string }
-        Returns: string
-      }
+      apply_registration_transfer: { Args: { input_transfer_id: string }; Returns: string }
       before_user_created_hook: { Args: { event: Json }; Returns: Json }
       cancel_my_team: {
         Args: { input_team_id: string }
@@ -2173,23 +2161,23 @@ export type Database = {
       }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       delete_my_account: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           status: string
         }[]
       }
-      get_group_link: { Args: never; Returns: string }
+      get_group_link: { Args: Record<PropertyKey, never>; Returns: string }
       get_my_account_setup: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           acknowledged: boolean
           requested_by_name: string
           tournament_name: string
         }[]
       }
-      get_my_deletion_summary: { Args: never; Returns: Json }
+      get_my_deletion_summary: { Args: Record<PropertyKey, never>; Returns: Json }
       get_my_levelling: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           needs_levelling: boolean
           playtomic_level: number
@@ -2197,7 +2185,7 @@ export type Database = {
         }[]
       }
       get_my_profile_v2: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           avatar_url: string | null
           birthday: string | null
@@ -2230,7 +2218,7 @@ export type Database = {
         }
       }
       get_my_team_invites: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           account_created_by_captain: boolean
           captain_id: string
@@ -2243,10 +2231,7 @@ export type Database = {
           tournament_time: string
         }[]
       }
-      get_payment_reminder_link: {
-        Args: { input_registration_id: string }
-        Returns: string
-      }
+      get_payment_reminder_link: { Args: { input_registration_id: string }; Returns: string }
       get_transfer_recipient_phone: {
         Args: { input_transfer_id: string }
         Returns: {
@@ -2257,10 +2242,7 @@ export type Database = {
       }
       is_deleted_player: { Args: { input_id: string }; Returns: boolean }
       is_own_avatar: { Args: { input_name: string }; Returns: boolean }
-      lobster_oscars_admin_end: {
-        Args: { input_tournament_id: string }
-        Returns: string
-      }
+      lobster_oscars_admin_end: { Args: { input_tournament_id: string }; Returns: string }
       lobster_oscars_admin_get_category_voters: {
         Args: { input_category_id: string }
         Returns: {
@@ -2304,14 +2286,8 @@ export type Database = {
           votes_count: number
         }[]
       }
-      lobster_oscars_admin_share: {
-        Args: { input_tournament_id: string }
-        Returns: string
-      }
-      lobster_oscars_admin_start: {
-        Args: { input_tournament_id: string }
-        Returns: string
-      }
+      lobster_oscars_admin_share: { Args: { input_tournament_id: string }; Returns: string }
+      lobster_oscars_admin_start: { Args: { input_tournament_id: string }; Returns: string }
       lobster_oscars_admin_upsert_categories: {
         Args: { input_categories: Json; input_tournament_id: string }
         Returns: string
@@ -2320,10 +2296,7 @@ export type Database = {
         Args: { input_category_id: string; input_target_id: string }
         Returns: string
       }
-      lobster_oscars_clear_vote: {
-        Args: { input_category_id: string }
-        Returns: string
-      }
+      lobster_oscars_clear_vote: { Args: { input_category_id: string }; Returns: string }
       lobster_oscars_get_my_votes: {
         Args: { input_tournament_id: string }
         Returns: {
@@ -2384,7 +2357,7 @@ export type Database = {
           team_id: string
         }[]
       }
-      require_admin: { Args: never; Returns: undefined }
+      require_admin: { Args: Record<PropertyKey, never>; Returns: undefined }
       respond_to_team_invite: {
         Args: { input_accept: boolean; input_team_id: string }
         Returns: {
@@ -2408,15 +2381,9 @@ export type Database = {
         }[]
       }
       signup_name_match: { Args: { input_name: string }; Returns: string }
-      sync_my_role: { Args: never; Returns: Json }
-      tournament_start_ts: {
-        Args: { input_tournament_id: string }
-        Returns: string
-      }
-      tournament_transfers_closed: {
-        Args: { input_tournament_id: string }
-        Returns: boolean
-      }
+      sync_my_role: { Args: Record<PropertyKey, never>; Returns: Json }
+      tournament_start_ts: { Args: { input_tournament_id: string }; Returns: string }
+      tournament_transfers_closed: { Args: { input_tournament_id: string }; Returns: boolean }
       update_my_profile: { Args: { input_payload: Json }; Returns: boolean }
     }
     Enums: {
@@ -2442,9 +2409,7 @@ export type Tables<
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R
@@ -2468,9 +2433,7 @@ export type TablesInsert<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I
     }
@@ -2493,9 +2456,7 @@ export type TablesUpdate<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U
     }
@@ -2518,9 +2479,7 @@ export type Enums<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
     ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
@@ -2535,9 +2494,7 @@ export type CompositeTypes<
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
     ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]

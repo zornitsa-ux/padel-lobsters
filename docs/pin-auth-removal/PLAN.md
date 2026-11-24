@@ -12,7 +12,7 @@ signed in gets logged out.
 
 **Constraints**
 
-- **Migrations:** review → merge → `npx supabase db push` from `main`
+- **Migrations:** review → merge → `npx supabase db push --remote` from `main`
   (CLAUDE.md). There are no MCP or dashboard writes to production. Edge
   functions are deployed from `main` after merge (CONTRIBUTING.md).
 - **The owner reviews, merges and does every production step:** db push,
@@ -1004,7 +1004,7 @@ before production, that every account still signs in and sees the same data.
 3. **Baseline (T14).** Run `parity.ts --record baseline`.
 4. **Apply the PR.** Check out the PR branch, which must contain every
    migration on `main` (otherwise `migration up` refuses), then
-   `npx supabase migration up --local`. If `config.toml` changed, restart the
+   `npx supabase migration up`. If `config.toml` changed, restart the
    stack.
 5. **After (T14).** Run `npm run rehearsal:integrity -- --local`, then
    `parity.ts --record after --compare baseline`.

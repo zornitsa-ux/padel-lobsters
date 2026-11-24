@@ -3,27 +3,28 @@
 # only, against production.
 #
 #   scripts/prod-rehearsal/integrity.sh --local              counts
-#   scripts/prod-rehearsal/integrity.sh --linked             counts, production
+#   scripts/prod-rehearsal/integrity.sh --remote             counts, production
 #   scripts/prod-rehearsal/integrity.sh --local --details    plus names (keep out of PRs)
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$here/../lib/supabase-cli.sh"
 
-usage() { echo "usage: $0 --local|--linked [--details]  (--details is local only)" >&2 && exit 2; }
+usage() { echo "usage: $0 --local|--remote [--details]  (--details is local only)" >&2 && exit 2; }
 
 target=""
 details=false
 for arg in "$@"; do
   case "$arg" in
-    --local | --linked) target="$arg" ;;
+    --local) target=local ;;
+    --remote) target=remote ;;
     --details) details=true ;;
     *) usage ;;
   esac
 done
 [[ -n "$target" ]] || usage
 # Names never come straight from production; load a copy with sync.sh instead.
-[[ "$target" == --local ]] || ! $details || usage
+[[ "$target" == local ]] || ! $details || usage
 
 query_file="$(mktemp)"
 trap 'rm -f "$query_file"' EXIT
@@ -31,7 +32,7 @@ trap 'rm -f "$query_file"' EXIT
 # $1: the query file (auth_sets.sql is its WITH); $2: a key every row carries.
 rows() {
   cat "$here/auth_sets.sql" "$1" >"$query_file"
-  "$supabase_cli" db query "$target" --output-format json -f "$query_file" | json_rows "$2"
+  db_query "$target" --output-format json -f "$query_file" | json_rows "$2"
 }
 
 rows "$here/auth_integrity.sql" check_name | jq -r '"\(.check_name)\t\(.value)"' |

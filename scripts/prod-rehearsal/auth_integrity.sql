@@ -1,7 +1,7 @@
 -- Auth integrity counts (docs/pin-auth-removal/PLAN.md §4.5).
 --
 -- One read-only statement, so it runs unchanged against the local stack and,
--- via `supabase db query --linked`, against production. It returns counts only,
+-- via `supabase db query --remote --read-only`, against production. It returns counts only,
 -- which is safe to paste into a PR. auth_integrity_details.sql names the people
 -- behind the counts that need follow-up.
 --

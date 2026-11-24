@@ -30,7 +30,7 @@ npx supabase link --project-ref <your-project-ref>
 #   Your project ref is in Supabase → Project Settings → General
 
 # Push all migrations to production
-npx supabase db push
+npx supabase db push --remote
 ```
 
 This creates every table, RLS policy, and stored procedure the app needs.
@@ -96,7 +96,7 @@ After a migration PR is merged to `main`:
 
 ```bash
 git checkout main && git pull
-npx supabase db push
+npx supabase db push --remote
 ```
 
 ---
