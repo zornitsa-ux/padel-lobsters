@@ -14,6 +14,8 @@
 // links sent in old WhatsApp messages still work — App.jsx redirects them
 // to the new path on first paint.
 
+import { firstName } from './playerName'
+
 export const APP_BASE_URL = 'https://padelobsters.nl'
 
 // E.164: leading '+', country code + subscriber digits, 8–15 digits total
@@ -45,9 +47,9 @@ export function buildTransferMessage(
   transferId: string,
   tikkieLink?: string | null,
 ): string {
-  const firstName = (toPlayerName || '').split(/\s+/)[0] || 'there'
+  const first = firstName({ name: toPlayerName, fallback: 'there' })
   const url = buildTransferUrl(transferId)
-  const base = `Hi ${firstName}, can you please accept the transfer of my spot on ${url}?`
+  const base = `Hi ${first}, can you please accept the transfer of my spot on ${url}?`
   if (tikkieLink) {
     return (
       `${base} It isn't paid yet — once you accept, please pay directly here: ${tikkieLink} ` +

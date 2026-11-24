@@ -14,6 +14,7 @@ import { ListCard, ListRow } from '../../components/ui/ListCard'
 import { Section } from '../../components/ui/Section'
 import { TextButton } from '../../components/ui/TextButton'
 import { Tag } from '../../components/ui/Tag'
+import { firstName } from '../../lib/playerName'
 
 type OrdersTableProps = {
   activeOrders: MerchInterest[]
@@ -74,7 +75,10 @@ export default function OrdersTable({ activeOrders, interests, items, players }:
             <p className="text-sm text-lob-muted">
               Cancel order for{' '}
               <strong>
-                {getPlayerName({ order: cancelTarget, players })?.split(' ')[0] || 'player'}
+                {firstName({
+                  name: getPlayerName({ order: cancelTarget, players }),
+                  fallback: 'player',
+                })}
               </strong>{' '}
               — {items.find((i) => i.id === cancelTarget.merch_item_id)?.name}?
             </p>
@@ -155,7 +159,7 @@ function OrderRow({
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-lob-dark">
-            {playerName?.split(' ')[0] || `Player #${o.player_id}`}
+            {firstName({ name: playerName, fallback: `Player #${o.player_id}` })}
             <span className="font-normal ml-1.5 caption">{item?.name || '—'}</span>
           </p>
           <div className="flex flex-wrap items-center gap-2 mt-0.5">
@@ -231,8 +235,8 @@ function CancelledOrders({
               <ListRow key={o.id}>
                 <div className="opacity-60 space-y-1">
                   <p className="text-sm text-lob-muted line-through">
-                    {getPlayerName({ order: o, players })?.split(' ')[0] || 'Unknown'} —{' '}
-                    {item?.name} {o.size && `(${o.size})`}
+                    {firstName({ name: getPlayerName({ order: o, players }), fallback: 'Unknown' })}{' '}
+                    — {item?.name} {o.size && `(${o.size})`}
                   </p>
                   {o.admin_comment && (
                     <p className="text-xs text-lob-danger italic">"{o.admin_comment}"</p>

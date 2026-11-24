@@ -1,6 +1,7 @@
 import { formatLevel, levelOrNoLevelStart } from '../../lib/level'
 import { computeTournamentStandings, type MatchForStandings } from '../../lib/standings'
 import type { TeamResultsByEvent } from '../events/kingOfCourt/kotcPlayer'
+import { firstName } from '../../lib/playerName'
 
 export interface ReviewScenario {
   id: string
@@ -91,7 +92,7 @@ export function corpReview({
   teamResults?: TeamResultsByEvent
 }): CorpReview {
   const lvl = levelOrNoLevelStart({ level: player.playtomicLevel })
-  const name = (player.name || 'Employee').split(' ')[0]
+  const name = firstName({ name: player.name, fallback: 'Employee' })
   const pid = player.id
 
   const spid = String(pid)

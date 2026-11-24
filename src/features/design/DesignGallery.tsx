@@ -79,6 +79,7 @@ import { Well } from '../../components/ui/Well'
 import { PlaytomicLevelField } from '../players/ProfileFields'
 import { LevelInput } from '../../components/ui/LevelInput'
 import { typedLevelProblem } from '../../lib/level'
+import { firstName } from '../../lib/playerName'
 
 // Dev-only (`/design`). Each design-system step adds its components here.
 
@@ -672,7 +673,7 @@ function OptionSection() {
           {SAMPLE_PLAYERS.slice(0, 2).map((p) => (
             <OptionTile key={p.id} selected={tile === p.id} onClick={() => setTile(p.id)}>
               <span className="font-semibold text-sm text-lob-dark">{p.name}</span>
-              <span className="caption">R2: you &amp; {p.name.split(' ')[0]}</span>
+              <span className="caption">R2: you &amp; {firstName({ name: p.name })}</span>
             </OptionTile>
           ))}
           <OptionTile disabled onClick={() => {}}>

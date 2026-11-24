@@ -4,6 +4,7 @@ import { Modal } from '../../components/ui/Modal'
 import { fetchPaymentReminderLink } from './registrationQueries'
 import { Button } from '../../components/ui/Button'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { firstName } from '../../lib/playerName'
 
 type LinkState =
   | { status: 'loading' }
@@ -44,7 +45,7 @@ export default function PaymentReminderModal({
     }
   }, [registrationId])
 
-  const firstName = playerName.split(/\s+/)[0] || 'this player'
+  const first = firstName({ name: playerName, fallback: 'this player' })
 
   const handleSend = () => {
     if (state.status !== 'ready') return
@@ -54,7 +55,7 @@ export default function PaymentReminderModal({
   }
 
   return (
-    <Modal open onClose={onClose} title={`Remind ${firstName}`}>
+    <Modal open onClose={onClose} title={`Remind ${first}`}>
       <div className="space-y-4">
         {state.status === 'loading' && (
           <p className="text-sm text-lob-muted text-center py-2">Preparing reminder…</p>
@@ -63,7 +64,7 @@ export default function PaymentReminderModal({
         {state.status === 'ready' && (
           <>
             <p className="caption leading-relaxed">
-              Opens WhatsApp with a pre-filled Tikkie payment nudge to {firstName}
+              Opens WhatsApp with a pre-filled Tikkie payment nudge to {first}
               {isTeam ? ', the team captain, who pays for both players' : ''}.
             </p>
             <Button fullWidth icon={<MessageCircle />} onClick={handleSend}>
@@ -74,7 +75,7 @@ export default function PaymentReminderModal({
 
         {state.status === 'unavailable' && (
           <p className="text-sm text-lob-muted text-center py-2">
-            No WhatsApp reminder available for {firstName} — check they have a valid phone number on
+            No WhatsApp reminder available for {first} — check they have a valid phone number on
             file and this event has a Tikkie link set.
           </p>
         )}

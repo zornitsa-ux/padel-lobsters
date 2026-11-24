@@ -6,6 +6,7 @@ import { useTournaments } from '../events/useTournaments'
 import { buildPlayerStats } from '../../lib/playerStats'
 import YourStatsCard from './YourStatsCard'
 import { isEventOver } from '../events/eventPhase'
+import { firstName } from '../../lib/playerName'
 
 export default function AccountStatsSection({ claimedId }: { claimedId: string | null }) {
   const { data: tournaments = [] } = useTournaments()
@@ -27,7 +28,7 @@ export default function AccountStatsSection({ claimedId }: { claimedId: string |
         .filter(([, rec]) => rec.lost >= 1)
         .map(([oppId, rec]) => {
           const p = players.find((x) => x.id === oppId)
-          return p ? { name: p.name.split(' ')[0], won: rec.won, lost: rec.lost } : null
+          return p ? { name: firstName({ name: p.name }), won: rec.won, lost: rec.lost } : null
         })
         .filter((x): x is NonNullable<typeof x> => x !== null)
         .sort((a, b) => b.lost - b.won - (a.lost - a.won))[0] || null
@@ -37,7 +38,7 @@ export default function AccountStatsSection({ claimedId }: { claimedId: string |
         .filter(([, rec]) => rec.wins >= 1)
         .map(([pId, rec]) => {
           const p = players.find((x) => x.id === pId)
-          return p ? { name: p.name.split(' ')[0], wins: rec.wins, games: rec.games } : null
+          return p ? { name: firstName({ name: p.name }), wins: rec.wins, games: rec.games } : null
         })
         .filter((x): x is NonNullable<typeof x> => x !== null)
         .sort((a, b) => b.wins - a.wins)[0] || null

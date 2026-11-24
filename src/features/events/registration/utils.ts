@@ -3,6 +3,7 @@ import type { NormalisedRegistration } from '../registrationQueries'
 import type { NormalisedMatch } from '../matchQueries'
 import type { NormalisedTransfer } from '../transferQueries'
 import { pricePerEntry } from '../eventHelpers'
+import { firstName } from '../../../lib/playerName'
 
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
 const TRANSFER_CUTOFF_MS = 12 * 60 * 60 * 1000
@@ -230,7 +231,7 @@ export const getPlayerFirstName = (
   playerId: string | null | undefined,
 ): string => {
   const p = players.find((x) => x.id === playerId)
-  return p ? p.name.split(' ')[0] : '?'
+  return firstName({ name: p?.name, fallback: '?' })
 }
 
 export const computeRankings = ({

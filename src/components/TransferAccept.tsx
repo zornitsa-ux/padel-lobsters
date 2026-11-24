@@ -23,6 +23,7 @@ import { IncomingTransferActions } from '../features/events/TransferActions'
 import { respondFailureMessage } from '../features/events/transferStatus'
 import { AlertBox } from './ui/AlertBox'
 import { loadFailed } from '../lib/queryState'
+import { firstName } from '../lib/playerName'
 
 // Landing page Melanie hits after tapping the WhatsApp link
 // (https://padelobsters.nl/?transfer=<id>). Shows the offer details and an
@@ -76,7 +77,7 @@ export default function TransferAccept({ transferId, onNavigate }: TransferAccep
 
   // First name only for non-admins (matches the rest of the app's privacy
   // posture — players_public hides full names).
-  const dn = (p?: Player | null) => (p ? (isAdmin ? p.name : (p.name || '').split(/\s+/)[0]) : '—')
+  const dn = (p?: Player | null) => (p ? (isAdmin ? p.name : firstName({ name: p.name })) : '—')
 
   const isMyOffer = transfer && claimedId && String(claimedId) === String(transfer.toPlayerId)
   const wrongIdentity = transfer && claimedId && !isMyOffer

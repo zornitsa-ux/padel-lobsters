@@ -34,6 +34,16 @@ describe('buildDisplayNames', () => {
     expect(buildDisplayNames(['Ian Smith', 'Ian Smith'])).toEqual({ 'Ian Smith': 'Ian' })
   })
 
+  it('keeps a deleted account’s name whole, apart from real names', () => {
+    expect(
+      buildDisplayNames(['Anonymous Octopus #6', 'Anonymous Crab #7', 'Anonymous Smith']),
+    ).toEqual({
+      'Anonymous Octopus #6': 'Anonymous Octopus #6',
+      'Anonymous Crab #7': 'Anonymous Crab #7',
+      'Anonymous Smith': 'Anonymous',
+    })
+  })
+
   it('skips empty entries and handles an empty list', () => {
     expect(buildDisplayNames(['', 'Ian'])).toEqual({ Ian: 'Ian' })
     expect(buildDisplayNames([])).toEqual({})

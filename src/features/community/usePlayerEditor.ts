@@ -11,13 +11,14 @@ import { getMissingPlayerFormFields } from './playerFormSchema'
 import { buildPlayerEditPatch } from './playerPatch'
 import { useResolveWithPii } from './useRevealPii'
 import type { CommunityPlayer } from './playersSelectors'
+import { nameParts } from '../../lib/playerName'
 
 // Single-word names go entirely into firstName; the admin can add a surname.
 function formFromPlayer(p: CommunityPlayer): PlayerFormState {
-  const nameParts = (p.name || '').trim().split(/\s+/)
+  const parts = nameParts(p.name)
   return {
-    firstName: nameParts[0] || '',
-    lastName: nameParts.slice(1).join(' '),
+    firstName: parts[0] || '',
+    lastName: parts.slice(1).join(' '),
     name: p.name || '',
     email: p.email || '',
     phone: p.phone || '',
