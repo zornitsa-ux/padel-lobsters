@@ -163,7 +163,7 @@ export function useForgetPlayerPii() {
 }
 
 // No cache to invalidate — the returned URL goes into the form and is
-// persisted by the following addPlayer/updatePlayer call.
+// persisted by the following updatePlayer call.
 export function useAvatarUpload() {
   return useMutation({ mutationFn: uploadAvatar })
 }
@@ -181,17 +181,6 @@ export function usePlayerActions({
   const invalidatePlayers = useCallback(
     () => qc.invalidateQueries({ queryKey: playerKeys.all() }),
     [qc],
-  )
-
-  const addPlayer = useCallback(
-    async (data: PlayerInput) => {
-      if (!session?.user) throw new Error('Admin sign-in required to add a player.')
-      const inserted = await mut.addPlayer(data)
-      if (!inserted) throw new Error('Could not save player. Check your admin sign-in.')
-      await invalidatePlayers()
-      return { ok: true, data: inserted }
-    },
-    [session, invalidatePlayers],
   )
 
   const updatePlayer = useCallback(
@@ -230,5 +219,5 @@ export function usePlayerActions({
     return { ok: true, email }
   }, [])
 
-  return { addPlayer, updatePlayer, deletePlayer, resendInvite }
+  return { updatePlayer, deletePlayer, resendInvite }
 }

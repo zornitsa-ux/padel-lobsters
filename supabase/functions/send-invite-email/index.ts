@@ -78,12 +78,12 @@ const introFor = ({
   switch (kind) {
     case 'league_invite':
       return teamName
-        ? `Hi ${firstName}, your spot with ${teamName} in the Padel Lobsters league is ready.`
-        : `Hi ${firstName}, your spot in the Padel Lobsters league is ready.`
+        ? `Hi ${firstName}, a Padel Lobsters admin has added you to the league with ${teamName}. Sign in to see your team, matches and results.`
+        : `Hi ${firstName}, a Padel Lobsters admin has added you to the league. Sign in to see your team, matches and results.`
     case 'added':
-      return `Welcome to Padel Lobsters, ${firstName}! An admin has set up your account.`
+      return `Hi ${firstName}, a Padel Lobsters admin has added you as a player, so you can sign up for events and see your results.`
     case 'resend':
-      return `Hi ${firstName}, here's your link to sign in to Padel Lobsters.`
+      return `Hi ${firstName}, a Padel Lobsters admin sent you this link to sign in.`
   }
 }
 
@@ -123,12 +123,14 @@ serve(async (req) => {
   const intro = introFor({ kind, firstName, teamName })
   const signInUrl = `${APP_URL}/home?signin=1&email=${encodeURIComponent(email)}`
   const instruction = `You sign in with your email address ${email}.`
+  const siteName = APP_URL.replace(/^https?:\/\//, '').replace(/\/$/, '')
+  const notYou = `Not you, or didn't expect this? You can ignore this email. To reach us, go to ${siteName}.`
 
   const text =
     `${intro}\n\n` +
     `${instruction}\n\n` +
     `Sign in: ${signInUrl}\n\n` +
-    `If you didn't expect this email, reply and we'll sort it out.\n\n` +
+    `${notYou}\n\n` +
     `- Padel Lobsters`
 
   const html =
@@ -141,7 +143,9 @@ serve(async (req) => {
     `<p style="margin:24px 0;text-align:center;">` +
     `<a href="${escapeHtml(signInUrl)}" style="display:inline-block;padding:12px 24px;background:#D94F2B;color:#fff;` +
     `text-decoration:none;font-weight:600;border-radius:8px;">Sign in</a></p>` +
-    `<p style="margin:24px 0 0 0;color:#6B8A92;font-size:13px;">If you didn't expect this email, reply and we'll sort it out.</p>` +
+    `<p style="margin:24px 0 0 0;color:#6B8A92;font-size:13px;"><strong>Not you, or didn't expect this?</strong> ` +
+    `You can ignore this email. To reach us, go to ` +
+    `<a href="${escapeHtml(APP_URL)}" style="color:#6B8A92;">${escapeHtml(siteName)}</a>.</p>` +
     `<p style="margin:8px 0 0 0;color:#6B8A92;font-size:13px;">- Padel Lobsters</p>` +
     `</div></body></html>`
 

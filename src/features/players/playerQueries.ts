@@ -95,7 +95,7 @@ export async function fetchPlayerPii(id: string): Promise<PlayerPii> {
 
 // ── Avatar upload ─────────────────────────────────────────────────────
 // Shared by every avatar-picking form. Returns the public URL; the caller
-// persists it via updatePlayer/addPlayer.
+// persists it via updatePlayer.
 export async function uploadAvatar({
   file,
   filename,
@@ -138,38 +138,8 @@ export function randomAvatarFilename(): string {
 // Reads of the redacted roster live above (fetchPlayers / fetchMyProfile).
 // This section keeps only the write paths.
 //
-// Phase 2c: writes go through SECURITY DEFINER RPCs so we can REVOKE
-// anon's direct grants on public.players. PINs are now generated
-// server-side (atomic — no client/server collision race).
-export async function addPlayer(data: PlayerInput) {
-  // admin_add_player emails an invite when there is an email; no PIN exists.
-  const payload = {
-    name: data.name,
-    email: data.email || '',
-    phone: data.phone || '',
-    notes: data.notes || '',
-    playtomic_level: typedLevel({ value: data.playtomicLevel }),
-    playtomic_username: data.playtomicUsername || '',
-    gender: data.gender || '',
-    status: data.status || 'active',
-    is_left_handed: data.isLeftHanded || false,
-    country: data.country || '',
-    avatar_url: data.avatarUrl || '',
-    birthday: data.birthday || null,
-    preferred_position: data.preferredPosition || '',
-    tagline_label: data.taglineLabel || '',
-  }
-  const { data: rows, error } = await supabase.rpc('admin_add_player', {
-    input_payload: payload,
-  })
-  if (error) {
-    console.error('admin_add_player error:', error)
-    throw withLevelMessage({ error })
-  }
-  const inserted = Array.isArray(rows) ? rows[0] : rows
-  return inserted || null
-}
-
+// Writes go through SECURITY DEFINER RPCs; anon has no direct grants on
+// public.players.
 export async function updatePlayer(id: string, data: PlayerInput, role: string) {
   const setIf = (cond: boolean, key: string, val: Json) => {
     if (cond) payload[key] = val

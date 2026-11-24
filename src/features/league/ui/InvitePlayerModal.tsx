@@ -3,6 +3,8 @@ import { Modal } from '../../../components/ui/Modal'
 import { AlertBox } from '../../../components/ui/AlertBox'
 import { useInviteLeaguePlayer } from '../hooks/useLeagueMutations'
 import { describeInviteError } from '../../players/inviteErrors'
+import { useConfirmInviteEmail } from '../../players/useConfirmInviteEmail'
+import { looksLikeEmail } from '../../auth/authActions'
 import { ActionRow } from '../../../components/ui/ActionRow'
 import { Button } from '../../../components/ui/Button'
 
@@ -22,19 +24,33 @@ export function InvitePlayerModal({
   leagueId,
 }: InvitePlayerModalProps) {
   const [email, setEmail] = useState('')
+  const [invalid, setInvalid] = useState(false)
   const invite = useInviteLeaguePlayer(leagueId)
+  const confirmInviteEmail = useConfirmInviteEmail()
 
   function handleClose() {
     setEmail('')
+    setInvalid(false)
     invite.reset()
     onClose()
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (!email.trim()) return
+    const address = email.trim()
+    if (!address) return
+    invite.reset()
+    const valid = looksLikeEmail(address)
+    setInvalid(!valid)
+    if (!valid) return
+    const ok = await confirmInviteEmail({
+      kind: 'league_invite',
+      name: playerName,
+      email: address.toLowerCase(),
+    })
+    if (!ok) return
     try {
-      await invite.mutateAsync({ input_player_id: playerId, input_email: email.trim() })
+      await invite.mutateAsync({ input_player_id: playerId, input_email: address })
     } catch {
       // error is surfaced via invite.error
     }
@@ -76,10 +92,10 @@ export function InvitePlayerModal({
           />
         </form>
 
-        {invite.error && (
+        {(invalid || invite.error) && (
           <AlertBox variant="error">
             {describeInviteError({
-              error: invite.error,
+              error: invalid ? new Error('invalid email') : invite.error,
               fallback: 'Failed to send invite. Please try again.',
             })}
           </AlertBox>

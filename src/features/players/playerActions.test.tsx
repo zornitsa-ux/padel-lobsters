@@ -8,7 +8,6 @@ import { usePlayerActions } from './usePlayers'
 vi.mock('./playerQueries', () => ({
   fetchPlayers: vi.fn(),
   fetchMyProfile: vi.fn(),
-  addPlayer: vi.fn(),
   updatePlayer: vi.fn(),
   deletePlayer: vi.fn(),
   resendInvite: vi.fn(),
@@ -25,67 +24,6 @@ const playerRole = 'player'
 
 beforeEach(() => {
   vi.clearAllMocks()
-})
-
-// ── addPlayer ─────────────────────────────────────────────────────────────────
-
-describe('usePlayerActions — addPlayer', () => {
-  it('throws admin-signin error without calling mutation when session is null', async () => {
-    const { result } = renderHookWithClient(() =>
-      usePlayerActions({ session: null, role: adminRole }),
-    )
-
-    await expect(act(async () => result.current.addPlayer({ name: 'Test' }))).rejects.toThrow(
-      'Admin sign-in required to add a player.',
-    )
-
-    expect(q.addPlayer).not.toHaveBeenCalled()
-  })
-
-  it('throws admin-signin error without calling mutation when session has no user', async () => {
-    const { result } = renderHookWithClient(() =>
-      usePlayerActions({ session: {}, role: adminRole }),
-    )
-
-    await expect(act(async () => result.current.addPlayer({ name: 'Test' }))).rejects.toThrow(
-      'Admin sign-in required to add a player.',
-    )
-
-    expect(q.addPlayer).not.toHaveBeenCalled()
-  })
-
-  it('throws "Could not save player" error when mutation returns null', async () => {
-    ;(q.addPlayer as ReturnType<typeof vi.fn>).mockResolvedValue(null)
-
-    const { result } = renderHookWithClient(() =>
-      usePlayerActions({ session: authedSession, role: adminRole }),
-    )
-
-    await expect(act(async () => result.current.addPlayer({ name: 'Test' }))).rejects.toThrow(
-      'Could not save player. Check your admin sign-in.',
-    )
-  })
-
-  it('returns { ok: true, data: inserted } and invalidates playerKeys.all() on success', async () => {
-    const inserted = { id: 'new-id', name: 'Test', pin: '1234' }
-    ;(q.addPlayer as ReturnType<typeof vi.fn>).mockResolvedValue(inserted)
-
-    const client = makeTestQueryClient()
-    vi.spyOn(client, 'invalidateQueries')
-
-    const { result } = renderHookWithClient(
-      () => usePlayerActions({ session: authedSession, role: adminRole }),
-      client,
-    )
-
-    let res: unknown
-    await act(async () => {
-      res = await result.current.addPlayer({ name: 'Test' })
-    })
-
-    expect(res).toEqual({ ok: true, data: inserted })
-    expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey: playerKeys.all() })
-  })
 })
 
 // ── updatePlayer ──────────────────────────────────────────────────────────────

@@ -21,6 +21,7 @@ import { corpReview } from './reviewScenarios'
 import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
 import { LevelBadge } from '../../components/ui/LevelBadge'
 import { usePlayerEditor } from './usePlayerEditor'
+import { useResendInvite } from './useResendInvite'
 import { buildFirstNameCount, getDisplayName } from './playersSelectors'
 import type { CommunityPlayer } from './playersSelectors'
 import type { InviteSent } from './InviteSentModal'
@@ -87,6 +88,7 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
     enabled: session != null,
   })
   const editor = usePlayerEditor({ isAdmin })
+  const confirmAndResend = useResendInvite({ resendInvite })
   const [inviteSent, setInviteSent] = useState<InviteSent | null>(null)
   const [error, setError] = useState('')
 
@@ -125,7 +127,8 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
   const handleResendInvite = async (p: CommunityPlayer) => {
     setError('')
     try {
-      const result = await resendInvite(p.id)
+      const result = await confirmAndResend(p)
+      if (!result.sent) return
       setInviteSent({ name: (p.name || '').split(' ')[0] || 'Player', email: result.email })
     } catch (err) {
       setError(describeInviteError({ error: err, fallback: 'Could not resend the invite.' }))

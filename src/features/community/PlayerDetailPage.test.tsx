@@ -6,6 +6,7 @@ import { renderWithClient } from '../../test/renderWithClient'
 
 const h = vi.hoisted(() => ({
   deletePlayer: vi.fn(),
+  confirmAndResend: vi.fn(),
   confirm: vi.fn(),
   isAdmin: false,
   players: [
@@ -32,10 +33,22 @@ vi.mock('./usePlayerEditor', () => ({
     formProps: {},
   }),
 }))
+vi.mock('./useResendInvite', () => ({ useResendInvite: () => h.confirmAndResend }))
 vi.mock('./PlayerForm', () => ({ default: () => null }))
 vi.mock('./PlayerProfile', () => ({
-  default: ({ player, onDelete }: { player: { id: string }; onDelete: (id: string) => void }) => (
-    <button onClick={() => onDelete(player.id)}>remove</button>
+  default: ({
+    player,
+    onDelete,
+    onResendInvite,
+  }: {
+    player: { id: string }
+    onDelete: (id: string) => void
+    onResendInvite: (p: { id: string }) => void
+  }) => (
+    <>
+      <button onClick={() => onDelete(player.id)}>remove</button>
+      <button onClick={() => onResendInvite(player)}>resend</button>
+    </>
   ),
 }))
 vi.mock('./reviewScenarios', () => ({
@@ -91,5 +104,31 @@ describe('PlayerDetailPage', () => {
     fireEvent.click(screen.getByText('remove'))
     await waitFor(() => expect(screen.getByText('ROSTER')).toBeTruthy())
     expect(h.deletePlayer).toHaveBeenCalledWith('p1')
+  })
+
+  it('shows the sent dialog only after the admin confirms the resend', async () => {
+    h.isAdmin = true
+    h.confirmAndResend.mockResolvedValue({ sent: true, email: 'ada@example.com' })
+    renderAt('p1')
+    fireEvent.click(screen.getByText('resend'))
+    await waitFor(() => expect(screen.getByText('Invite sent')).toBeTruthy())
+    expect(screen.getByText('ada@example.com')).toBeTruthy()
+  })
+
+  it('shows nothing when the admin cancels the resend', async () => {
+    h.isAdmin = true
+    h.confirmAndResend.mockResolvedValue({ sent: false })
+    renderAt('p1')
+    fireEvent.click(screen.getByText('resend'))
+    await waitFor(() => expect(h.confirmAndResend).toHaveBeenCalled())
+    expect(screen.queryByText('Invite sent')).toBeNull()
+  })
+
+  it('explains a player with no email on file', async () => {
+    h.isAdmin = true
+    h.confirmAndResend.mockRejectedValue(new Error('player has no email'))
+    renderAt('p1')
+    fireEvent.click(screen.getByText('resend'))
+    await waitFor(() => expect(screen.getByText(/no email on file/i)).toBeTruthy())
   })
 })

@@ -12,7 +12,7 @@ const { mockRpc, mockFrom, mockOrder, mockFetchMyProfileRpc } = vi.hoisted(() =>
 vi.mock('../../supabase', () => mockSupabase({ rpc: mockRpc, from: mockFrom }))
 vi.mock('../../api/auth', () => ({ fetchMyProfile: mockFetchMyProfileRpc }))
 
-import { addPlayer, fetchPlayers, updatePlayer } from './playerQueries'
+import { fetchPlayers, updatePlayer } from './playerQueries'
 
 // The column list is built as one string literal, so capturing it means
 // spying on .select(); this asserts the legacy columns are not requested.
@@ -62,16 +62,6 @@ describe('fetchPlayers — roster columns', () => {
 describe('player write payloads', () => {
   const payloadOf = (call: number) => mockRpc.mock.calls[call][1].input_payload
 
-  it('admin_add_player receives playtomic_level and no adjustment', async () => {
-    await addPlayer(profile)
-
-    expect(mockRpc).toHaveBeenCalledWith('admin_add_player', expect.anything())
-    const payload = payloadOf(0)
-    expect(payload.playtomic_level).toBe('3.5')
-    expect(payload).not.toHaveProperty('adjustment')
-    expect(payload).not.toHaveProperty('adjusted_level')
-  })
-
   it('admin_update_player receives no adjustment even when the caller passes one', async () => {
     await updatePlayer('p1', profile, 'admin')
 
@@ -84,11 +74,9 @@ describe('player write payloads', () => {
   it('sends the level as typed, and a missing one as empty, never "null"', async () => {
     await updatePlayer('p1', { playtomicLevel: '2,455' }, 'player')
     await updatePlayer('p1', { playtomicLevel: null }, 'player')
-    await addPlayer({ name: 'Ada' })
 
     expect(payloadOf(0).playtomic_level).toBe('2,455')
     expect(payloadOf(1).playtomic_level).toBe('')
-    expect(payloadOf(2).playtomic_level).toBe('')
   })
 
   it('update_my_profile receives no adjustment either', async () => {
@@ -110,9 +98,8 @@ describe('player write level refusals (C-8)', () => {
     )
   })
 
-  it('shows invalid_level in words on an admin edit and an admin add', async () => {
+  it('shows invalid_level in words on an admin edit', async () => {
     refuse('invalid_level')
     await expect(updatePlayer('p1', profile, 'admin')).rejects.toThrow(/at most 2 decimals/)
-    await expect(addPlayer(profile)).rejects.toThrow(/at most 2 decimals/)
   })
 })
