@@ -27,7 +27,7 @@ vi.mock('../players/playerQueries', () => ({
 }))
 vi.mock('./deletionQueries', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./deletionQueries')>()),
-  fetchMyDeletionSummary: () => h.fetchSummary(),
+  fetchDeletionSummary: () => h.fetchSummary(),
   deleteMyAccount: () => h.deleteMyAccount(),
 }))
 vi.mock('./leaveDevice', () => ({ leaveAfterDeletion: h.leave }))

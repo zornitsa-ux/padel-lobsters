@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { UserX } from 'lucide-react'
 import { useApp } from '../../context/useApp'
 import { ActionRow } from '../../components/ui/ActionRow'
@@ -12,22 +11,15 @@ import { Spinner } from '../../components/ui/Spinner'
 import { TextButton } from '../../components/ui/TextButton'
 import { requestEmailCode } from '../auth/authActions'
 import { describeSignInError } from '../auth/authErrors'
-import { OtpCodeStep } from '../auth/OtpCodeStep'
-import { removeAvatar, updatePlayer } from '../players/playerQueries'
-import { hasRecentEmailCode } from '../auth/sessionClaims'
+import { deleteMyAccount, type DeleteStatus } from './deletionQueries'
 import {
-  deleteMyAccount,
-  fetchMyDeletionSummary,
-  myDeletionSummaryKey,
-  type DeleteStatus,
-} from './deletionQueries'
-import { describeDeletion } from './deletionSummary'
+  codeIsFresh,
+  removePhotoThenDelete,
+  useDeletionSummary,
+  type DeletionStep,
+} from './deletionFlow'
+import { CancelRow, CodeEntry, SummaryLines } from './deletionSteps'
 import { leaveAfterDeletion } from './leaveDevice'
-
-type Step = 'idle' | 'summary' | 'code' | 'confirm'
-
-// A minute under the server's 10, so a code doesn't expire between check and call.
-const CODE_MAX_AGE_SECONDS = 540
 
 const ADMIN_LINE =
   "Admins can't delete their own account. Ask Jon to remove your admin role first, then come back here."
@@ -43,10 +35,16 @@ const REFUSALS: Partial<Record<DeleteStatus, string>> = {
   not_found: "We couldn't find your account. Nothing was deleted.",
 }
 
+const MESSAGES = {
+  refusals: REFUSALS,
+  photoFailed: "Couldn't remove your photo, so nothing was deleted. Try again.",
+  deleteFailed: "Couldn't delete your account. You're still signed in, so try again.",
+}
+
 /** Settings: a member deletes their own account (docs/account-deletion DESIGN §3.1). */
 export default function DeleteAccountSection() {
   const { session, isAdmin } = useApp()
-  const [step, setStep] = useState<Step>('idle')
+  const [step, setStep] = useState<DeletionStep>('idle')
   const [notice, setNotice] = useState('')
   const playerId = session?.user?.id
   const email = session?.user?.email ?? ''
@@ -91,8 +89,8 @@ export default function DeleteAccountSection() {
 }
 
 interface DeleteFlowProps {
-  step: Exclude<Step, 'idle'>
-  setStep: (step: Step) => void
+  step: Exclude<DeletionStep, 'idle'>
+  setStep: (step: DeletionStep) => void
   email: string
   playerId: string
   notice: string
@@ -119,7 +117,14 @@ function DeleteFlow({
       />
     )
   if (step === 'code')
-    return <CodeStep email={email} onVerified={() => setStep('confirm')} onCancel={onCancel} />
+    return (
+      <CodeEntry
+        email={email}
+        help="No email? Check your spam folder or resend the code. If it still doesn't arrive, an admin can delete your account for you."
+        onVerified={() => setStep('confirm')}
+        onCancel={onCancel}
+      />
+    )
   return <ConfirmStep playerId={playerId} onCancel={onCancel} onRefused={onRefused} />
 }
 
@@ -134,17 +139,7 @@ function SummaryStep({
   onSent: () => void
   onCancel: () => void
 }) {
-  const {
-    data: summary,
-    isPending,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: myDeletionSummaryKey,
-    queryFn: fetchMyDeletionSummary,
-    // Never shown from cache: after a refusal the summary must be read again.
-    gcTime: 0,
-  })
+  const { data: summary, isPending, isError, refetch } = useDeletionSummary({})
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
@@ -190,11 +185,7 @@ function SummaryStep({
       <p className="text-sm font-semibold text-lob-dark">
         What happens when you delete your account
       </p>
-      <ul className="list-disc pl-5 space-y-1.5 text-sm text-lob-slate">
-        {describeDeletion({ summary }).map((line) => (
-          <li key={line.id}>{line.text}</li>
-        ))}
-      </ul>
+      <SummaryLines summary={summary} voice="self" />
       {blocked ? (
         <>
           <AlertBox variant="warning" size="sm">
@@ -235,32 +226,6 @@ function SummaryStep({
   )
 }
 
-function CodeStep({
-  email,
-  onVerified,
-  onCancel,
-}: {
-  email: string
-  onVerified: () => void
-  onCancel: () => void
-}) {
-  return (
-    <div className="space-y-3">
-      <OtpCodeStep
-        email={email}
-        onVerified={onVerified}
-        submitLabel="Confirm it's me"
-        linkHint={false}
-      />
-      <p className="caption">
-        No email? Check your spam folder or resend the code. If it still doesn&apos;t arrive, an
-        admin can delete your account for you.
-      </p>
-      <CancelRow onCancel={onCancel} />
-    </div>
-  )
-}
-
 function ConfirmStep({
   playerId,
   onCancel,
@@ -276,13 +241,18 @@ function ConfirmStep({
 
   async function handleDelete() {
     // The server would refuse a stale code anyway; checking first keeps the photo.
-    if (!hasRecentEmailCode({ session, maxAgeSeconds: CODE_MAX_AGE_SECONDS })) {
+    if (!codeIsFresh({ session })) {
       onRefused(REFUSALS.code_required ?? '')
       return
     }
     setDeleting(true)
     setError('')
-    const outcome = await runDeletion({ playerId })
+    const outcome = await removePhotoThenDelete({
+      playerId,
+      role: 'player',
+      deleteAccount: deleteMyAccount,
+      messages: MESSAGES,
+    })
     if (outcome.done) return leaveAfterDeletion({ playerId })
     setDeleting(false)
     if (outcome.refusal) onRefused(outcome.refusal)
@@ -309,43 +279,4 @@ function ConfirmStep({
       </ActionRow>
     </div>
   )
-}
-
-function CancelRow({ onCancel }: { onCancel: () => void }) {
-  return (
-    <ActionRow layout="end">
-      <TextButton tone="neutral" onClick={onCancel}>
-        Cancel
-      </TextButton>
-    </ActionRow>
-  )
-}
-
-type Outcome = { done: true } | { done: false; refusal?: string; error: string }
-
-// The photo goes first (DESIGN §2.4): if that fails nothing has changed. If
-// the delete fails after it, only the photo is lost, and avatar_url is cleared
-// so no profile shows a broken image.
-async function runDeletion({ playerId }: { playerId: string }): Promise<Outcome> {
-  try {
-    await removeAvatar({ playerId })
-  } catch {
-    return { done: false, error: "Couldn't remove your photo, so nothing was deleted. Try again." }
-  }
-  const outcome = await deleteAfterPhoto()
-  if (!outcome.done) await updatePlayer(playerId, { avatarUrl: '' }, 'player').catch(() => {})
-  return outcome
-}
-
-async function deleteAfterPhoto(): Promise<Outcome> {
-  try {
-    const status = await deleteMyAccount()
-    if (status === 'deleted' || status === 'already_deleted') return { done: true }
-    return { done: false, refusal: REFUSALS[status], error: '' }
-  } catch {
-    return {
-      done: false,
-      error: "Couldn't delete your account. You're still signed in, so try again.",
-    }
-  }
 }

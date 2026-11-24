@@ -67,3 +67,24 @@ describe('describeDeletion', () => {
     expect(lines[3]).toBe('Your 2 open shop requests will be cancelled.')
   })
 })
+
+describe('describeDeletion for an admin', () => {
+  it('speaks about the member, not to them', () => {
+    const lines = describeDeletion({
+      summary: summary({
+        upcoming: [
+          { tournament_id: 't1', name: 'Autumn Cup', date: '2026-12-05', paid: true, team: false },
+        ],
+        team_events: [{ tournament_id: 't3', name: 'Pairs Night', is_captain: false }],
+        pending_transfers: 2,
+      }),
+      voice: 'admin',
+    }).map((line) => line.text)
+
+    expect(lines[0]).toMatch(/^Their spot in Autumn Cup/)
+    expect(lines[1]).toMatch(/^They've paid for Autumn Cup\./)
+    expect(lines[2]).toMatch(/^Pairs Night: if their partner has accepted, the partner keeps/)
+    expect(lines[3]).toBe('Their 2 pending spot transfers will be cancelled.')
+    expect(lines.join(' ')).not.toMatch(/\b[Yy]our?\b/)
+  })
+})

@@ -12,6 +12,7 @@ const h = vi.hoisted(() => ({
     { id: 'p1', name: 'Ada Lovelace', status: 'active', playtomicLevel: 3.5 },
     { id: 'p2', name: 'Ada Byron', status: 'active', playtomicLevel: 2 },
     { id: 'p9', name: 'Anonymous Crab #9', status: 'deleted', playtomicLevel: null },
+    { id: 'me', name: 'Ann Admin', status: 'active', playtomicLevel: 4 },
   ],
 }))
 
@@ -19,6 +20,7 @@ vi.mock('../../context/useApp', () => ({
   useApp: () => ({
     session: { user: { id: 'me', app_metadata: h.isAdmin ? { role: 'admin' } : {} } },
     role: h.isAdmin ? 'admin' : 'player',
+    isAdmin: h.isAdmin,
   }),
 }))
 vi.mock('../players/usePlayers', () => ({
@@ -46,6 +48,9 @@ vi.mock('./PlayerProfile', () => ({
 }))
 vi.mock('./reviewScenarios', () => ({
   corpReview: () => ({ hasLabel: false, scenarioLabel: '', body: 'A steady lobster.' }),
+}))
+vi.mock('../account-deletion/AdminDeleteAccount', () => ({
+  default: ({ player }: { player: { name: string } }) => <p>delete account of {player.name}</p>,
 }))
 vi.mock('../events/useTournaments', () => ({ useTournaments: () => ({ data: [] }) }))
 vi.mock('../events/useMatches', () => ({ useAllMatches: () => ({ data: [] }) }))
@@ -77,6 +82,23 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('PlayerDetailPage', () => {
+  it("offers an admin the member's account deletion, naming the member", () => {
+    h.isAdmin = true
+    renderAt('p1')
+
+    expect(screen.getByText('delete account of Ada Lovelace')).toBeTruthy()
+  })
+
+  it('offers no account deletion to a member, or to an admin on their own page', () => {
+    renderAt('p1')
+    expect(screen.queryByText(/delete account of/)).toBeNull()
+    cleanup()
+
+    h.isAdmin = true
+    renderAt('me')
+    expect(screen.queryByText(/delete account of/)).toBeNull()
+  })
+
   it('shows the player under the standard header with a way back', () => {
     renderAt('p1')
     expect(screen.getByRole('heading', { name: 'Ada L' })).toBeTruthy()
