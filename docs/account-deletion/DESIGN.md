@@ -104,9 +104,10 @@ house lock order before any registration changes.
    cancellation (D-4).
 3. **Upcoming team-event registrations:** the spot stays with the pair
    (D-3). If the deleted member is the captain and the partner isn't
-   deleted, `captain_id` moves to the partner. If both members are now
-   deleted, the team is cancelled with `cancel_team_rows`, so the waitlist
-   moves up. The deleted member's row stays active under the anonymised name
+   deleted, `captain_id` moves to the partner. The team is cancelled with
+   `cancel_team_rows` instead, so the waitlist moves up, when both members
+   are now deleted, or when the captain goes before the partner accepted:
+   the partner never agreed to play. The deleted member's row stays active under the anonymised name
    until the captain or an admin replaces them with `change_team_partner`.
    The team shows on the admin follow-ups (§3.4) until then.
 4. **Pending spot transfers** from or to them: `status = 'cancelled'`,

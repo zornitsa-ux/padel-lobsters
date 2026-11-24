@@ -15,7 +15,9 @@ them and how the code carries them out.
   two active rows (`registrations_team_consistent`), so the deleted member's
   row stays active under the anonymised name until it's replaced through
   `change_team_partner`. The captain role moves to the partner so they can
-  replace them. Admins see the team in follow-ups.
+  replace them. Admins see the team in follow-ups. A partner who hasn't
+  accepted yet never agreed to play, so when the captain goes first the
+  team is cancelled instead of handed to them.
 - **D-4. Cancellation is the normal one, with no refund** (owner: "same as a
   normal cancellation"). Paid spots aren't refunded on any cancellation, so
   the summary tells the member and points them to a spot transfer first.

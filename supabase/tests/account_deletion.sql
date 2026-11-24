@@ -110,7 +110,10 @@ declare
   v_league uuid; v_lt uuid; v_lt_al uuid;
   v_item integer;
   v_item2 integer;
-  v_team1 uuid; v_team2 uuid; v_team3 uuid;
+  v_team1 uuid; v_team2 uuid; v_team3 uuid; v_team4 uuid;
+  v_tt2 uuid;
+  v_g uuid := pg_temp.player('Gus Teamtest');
+  v_h uuid := pg_temp.player('Hal Teamtest');
   v_match uuid;
   v_r record;
   v_counts_before text;
@@ -362,6 +365,18 @@ begin
   perform pg_temp.check(not exists (select 1 from public.registrations where team_id = v_team3 and status <> 'cancelled')
                         and (select cancelled_reason from public.event_teams where id = v_team3) = 'account_deleted'
                         and pg_temp.teams_ok(v_tt), 'T9: team cancelled');
+
+  -- The captain goes before the partner accepted: the partner never agreed,
+  -- so the team is cancelled rather than handed to them.
+  v_tt2 := pg_temp.event('Team test two', 15, 4, 'team');
+  perform pg_temp.act(v_g, false);
+  select team_id into v_team4 from public.register_team_for_tournament(v_tt2, v_g, v_h, null, false);
+  perform pg_temp.check((select accepted_at from public.registrations where team_id = v_team4 and player_id = v_h) is null,
+                        'fixture: partner has not accepted');
+  perform pg_temp.check((select status from public.delete_my_account()) = 'deleted', 'T10: captain deletes first');
+  perform pg_temp.check(not exists (select 1 from public.registrations where team_id = v_team4 and status <> 'cancelled')
+                        and (select captain_id from public.event_teams where id = v_team4) = v_g
+                        and pg_temp.teams_ok(v_tt2), 'T11: unaccepted partner is not made captain; team cancelled');
   raise notice 'team events ok';
 
   -- ── Joining again with the same email ─────────────────────────────────────
@@ -374,6 +389,18 @@ begin
                                    and email = 'marlowe.testcase@example.test'), 'J1: a new member');
   perform pg_temp.check((select name from public.players where id = v_m) = v_name, 'J2: old row untouched');
   raise notice 'joining again ok';
+
+  -- ── A reserved name from an old signup doesn't fail the confirmation ─────
+  v_new := gen_random_uuid();
+  insert into auth.users (id, instance_id, aud, role, email, email_confirmed_at,
+                          raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+  values (v_new, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+          'old.signup@example.test', null, '{}', '{"name":"Anonymous Crab #3"}', now(), now());
+  update auth.users set email_confirmed_at = now() where id = v_new;
+  perform pg_temp.check(exists (select 1 from auth.users where id = v_new and email_confirmed_at is not null)
+                        and not exists (select 1 from public.players where id = v_new),
+                        'C1: confirmed, no player with a reserved name');
+  raise notice 'old signup with a reserved name ok';
 end $$;
 
 rollback;

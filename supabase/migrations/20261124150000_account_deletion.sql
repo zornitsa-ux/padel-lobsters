@@ -126,6 +126,94 @@ begin
 end;
 $function$;
 
+-- Email confirmation creates the player; a reserved name from a signup made
+-- before this migration must not fail it. Otherwise as in
+-- 20261124120000_no_level_null.sql.
+create or replace function private.create_player_for_confirmed_user()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+declare
+  v_meta    jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
+  v_name    text  := nullif(regexp_replace(btrim(coalesce(v_meta ->> 'name', '')), '\s+', ' ', 'g'), '');
+  v_level   numeric;
+  v_source  text  := nullif(btrim(coalesce(v_meta ->> 'signup_source', '')), '');
+  v_created uuid;
+begin
+  if v_name is null or nullif(btrim(new.email), '') is null then
+    return new;
+  end if;
+
+  -- The hook refuses a bad level at signup. One that gets here anyway (signed
+  -- up before this migration) is stored as no level, so the player levels at
+  -- sign-in: failing the email confirmation would lock them out.
+  begin
+    v_level := private.level_to_store(v_meta ->> 'playtomic_level', 'optional');
+  exception when raise_exception then
+    v_level := null;
+  end;
+
+  -- An email already held by another player (case-insensitive) must not abort
+  -- GoTrue's confirmation; the integrity check reports the user instead.
+  begin
+    insert into public.players(
+      id, name, email, phone, notes,
+      playtomic_level,
+      playtomic_username, gender, status, is_left_handed,
+      country, birthday, preferred_position, tagline_label
+    ) values (
+      new.id,
+      left(v_name, 100),
+      lower(new.email),
+      coalesce(nullif(btrim(v_meta ->> 'phone'), ''), ''),
+      coalesce(v_meta ->> 'notes', ''),
+      v_level,
+      coalesce(v_meta ->> 'playtomic_username', ''),
+      coalesce(v_meta ->> 'gender', ''),
+      'active',
+      coalesce(v_meta ->> 'is_left_handed', '') = 'true',
+      coalesce(v_meta ->> 'country', ''),
+      private.parse_metadata_date(v_meta ->> 'birthday'),
+      coalesce(v_meta ->> 'preferred_position', ''),
+      coalesce(v_meta ->> 'tagline_label', '')
+    )
+    on conflict (id) do nothing
+    returning id into v_created;
+  exception
+    when unique_violation then
+      return new;
+    when raise_exception then
+      -- A reserved name (players_reserved_name) from a signup made before
+      -- the hook refused it: same as above, never fail the confirmation.
+      if sqlerrm = 'reserved_name' then
+        return new;
+      end if;
+      raise;
+  end;
+
+  -- Only for a player created just now. Losing the answer is acceptable;
+  -- failing the email confirmation is not, so any error is swallowed.
+  if v_created is not null and v_source is not null then
+    begin
+      insert into public.player_signup_source(player_id, source, detail)
+      values (
+        v_created,
+        v_source,
+        case when v_source in ('lobster', 'other')
+             then nullif(btrim(coalesce(v_meta ->> 'signup_source_detail', '')), '')
+        end
+      );
+    exception when others then
+      null;
+    end;
+  end if;
+
+  return new;
+end;
+$function$;
+
 -- A captain's new partner: a reserved name is an invalid name, as a status.
 create or replace function private.create_partner_player(input_requested_by uuid, input_tournament_id uuid, input_new_partner jsonb, input_consent boolean, input_skip_daily_cap boolean)
  returns table(status text, player_id uuid)
@@ -356,6 +444,7 @@ create policy "Player or admin delete avatar" on storage.objects
   for delete to authenticated
   using (
     bucket_id = 'avatars'
+    and not public.is_deleted_player(auth.uid())
     and (
       name = 'player-' || auth.uid()::text || '.webp'
       or (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
@@ -619,7 +708,7 @@ begin
   union all
   select input_player_id, 'players', p.id::text, 'notes'
     from public.players p
-   where p.id <> input_player_id and p.status <> 'deleted' and p.notes ~* v_pattern
+   where p.id <> input_player_id and coalesce(p.status, 'active') <> 'deleted' and p.notes ~* v_pattern
   union all
   select input_player_id, 'tournaments', t.id::text, 'notes'
     from public.tournaments t
@@ -791,6 +880,8 @@ declare
   v_name text;
   v_row record;
   v_other uuid;
+  v_other_accepted boolean;
+  v_was_captain boolean;
 begin
   perform set_config('app.audit_source',
     case when input_by_admin then 'admin_delete_account' else 'delete_my_account' end, true);
@@ -820,8 +911,9 @@ begin
     perform private.cancel_registration_row(v_row.id);
   end loop;
 
-  -- 3. Team spots stay with the pair (D-3): the partner becomes captain, or
-  -- the team is cancelled when the partner is deleted too.
+  -- 3. Team spots stay with the pair (D-3): the partner becomes captain. The
+  -- team is cancelled instead when the partner is deleted too, or when the
+  -- captain goes before the partner ever accepted.
   for v_row in
     select r.team_id
       from public.registrations r
@@ -833,12 +925,15 @@ begin
      order by t.id
   loop
     perform private.lock_team(v_row.team_id);
-    select r.player_id into v_other
+    select r.player_id, r.accepted_at is not null into v_other, v_other_accepted
       from public.registrations r
      where r.team_id = v_row.team_id
        and r.status in ('registered', 'waitlist')
        and r.player_id <> input_target_id;
-    if v_other is null or public.is_deleted_player(v_other) then
+    select et.captain_id = input_target_id into v_was_captain
+      from public.event_teams et where et.id = v_row.team_id;
+    if v_other is null or public.is_deleted_player(v_other)
+       or (v_was_captain and not v_other_accepted) then
       perform private.cancel_team_rows(v_row.team_id, 'account_deleted');
     else
       update public.event_teams et set captain_id = v_other
