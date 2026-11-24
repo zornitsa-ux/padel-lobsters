@@ -56,7 +56,7 @@ service_key="$(local_var SERVICE_ROLE_KEY)"
 
 [[ -f supabase/.temp/project-ref ]] || die "no linked project. Run npx supabase link"
 project_ref="$(cat supabase/.temp/project-ref)"
-prod_anon_key="$("$supabase_cli" projects api-keys --project-ref "$project_ref" -o json |
+prod_anon_key="$("$supabase_cli" projects api-keys --remote="$project_ref" -o json |
   jq -er '.[] | select(.name == "anon") | .api_key')" || die "couldn't fetch production's anon key"
 prod_gotrue="$(gotrue_version "https://$project_ref.supabase.co" "$prod_anon_key")" ||
   die "couldn't read production's GoTrue version"
