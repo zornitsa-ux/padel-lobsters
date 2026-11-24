@@ -14,6 +14,7 @@ import { ListCard, ListRow } from '../../../components/ui/ListCard'
 import { Section } from '../../../components/ui/Section'
 import { RankMarker } from '../../../components/ui/RankMarker'
 import { levelText } from '../../../lib/level'
+import { firstName } from '../../../lib/playerName'
 
 interface RegisteredSectionProps {
   isCompleted: boolean
@@ -138,7 +139,7 @@ function TransferControl({
 }) {
   if (pending) {
     const recipient = getPlayer(pending.toPlayerId)
-    const recipientFirst = (recipient?.name || '').split(/\s+/)[0] || 'them'
+    const recipientFirst = firstName({ name: recipient?.name, fallback: 'them' })
     return (
       <AlertBox
         variant="warning"

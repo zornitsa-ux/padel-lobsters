@@ -7,6 +7,7 @@ import { TextButton } from '../../components/ui/TextButton'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { ListCard, ListRow } from '../../components/ui/ListCard'
 import { Section } from '../../components/ui/Section'
+import { firstName } from '../../lib/playerName'
 
 interface AdminAlertsProps {
   isAdmin: boolean
@@ -55,7 +56,7 @@ export default function AdminAlerts({
               <ListRow key={p.id}>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-lob-dark">
-                    {p.name.split(' ')[0]}
+                    {firstName({ name: p.name })}
                   </span>
                   <span className="ml-auto caption">{birthdayWhen(diff)}</span>
                 </div>

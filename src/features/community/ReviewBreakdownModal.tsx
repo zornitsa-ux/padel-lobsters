@@ -3,6 +3,7 @@ import { Modal } from '../../components/ui/Modal'
 import { REVIEW_SCENARIOS } from './reviewScenarios'
 import { Button } from '../../components/ui/Button'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { firstName } from '../../lib/playerName'
 
 // One message variant plus how many players receive it.
 export interface ReviewSample {
@@ -75,7 +76,7 @@ export default function ReviewBreakdownModal({
             key={p.id}
             className="text-xs bg-white border border-lob-line-strong px-2 py-0.5 rounded-md text-lob-slate"
           >
-            {(p.name || '').split(' ')[0]}
+            {firstName({ name: p.name })}
           </span>
         ))}
       </div>

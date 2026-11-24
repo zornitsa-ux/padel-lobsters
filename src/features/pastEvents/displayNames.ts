@@ -1,3 +1,4 @@
+import { firstName } from '../../lib/playerName'
 // Build a {fullName: displayName} map.
 // • If a first name is unique in the input, display = first name only.
 // • If multiple players share a first name, append the rest of the name —
@@ -7,7 +8,7 @@ export function buildDisplayNames(names: readonly string[]): Record<string, stri
   const groups: Record<string, string[]> = {}
   ;(names || []).forEach((n) => {
     if (!n) return
-    const f = n.trim().split(/\s+/)[0] || n
+    const f = firstName({ name: n, fallback: n })
     if (!groups[f]) groups[f] = []
     groups[f].push(n)
   })

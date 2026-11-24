@@ -6,6 +6,7 @@ import { TextButton } from '../../../components/ui/TextButton'
 import { Button } from '../../../components/ui/Button'
 import { IncomingTransferActions, OutgoingTransferActions } from '../TransferActions'
 import { AlertBox } from '../../../components/ui/AlertBox'
+import { firstName } from '../../../lib/playerName'
 
 interface TransferSpotCardProps {
   myReg: NormalisedRegistration | null | undefined
@@ -66,7 +67,7 @@ export default function TransferSpotCard({
       <div className="space-y-2">
         {incomingForMe.map((xfer) => {
           const fromP = getPlayer(xfer.fromPlayerId)
-          const fromFirst = (fromP?.name || '').split(/\s+/)[0] || 'Someone'
+          const fromFirst = firstName({ name: fromP?.name, fallback: 'Someone' })
           const busy = respondingTo === xfer.id
           return (
             <AlertBox
@@ -91,7 +92,7 @@ export default function TransferSpotCard({
 
   if (pendingFromMe) {
     const recipient = getPlayer(pendingFromMe.toPlayerId)
-    const recipientFirst = (recipient?.name || '').split(/\s+/)[0] || 'them'
+    const recipientFirst = firstName({ name: recipient?.name, fallback: 'them' })
     const busy = respondingTo === pendingFromMe.id
     return (
       <>

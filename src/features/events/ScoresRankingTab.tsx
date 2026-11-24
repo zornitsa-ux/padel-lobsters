@@ -4,6 +4,7 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { Podium } from '../../components/ui/Podium'
 import type { PlayerStanding } from '../../lib/standings'
 import type { NormalisedMatch } from './matchQueries'
+import { firstName } from '../../lib/playerName'
 
 // The subset of a Player this table renders. `Player` satisfies it.
 export interface StandingPlayer {
@@ -66,7 +67,7 @@ export default function ScoresRankingTab({
               <Podium
                 places={standings
                   .slice(0, 3)
-                  .map((s) => ({ name: s.player.name.split(' ')[0], points: s.points }))}
+                  .map((s) => ({ name: firstName({ name: s.player.name }), points: s.points }))}
               />
             </div>
           )}

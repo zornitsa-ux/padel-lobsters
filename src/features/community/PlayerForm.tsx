@@ -9,6 +9,7 @@ import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { TextButton } from '../../components/ui/TextButton'
 import { AlertBox } from '../../components/ui/AlertBox'
+import { firstName } from '../../lib/playerName'
 
 interface PlayerFormProps {
   showForm: boolean
@@ -123,7 +124,7 @@ export default function PlayerForm({
                 <div className="space-y-3">
                   <Button fullWidth onClick={acceptMerge}>
                     {isAdmin
-                      ? `Update ${(mergePlayer.name || '').split(' ')[0]}'s profile`
+                      ? `Update ${firstName({ name: mergePlayer.name })}'s profile`
                       : 'Yes, complete my profile'}
                   </Button>
                   <div className="text-center">

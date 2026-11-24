@@ -1,3 +1,5 @@
+import { firstName, isAnonymisedName } from '../../lib/playerName'
+
 export type PlayerLike = {
   // `players.id` is a uuid — string, never a number.
   id: string
@@ -69,7 +71,7 @@ export function orderPlayersForRender<T extends PlayerLike>(
 export function buildFirstNameCount<T extends PlayerLike>(players: T[]): Record<string, number> {
   const out: Record<string, number> = {}
   players.forEach((p) => {
-    const fn = (p.name || '').trim().split(/\s+/)[0]
+    const fn = firstName({ name: p.name })
     out[fn] = (out[fn] || 0) + 1
   })
   return out
@@ -79,8 +81,9 @@ export function getDisplayName(
   name: string | null | undefined,
   firstNameCount: Record<string, number>,
 ): string {
+  const fn = firstName({ name, fallback: '?' })
+  if (isAnonymisedName(name)) return fn
   const parts = (name || '').trim().split(/\s+/)
-  const fn = parts[0] || '?'
   if (firstNameCount[fn] > 1 && parts.length > 1) {
     return `${fn} ${parts[1][0].toUpperCase()}`
   }

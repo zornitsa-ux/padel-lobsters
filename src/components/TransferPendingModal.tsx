@@ -14,6 +14,7 @@ import {
 import { TextButton } from './ui/TextButton'
 import { Button } from './ui/Button'
 import { Well } from './ui/Well'
+import { firstName } from '../lib/playerName'
 
 // Confirmation modal that comes up after a transfer offer is sent.
 // Shows two share actions:
@@ -120,13 +121,13 @@ export default function TransferPendingModal({
     <Modal
       open
       onClose={onClose}
-      title={`Awaiting ${(toPlayer?.name || 'their').split(/\s+/)[0]}'s response`}
+      title={`Awaiting ${firstName({ name: toPlayer?.name, fallback: 'their' })}'s response`}
     >
       <div className="space-y-4">
         <p className="caption leading-relaxed">
           Your spot is held in <strong>pending transfer</strong> until{' '}
-          {(toPlayer?.name || 'they').split(/\s+/)[0]} accepts. Send the link via WhatsApp so they
-          know to open it.
+          {firstName({ name: toPlayer?.name, fallback: 'they' })} accepts. Send the link via
+          WhatsApp so they know to open it.
         </p>
 
         <Well>
@@ -140,7 +141,7 @@ export default function TransferPendingModal({
           <Button fullWidth icon={<MessageCircle />} onClick={handleDirect} disabled={!!busyAction}>
             {busyAction === 'whatsapp'
               ? 'Opening WhatsApp…'
-              : `Contact ${(toPlayer?.name || '').split(/\s+/)[0]} on WhatsApp`}
+              : `Contact ${firstName({ name: toPlayer?.name })} on WhatsApp`}
           </Button>
         )}
 
@@ -164,8 +165,8 @@ export default function TransferPendingModal({
 
         {phone === '' && groupLink && (
           <p className="caption text-center">
-            No WhatsApp number on file for {(toPlayer?.name || 'this player').split(/\s+/)[0]} — use
-            the group instead.
+            No WhatsApp number on file for{' '}
+            {firstName({ name: toPlayer?.name, fallback: 'this player' })} — use the group instead.
           </p>
         )}
 

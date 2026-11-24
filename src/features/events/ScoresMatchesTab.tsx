@@ -4,6 +4,7 @@ import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import type { Player } from '../../lib/normalise'
 import type { NormalisedMatch } from './matchQueries'
 import { EventMatchList } from './EventMatchList'
+import { firstName } from '../../lib/playerName'
 
 export interface MatchRound {
   round: number
@@ -23,7 +24,7 @@ export default function ScoresMatchesTab({
   onSelectRound,
   players,
 }: ScoresMatchesTabProps) {
-  const nameMap = new Map(players.map((p) => [p.id, (p.name || '').split(' ')[0]]))
+  const nameMap = new Map(players.map((p) => [p.id, firstName({ name: p.name })]))
   const nameFor = (id: string): string => nameMap.get(id) ?? '?'
 
   return (

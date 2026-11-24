@@ -19,6 +19,7 @@ import { Chip, ChipGroup } from '../../components/ui/Chip'
 import { Well } from '../../components/ui/Well'
 import { Tag } from '../../components/ui/Tag'
 import { hasLevel, knownLevel } from '../../lib/level'
+import { firstName } from '../../lib/playerName'
 
 const MONTH_ABBR = [
   'Jan',
@@ -85,7 +86,7 @@ export default function PlayerProfile({
 
   const firstNameOf = (id: string): string | null => {
     const found = players.find((x) => String(x.id) === id)
-    return found ? (found.name || '').split(' ')[0] : null
+    return found ? firstName({ name: found.name }) : null
   }
 
   const stats = buildPlayerStats(String(p.id), matches, tournaments, registrations)

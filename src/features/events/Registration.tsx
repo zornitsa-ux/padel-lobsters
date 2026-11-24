@@ -71,6 +71,7 @@ import type {
 } from './registration/utils'
 import { Button } from '../../components/ui/Button'
 import { isStaleTransferStatus, respondFailureMessage } from './transferStatus'
+import { firstName } from '../../lib/playerName'
 
 export default function Registration({
   tournament,
@@ -102,7 +103,7 @@ export default function Registration({
   // to everyone: picking a partner among people who share a first name.
   const fullNames = isAdmin || tournament?.entryMode === 'team'
   const displayName = useCallback<DisplayName>(
-    (p) => (fullNames ? (p.name || '').trim() : (p.name || '').split(' ')[0]),
+    (p) => (fullNames ? (p.name || '').trim() : firstName({ name: p.name })),
     [fullNames],
   )
 

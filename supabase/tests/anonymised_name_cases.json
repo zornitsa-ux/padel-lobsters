@@ -1,0 +1,21 @@
+{
+  "about": "Anonymised names of deleted accounts (docs/account-deletion C-1). Read by the client's unit test now and by the database test from AD2. `anonymised`: the strict pattern that marks a deleted account (private.is_anonymised_name, isAnonymisedName). `reserved`: refused as a name anywhere a player is named (private.is_reserved_name): the same pattern, ignoring case and extra spaces.",
+  "cases": [
+    { "name": "Anonymous Octopus #1", "anonymised": true, "reserved": true },
+    { "name": "Anonymous Seahorse #13", "anonymised": true, "reserved": true },
+    { "name": "Anonymous Crab #250", "anonymised": true, "reserved": true },
+    { "name": "  Anonymous Octopus #6  ", "anonymised": true, "reserved": true },
+    { "name": "anonymous octopus #6", "anonymised": false, "reserved": true },
+    { "name": "ANONYMOUS OCTOPUS #6", "anonymised": false, "reserved": true },
+    { "name": "Anonymous  Octopus  #6", "anonymised": false, "reserved": true },
+    { "name": "Anonymous Octopus 6", "anonymised": false, "reserved": false },
+    { "name": "Anonymous Manta Ray #6", "anonymised": false, "reserved": false },
+    { "name": "Anonymous Octopus #", "anonymised": false, "reserved": false },
+    { "name": "Anonymous Octopus #6b", "anonymised": false, "reserved": false },
+    { "name": "Anonymous Smith", "anonymised": false, "reserved": false },
+    { "name": "Anonymous", "anonymised": false, "reserved": false },
+    { "name": "Sam Anonymous Octopus #6", "anonymised": false, "reserved": false },
+    { "name": "Octopus", "anonymised": false, "reserved": false },
+    { "name": "", "anonymised": false, "reserved": false }
+  ]
+}

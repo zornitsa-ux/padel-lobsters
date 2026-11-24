@@ -6,6 +6,7 @@ import type { NormalisedTransfer } from '../events/transferQueries'
 import { IncomingTransferActions, OutgoingTransferActions } from '../events/TransferActions'
 import { AlertBox } from '../../components/ui/AlertBox'
 import { formatDate } from '../events/eventHelpers'
+import { firstName } from '../../lib/playerName'
 
 const eventLine = (t: NormalisedTournament) =>
   t.date ? `${t.name} · ${formatDate(t.date)}` : t.name
@@ -42,7 +43,7 @@ export default function TransferOfferBanners({
       {incomingTransfers.map((xfer) => {
         const fromP = players.find((p) => String(p.id) === String(xfer.fromPlayerId))
         const t = tournaments.find((t) => String(t.id) === String(xfer.tournamentId))
-        const fromFirst = (fromP?.name || '').split(/\s+/)[0] || 'Someone'
+        const fromFirst = firstName({ name: fromP?.name, fallback: 'Someone' })
         const busy = transferBusy === xfer.id
         return (
           <AlertBox
@@ -65,7 +66,7 @@ export default function TransferOfferBanners({
       {outgoingTransfers.map((xfer) => {
         const toP = players.find((p) => String(p.id) === String(xfer.toPlayerId))
         const t = tournaments.find((t) => String(t.id) === String(xfer.tournamentId))
-        const toFirst = (toP?.name || '').split(/\s+/)[0] || 'them'
+        const toFirst = firstName({ name: toP?.name, fallback: 'them' })
         const busy = transferBusy === xfer.id
         return (
           <AlertBox

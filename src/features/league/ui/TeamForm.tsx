@@ -18,6 +18,7 @@ import { focusFirstItem } from '../../../components/ui/menuFocus'
 import { FormError } from '../../../components/ui/FormError'
 import { useFieldError } from '../../../components/ui/useFieldError'
 import { SearchInput } from '../../../components/ui/SearchInput'
+import { firstName } from '../../../lib/playerName'
 
 interface PlayerOption {
   id: string
@@ -226,8 +227,8 @@ export function TeamForm({
     const match = otherTeams.find((t) => t.player1_id === playerId || t.player2_id === playerId)
     if (!match) return null
     if (match.team_name) return match.team_name
-    const p1 = match.player1?.name?.split(' ')[0] ?? '?'
-    const p2 = match.player2?.name?.split(' ')[0] ?? '?'
+    const p1 = firstName({ name: match.player1?.name, fallback: '?' })
+    const p2 = firstName({ name: match.player2?.name, fallback: '?' })
     return `${p1} & ${p2}`
   }
   const player1Conflict = teamNameForPlayer(player1Id)

@@ -13,6 +13,7 @@ import { Badge } from './ui/Badge'
 import { EmptyState } from './ui/EmptyState'
 import { SearchInput } from './ui/SearchInput'
 import { levelText } from '../lib/level'
+import { firstName } from '../lib/playerName'
 
 // Picker modal Josephine sees when she taps "Transfer spot to another player".
 // Lists waitlist players first (so transferring to them is a one-tap promotion
@@ -101,7 +102,7 @@ export default function TransferSpotModal({
   // outgoing player is unreachable to begin with.
   const [transferImmediately, setTransferImmediately] = useState(false)
 
-  const displayName = (p: Player) => (isAdmin ? p.name : (p.name || '').split(' ')[0])
+  const displayName = (p: Player) => (isAdmin ? p.name : firstName({ name: p.name }))
   const registeredIds = regs.filter((r) => r.status === 'registered').map((r) => String(r.playerId))
   const waitlistedIds = regs.filter((r) => r.status === 'waitlist').map((r) => String(r.playerId))
 
@@ -175,7 +176,7 @@ export default function TransferSpotModal({
       }}
       title={
         isOnBehalf
-          ? `Transfer ${(fromPlayer?.name || 'their').split(/\s+/)[0]}'s spot`
+          ? `Transfer ${firstName({ name: fromPlayer?.name, fallback: 'their' })}'s spot`
           : 'Transfer your spot'
       }
     >
@@ -183,7 +184,7 @@ export default function TransferSpotModal({
         <p className="caption -mt-2">
           {transferImmediately
             ? 'Pick who takes over. This moves the spot immediately — no acceptance needed.'
-            : `Pick who takes over. They'll be asked to accept — ${isOnBehalf ? `${(fromPlayer?.name || 'their').split(/\s+/)[0]}'s spot` : 'your spot'} stays held until they do.`}
+            : `Pick who takes over. They'll be asked to accept — ${isOnBehalf ? `${firstName({ name: fromPlayer?.name, fallback: 'their' })}'s spot` : 'your spot'} stays held until they do.`}
         </p>
 
         {isOnBehalf && (

@@ -1,4 +1,5 @@
 import type { LeagueTeam } from './types'
+import { firstName } from '../../../lib/playerName'
 
 export function resolveTeamName(team: LeagueTeam): string {
   if (team.team_name) return team.team_name
@@ -9,8 +10,8 @@ export function resolveTeamName(team: LeagueTeam): string {
 
 export function resolveTeamShortName(team: LeagueTeam): string {
   if (team.team_name) return team.team_name
-  const p1 = team.player1?.name?.split(' ')[0] ?? '?'
-  const p2 = team.player2?.name?.split(' ')[0] ?? '?'
+  const p1 = firstName({ name: team.player1?.name, fallback: '?' })
+  const p2 = firstName({ name: team.player2?.name, fallback: '?' })
   return `${p1} & ${p2}`
 }
 

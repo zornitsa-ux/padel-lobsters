@@ -20,6 +20,7 @@ import type {
   SessionRow,
 } from './oscarsSchemas'
 import type { Player, NormalisedTournament } from '../../lib/normalise'
+import { firstName } from '../../lib/playerName'
 
 /* ════════════════════════════════════════════════════════════════════════════
    useOscarsSession — owns all Lobster Oscars server state, fetchers, polling-
@@ -117,7 +118,7 @@ export function useOscarsSession(
   const shortLabels = useMemo(() => shortLabelMap(regPlayers), [regPlayers])
   const shortName = useCallback(
     (p: ShortNamePlayer | null | undefined) =>
-      shortLabels[String(p?.id)] || (p?.name || '').split(' ')[0] || p?.name || '',
+      shortLabels[String(p?.id)] || firstName({ name: p?.name }),
     [shortLabels],
   )
 

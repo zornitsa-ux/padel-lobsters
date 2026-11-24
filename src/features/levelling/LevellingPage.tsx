@@ -26,6 +26,7 @@ import { returnPathFrom } from './levellingRoutes'
 import { useCompleteLevelling, useMyLevelling } from './useMyLevelling'
 import QuestionStep from './QuestionStep'
 import PlaytomicStep from './PlaytomicStep'
+import { firstName } from '../../lib/playerName'
 
 const SAVE_ERROR = 'We couldn’t save your answers. Please try again.'
 const DONE_STATUSES = new Set<CompleteLevellingStatus>(['ok', 'already_levelled', 'not_needed'])
@@ -36,7 +37,7 @@ const FINISHED: Record<LevellingMode, string> = {
 }
 
 const finishedToast = ({ name, mode }: { name: string | undefined; mode: LevellingMode }) => {
-  const first = name?.split(' ')[0]
+  const first = firstName({ name })
   return `${first ? `Thanks, ${first}! ` : 'Thanks! '}${FINISHED[mode]}`
 }
 

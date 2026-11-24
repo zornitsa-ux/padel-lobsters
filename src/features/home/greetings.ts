@@ -1,3 +1,4 @@
+import { firstName } from '../../lib/playerName'
 // ── Fun greetings ────────────────────────────────────────────────────────────
 
 // [hello, subtitle] — the two lines the Greeting component renders.
@@ -24,7 +25,7 @@ export const GREETING_OVERRIDES: Record<string, number> = {
 }
 
 export function getGreeting(name: string | null | undefined): GreetingLines {
-  const first = (name || 'Lobster').split(' ')[0]
+  const first = firstName({ name, fallback: 'Lobster' })
   const today = new Date().toISOString().slice(0, 10)
   const override = GREETING_OVERRIDES[today]
   if (override !== undefined) {

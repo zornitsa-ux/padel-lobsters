@@ -1,6 +1,7 @@
 import { ListCard, ListRow } from '../../components/ui/ListCard'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import type { OscarCategoryResult } from './oscarResults'
+import { firstName } from '../../lib/playerName'
 
 /** Each category's winners and vote bars, one row per category. */
 export function OscarResultsList({
@@ -35,7 +36,7 @@ export function OscarResultsList({
             {cat.rows.map((r) => (
               <div key={r.target_id} className="flex items-center gap-2">
                 <span className="text-xs w-16 truncate text-lob-slate">
-                  {(r.target_name || '').split(' ')[0]}
+                  {firstName({ name: r.target_name })}
                 </span>
                 <ProgressBar
                   value={(Number(r.votes_count) / cat.maxVotes) * 100}

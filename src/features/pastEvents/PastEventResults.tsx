@@ -28,6 +28,7 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { Tag } from '../../components/ui/Tag'
 import { Podium } from '../../components/ui/Podium'
 import { plural } from '../../lib/plural'
+import { firstName } from '../../lib/playerName'
 
 type TabId = 'standings' | 'matches' | 'games'
 
@@ -98,7 +99,7 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
     return buildDisplayNames([...names])
   }, [players])
   const globalDn = useCallback(
-    (n: string): string => globalDnMap[n] || (n || '').split(' ')[0] || '',
+    (n: string): string => globalDnMap[n] || firstName({ name: n }),
     [globalDnMap],
   )
 

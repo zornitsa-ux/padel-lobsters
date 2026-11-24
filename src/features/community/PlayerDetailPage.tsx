@@ -28,6 +28,7 @@ import type { InviteSent } from './InviteSentModal'
 import { describeInviteError } from '../players/inviteErrors'
 import type { EventNavigate } from '../events/eventHelpers'
 import { hasLevel } from '../../lib/level'
+import { firstName } from '../../lib/playerName'
 
 const BACK_LINK = { to: '/community', label: 'Community' }
 
@@ -129,7 +130,7 @@ export default function PlayerDetailPage({ playerId, onNavigate }: PlayerDetailP
     try {
       const result = await confirmAndResend(p)
       if (!result.sent) return
-      setInviteSent({ name: (p.name || '').split(' ')[0] || 'Player', email: result.email })
+      setInviteSent({ name: firstName({ name: p.name, fallback: 'Player' }), email: result.email })
     } catch (err) {
       setError(describeInviteError({ error: err, fallback: 'Could not resend the invite.' }))
     }

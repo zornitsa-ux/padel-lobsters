@@ -1,3 +1,4 @@
+import { firstName } from './playerName'
 // Helpers for the registration-transfer share flow.
 //
 // Two share actions are supported:
@@ -45,9 +46,9 @@ export function buildTransferMessage(
   transferId: string,
   tikkieLink?: string | null,
 ): string {
-  const firstName = (toPlayerName || '').split(/\s+/)[0] || 'there'
+  const first = firstName({ name: toPlayerName, fallback: 'there' })
   const url = buildTransferUrl(transferId)
-  const base = `Hi ${firstName}, can you please accept the transfer of my spot on ${url}?`
+  const base = `Hi ${first}, can you please accept the transfer of my spot on ${url}?`
   if (tikkieLink) {
     return (
       `${base} It isn't paid yet — once you accept, please pay directly here: ${tikkieLink} ` +

@@ -7,11 +7,9 @@ import { Section } from '../../components/ui/Section'
 import { Tag } from '../../components/ui/Tag'
 import { matchOutcome, type MyMatchView, type MyRoundView } from './nextMatch'
 import type { Player } from '../../lib/normalise'
+import { firstName } from '../../lib/playerName'
 
 type GetPlayer = (id: string | null) => Player | undefined
-
-const firstName = (player: Player | undefined, fallback: string): string =>
-  player ? (player.name || fallback).split(' ')[0] : fallback
 
 /**
  * The player's whole event: what's next under "Up next" (sitting out the round being played, then
@@ -93,7 +91,9 @@ function NextRoundCard({ view, getPlayer }: { view: MyMatchView; getPlayer: GetP
         <Avatar player={partner ?? { name: '?' }} size="lg" />
         <div className="text-left">
           <p className="caption">with</p>
-          <p className="font-bold text-lob-dark">{firstName(partner, 'Partner TBD')}</p>
+          <p className="font-bold text-lob-dark">
+            {firstName({ name: partner?.name, fallback: 'Partner TBD' })}
+          </p>
         </div>
       </div>
 
@@ -103,7 +103,9 @@ function NextRoundCard({ view, getPlayer }: { view: MyMatchView; getPlayer: GetP
           {opponents.map((opp, i) => (
             <div key={view.opponentIds[i] ?? i} className="flex items-center gap-1.5">
               <Avatar player={opp ?? { name: '?' }} size="sm" />
-              <span className="text-sm font-medium text-lob-slate">{firstName(opp, 'TBD')}</span>
+              <span className="text-sm font-medium text-lob-slate">
+                {firstName({ name: opp?.name, fallback: 'TBD' })}
+              </span>
             </div>
           ))}
         </div>
@@ -143,8 +145,11 @@ function PlayedRound({ round, getPlayer }: { round: MyRoundView; getPlayer: GetP
           {view.court ? ` · Court ${view.court}` : ''}
         </p>
         <p className={`text-sm truncate ${done ? 'text-lob-muted' : 'text-lob-slate'}`}>
-          with <span className="font-medium">{firstName(partner, 'Partner TBD')}</span> vs{' '}
-          {opponents.map((o) => firstName(o, 'TBD')).join(' & ')}
+          with{' '}
+          <span className="font-medium">
+            {firstName({ name: partner?.name, fallback: 'Partner TBD' })}
+          </span>{' '}
+          vs {opponents.map((o) => firstName({ name: o?.name, fallback: 'TBD' })).join(' & ')}
         </p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">

@@ -3,6 +3,7 @@
 // admin can see at a glance whether the engine had to break any rule.
 
 import type { EntityId, SchedulePlayer, ScheduleRound, ScheduleWarning } from './schedule/types'
+import { firstName } from '../../lib/playerName'
 
 export default function validateSchedule(
   rounds: ScheduleRound[],
@@ -14,7 +15,7 @@ export default function validateSchedule(
   const warnings: ScheduleWarning[] = []
   const getName = (id: EntityId): string => {
     const p = allPlayers.find((x) => x.id === id)
-    return p ? (p.name || '').split(' ')[0] : String(id)
+    return p ? firstName({ name: p.name }) : String(id)
   }
   const isLefty = (id: EntityId): boolean =>
     Boolean(allPlayers.find((x) => x.id === id)?.isLeftHanded)
