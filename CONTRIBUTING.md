@@ -65,6 +65,27 @@ safety checks at the top.
 changes go through migration files so they're tracked in Git, reviewed in PRs,
 and reproducible on every developer's machine.
 
+### Releasing to production
+
+After a PR that changes migrations or `supabase/functions/` is merged, run from `main`:
+
+```bash
+git checkout main && git pull
+npm run release:plan   # read-only: what would ship
+npm run release        # preflight, confirm, apply, verify
+```
+
+`release` refuses unless you are on a clean `main` equal to `origin/main`, CI is
+green on that commit, the CLI matches the pinned version and a person is at a
+terminal. It lists pending migrations and functions committed since their last
+deploy, asks you to type the project ref, applies migrations then functions
+(`--functions-first` reverses that; `--redeploy-functions` ships every function),
+then checks that nothing is pending and that production's grants match the
+reviewed files. Design and failure handling: `docs/release/DESIGN.md`.
+
+The two sections below describe the steps it runs, for reference or manual
+recovery.
+
 ### Applying migrations to production
 
 This is a **manual step** — it is not automated in CI/CD. After a migration

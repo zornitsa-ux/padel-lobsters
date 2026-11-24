@@ -26,6 +26,8 @@
     "db:grants": "./scripts/dump-grants.sh --write",
     "db:grants:check": "./scripts/dump-grants.sh --check",
     "db:grants:prod": "./scripts/dump-grants.sh --check --remote",
+    "release": "node scripts/release/release.ts",
+    "release:plan": "node scripts/release/release.ts --plan",
     "rehearsal:sync": "./scripts/prod-rehearsal/sync.sh",
     "rehearsal:integrity": "./scripts/prod-rehearsal/integrity.sh",
     "rehearsal:parity": "node scripts/prod-rehearsal/parity.ts",

@@ -35,7 +35,7 @@ See `docs/design-system/` (TOKENS.md for tokens, PLAN.md for what's being built)
 ## Database Migrations
 
 - Never apply a migration to production before its PR has been code reviewed and merged. This applies to every developer and agent, with no exceptions for urgency.
-- Production migrations run only from `main` after merge, via `npx supabase db push --remote` (see CONTRIBUTING.md, "Applying migrations to production").
+- Production migrations run only from `main` after merge, via `npm run release` (which runs `npx supabase db push --remote`; see CONTRIBUTING.md, "Releasing to production"). Agents never run it: it needs a person at a terminal.
 - Do not write to the production database by any other route either: no `apply_migration` or write SQL through the Supabase MCP, and no SQL in the dashboard. Read-only queries are fine. The one exception is the Jon-run path below.
 - Before review, test migrations locally only (`npm run db:reset`, or `npx supabase migration up`, plus any script in `supabase/tests/`).
 

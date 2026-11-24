@@ -104,6 +104,7 @@ export default defineConfig({
       'src/**/*.test.{js,jsx,ts,tsx}',
       'api/**/*.test.{ts,tsx}',
       'scripts/prod-rehearsal/*.test.ts',
+      'scripts/release/*.test.ts',
     ],
   },
 })
