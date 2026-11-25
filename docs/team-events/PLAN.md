@@ -244,13 +244,12 @@ signed in):
 
 ## 4. Open questions (owner)
 
-| ID   | Question                                       | Default if unanswered                     |
-| ---- | ---------------------------------------------- | ----------------------------------------- |
-| OQ-6 | Is this event separate from regular event #13? | Assume separate; both must be ≥ Sun 8 Nov |
+None open.
 
 (OQ-2 tie rule and OQ-3 rounds were withdrawn by D-006. OQ-5, picking
 placeholders as partners, was withdrawn by D-010: placeholders aren't offered.
-OQ-4, odd counts, was closed by D-029: capacity matches the courts.)
+OQ-4, odd counts, was closed by D-029: capacity matches the courts. OQ-6, a
+separate event from regular event #13, is obsolete.)
 
 ---
 
