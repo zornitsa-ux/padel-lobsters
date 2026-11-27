@@ -17,7 +17,7 @@
    ════════════════════════════════════════════════════════════════════════════ */
 
 import { isEventDayReached, isTournamentPast, localDateString } from '../../lib/tournamentDate'
-import { presetFor, ratingsOn, recordsMatches, savesPlacings } from './presets'
+import { ratingsOn, recordsMatches, savesPlacings } from './presets'
 import { tournamentStartMs } from '../../lib/tournamentStart'
 import { DEFAULT_EVENT_DURATION_MINUTES } from '../../lib/normalise'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
@@ -103,7 +103,7 @@ export function eventPhase({
   hasFinalStandings?: boolean
   now?: Date
 }): EventPhase {
-  if (savesPlacings(presetFor(tournament))) {
+  if (savesPlacings(tournament)) {
     return kingOfTheCourtPhase({ tournament, hasFinalStandings, now })
   }
   if (tournament.status === 'completed') {
@@ -150,7 +150,7 @@ export function isEventOver({
 }): boolean {
   if (tournament.status === 'completed') return true
   // Finish applies the ratings, so a rated event isn't over until then.
-  if (ratingsOn(presetFor(tournament))) return false
+  if (ratingsOn(tournament)) return false
   const start = tournamentStartMs(tournament)
   const minutes = tournament.duration ?? DEFAULT_EVENT_DURATION_MINUTES
   return start != null && now.getTime() >= start + minutes * 60_000
@@ -173,7 +173,7 @@ export function eventTimeGroup({
   now?: Date
 }): EventTimeGroup {
   if (isEventOver({ tournament, now })) return 'finished'
-  if (!ratingsOn(presetFor(tournament))) return 'upcoming'
+  if (!ratingsOn(tournament)) return 'upcoming'
   return isTournamentPast(tournament.date, now) ? 'awaitingResults' : 'upcoming'
 }
 
@@ -339,5 +339,5 @@ export function isRunOfShowVisible({
   isAdmin: boolean
   format?: string | null
 }): boolean {
-  return isAdmin && isPhaseAtLeast(phase, recordsMatches(presetFor({ format })) ? 'sealed' : 'live')
+  return isAdmin && isPhaseAtLeast(phase, recordsMatches({ format }) ? 'sealed' : 'live')
 }

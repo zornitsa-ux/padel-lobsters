@@ -12,7 +12,7 @@ export type EventPreset = {
   ratings: 'on' | 'off'
 }
 
-export const AMERICANO_PRESET: EventPreset = {
+export const AMERICANO_PRESET = {
   id: 'americano',
   format: 'lobster_matching',
   entry: 'individual',
@@ -20,9 +20,9 @@ export const AMERICANO_PRESET: EventPreset = {
   scoring: 'points_per_match',
   standingsShown: 'on_reveal',
   ratings: 'on',
-}
+} as const satisfies EventPreset
 
-export const KING_OF_THE_COURT_PRESET: EventPreset = {
+export const KING_OF_THE_COURT_PRESET = {
   id: 'king_of_the_court',
   format: 'king_of_court',
   entry: 'team',
@@ -30,7 +30,7 @@ export const KING_OF_THE_COURT_PRESET: EventPreset = {
   scoring: 'final_placings',
   standingsShown: 'on_save',
   ratings: 'off',
-}
+} as const satisfies EventPreset
 
 export const PRESETS: readonly EventPreset[] = [AMERICANO_PRESET, KING_OF_THE_COURT_PRESET]
 
@@ -39,10 +39,17 @@ export function presetFor({ format }: { format?: string | null }): EventPreset {
   return PRESETS.find((p) => p.format === format) ?? AMERICANO_PRESET
 }
 
-export const recordsMatches = (preset: EventPreset) => preset.play !== 'not_recorded'
+// Each part reads the preset for a format, so an event row, a form or a preset
+// can be passed as it is.
+type HasFormat = { format?: string | null }
 
-export const ratingsOn = (preset: EventPreset) => preset.ratings === 'on'
+export const recordsMatches = ({ format }: HasFormat) =>
+  presetFor({ format }).play !== 'not_recorded'
 
-export const savesPlacings = (preset: EventPreset) => preset.scoring === 'final_placings'
+export const ratingsOn = ({ format }: HasFormat) => presetFor({ format }).ratings === 'on'
 
-export const revealsStandings = (preset: EventPreset) => preset.standingsShown === 'on_reveal'
+export const savesPlacings = ({ format }: HasFormat) =>
+  presetFor({ format }).scoring === 'final_placings'
+
+export const revealsStandings = ({ format }: HasFormat) =>
+  presetFor({ format }).standingsShown === 'on_reveal'

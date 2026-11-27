@@ -15,7 +15,7 @@ import {
   useReviewRatingEvent,
 } from '../matchmaking/useMatchmaking'
 import { errorMessage } from '../../lib/errors'
-import { presetFor, ratingsOn } from './presets'
+import { ratingsOn } from './presets'
 import type { MatchResult } from '../matchmaking/domain/types'
 import type { RatingReviewProps } from '../matchmaking/ui/RatingReview'
 import type { NormalisedTournament } from '../../lib/normalise'
@@ -41,7 +41,7 @@ export function useEventLifecycle({ tournament }: { tournament: NormalisedTourna
   const { data: savedMatches = [] } = useMatches(tournament.id)
   // King of the Court has no ratings or Finish (D-009, D-026); the run of show
   // still mounts this hook there for the raffle, so skip the rating queries.
-  const appliesRatings = ratingsOn(presetFor(tournament))
+  const appliesRatings = ratingsOn(tournament)
 
   const regs = useMemo(() => regsData.filter((r) => r.status === 'registered'), [regsData])
   const registeredPlayers = useMemo(() => {

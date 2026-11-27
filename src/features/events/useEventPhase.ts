@@ -3,7 +3,7 @@ import { useMatches } from './useMatches'
 import { useOscarsSessionRow } from '../oscars/useOscarsSessionRow'
 import { derivePhase, toPhaseSession } from '../oscars/oscarsPhase'
 import { eventPhase } from './eventPhase'
-import { presetFor, savesPlacings } from './presets'
+import { ratingsOn, savesPlacings } from './presets'
 import { useEventTeams } from './teams/useTeams'
 import type { EventPhase, PhaseTournament } from './eventPhase'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
@@ -32,21 +32,28 @@ export function useEventPhase(tournament: (PhaseTournament & { id: string }) | n
   const { data: matches = [], isPending: matchesPending } = useMatches(tournament?.id)
   const { data: oscarsSession } = useOscarsSessionRow(tournament?.id)
   // King of the Court's standings are public as soon as they're saved (D-026).
-  const placings = tournament != null && savesPlacings(presetFor(tournament))
+  const placings = tournament != null && savesPlacings(tournament)
   const { data: teams, isPending: teamsPending } = useEventTeams({
     tournamentId: tournament?.id,
     enabled: placings,
   })
   const hasFinalStandings = Boolean(teams?.some((t) => t.finalRank != null && !t.cancelledAt))
 
-  const now = useMinuteClock({ enabled: placings })
+  // An unrated event is over by the clock (D-026), so its phase needs one.
+  const endsByClock = tournament != null && !ratingsOn(tournament)
+  const now = useMinuteClock({ enabled: endsByClock })
 
   const phase = useMemo(
     () =>
       tournament
-        ? eventPhase({ tournament, matches, hasFinalStandings, now: placings ? now : new Date() })
+        ? eventPhase({
+            tournament,
+            matches,
+            hasFinalStandings,
+            now: endsByClock ? now : new Date(),
+          })
         : 'open',
-    [tournament, matches, hasFinalStandings, placings, now],
+    [tournament, matches, hasFinalStandings, endsByClock, now],
   )
 
   // react-query's `undefined` while loading is exactly derivePhase's loading

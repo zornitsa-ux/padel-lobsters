@@ -43,4 +43,16 @@ describe('presets', () => {
     const formats = PRESETS.map((p) => p.format)
     expect(new Set(formats).size).toBe(formats.length)
   })
+
+  // The lifecycle reads a different part for each question; these combinations
+  // would leave an event that can never finish or never show its standings.
+  it.each(PRESETS)('$id is a coherent set of parts', (p) => {
+    // Ratings are applied from match scores.
+    if (ratingsOn(p)) expect(recordsMatches(p)).toBe(true)
+    // Unrated means over by the clock, and the clock-driven phase is the
+    // placings one: an unrated preset must rank by placings.
+    if (!ratingsOn(p)) expect(savesPlacings(p)).toBe(true)
+    // Standings come from scores (revealed) or placings (shown on save).
+    expect(revealsStandings(p)).toBe(recordsMatches(p))
+  })
 })
