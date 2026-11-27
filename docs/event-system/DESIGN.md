@@ -103,9 +103,10 @@ still lets ratings be written (account-deletion DESIGN §2).
 | `hasLiveScores`                                           | until `completed`                                            | unchanged meaning: until ratings applied                                                                                                           |
 | Run of show "Finish tournament"                           | applies ratings, sets `completed`                            | "Apply ratings", same writes; a to-do (§5)                                                                                                         |
 
-- **An overrunning night stays `live`:** past the end on the event day, with
-  matches still unscored and ratings not applied. Players keep landing on
-  their matches. From the next day it's `social`, scored or not.
+- **An overrunning night stays `live`:** up to 3 hours past the end (past
+  midnight too), with matches still unscored and ratings not applied.
+  Players keep landing on their matches. After that it's `social`, scored or
+  not.
 - **Home banners** for a rated event still wait for ratings to be applied
   (`eventTimeGroup` = `finished`): before that, standings are partial.
 - **Admin roster controls** (add player or team, cancel, transfer, team
@@ -113,7 +114,13 @@ still lets ratings be written (account-deletion DESIGN §2).
 - **The client reads the start in the viewer's own timezone**, the database
   in Europe/Amsterdam. Accepted: members are in the Netherlands, and the
   server decides.
-- `isTransferWindowClosed` reads a missing time as 19:00, as the server.
+- **Start times are read the same on both sides:** `HH:MM` or `HH.MM`,
+  00:00–23:59. Anything else (missing, blank, "7pm", "20") means 19:00. The
+  event form only saves `HH:MM`. `isTransferWindowClosed` uses the same parse.
+- **The You tab** offers no Register, waitlist or Register again once the
+  event is finished.
+- **An Americano with no schedule never wraps up** (scores to enter). The
+  signup-only preset is the fix for that use.
 
 Callers of `isEventOver` (Home banners and streak, account stats, event cards,
 registration, team lists, public event page) keep their logic and get the
