@@ -3,7 +3,7 @@ import { useMatches } from './useMatches'
 import { useOscarsSessionRow } from '../oscars/useOscarsSessionRow'
 import { derivePhase, toPhaseSession } from '../oscars/oscarsPhase'
 import { eventPhase } from './eventPhase'
-import { isKingOfTheCourt } from './eventFormat'
+import { presetFor, savesPlacings } from './presets'
 import { useEventTeams } from './teams/useTeams'
 import type { EventPhase, PhaseTournament } from './eventPhase'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
@@ -32,21 +32,21 @@ export function useEventPhase(tournament: (PhaseTournament & { id: string }) | n
   const { data: matches = [], isPending: matchesPending } = useMatches(tournament?.id)
   const { data: oscarsSession } = useOscarsSessionRow(tournament?.id)
   // King of the Court's standings are public as soon as they're saved (D-026).
-  const kotc = tournament != null && isKingOfTheCourt(tournament)
+  const placings = tournament != null && savesPlacings(presetFor(tournament))
   const { data: teams, isPending: teamsPending } = useEventTeams({
     tournamentId: tournament?.id,
-    enabled: kotc,
+    enabled: placings,
   })
   const hasFinalStandings = Boolean(teams?.some((t) => t.finalRank != null && !t.cancelledAt))
 
-  const now = useMinuteClock({ enabled: kotc })
+  const now = useMinuteClock({ enabled: placings })
 
   const phase = useMemo(
     () =>
       tournament
-        ? eventPhase({ tournament, matches, hasFinalStandings, now: kotc ? now : new Date() })
+        ? eventPhase({ tournament, matches, hasFinalStandings, now: placings ? now : new Date() })
         : 'open',
-    [tournament, matches, hasFinalStandings, kotc, now],
+    [tournament, matches, hasFinalStandings, placings, now],
   )
 
   // react-query's `undefined` while loading is exactly derivePhase's loading
@@ -58,7 +58,7 @@ export function useEventPhase(tournament: (PhaseTournament & { id: string }) | n
   return {
     phase,
     oscarsPhase,
-    isPending: tournament != null && (matchesPending || (kotc && teamsPending)),
+    isPending: tournament != null && (matchesPending || (placings && teamsPending)),
   }
 }
 

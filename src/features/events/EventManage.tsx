@@ -9,7 +9,7 @@ import { useMatches } from './useMatches'
 import { useRegistrations } from './useRegistrations'
 import { useEventPhase } from './useEventPhase'
 import { allMatchesScored, isMatchScored, isRunOfShowVisible } from './eventPhase'
-import { isKingOfTheCourt } from './eventFormat'
+import { presetFor, recordsMatches } from './presets'
 import RunOfShow from './RunOfShow'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { EventNavigate } from './eventHelpers'
@@ -98,7 +98,7 @@ function Overview({ tournament }: { tournament: NormalisedTournament }) {
   const scoredCount = matches.filter(isMatchScored).length
   const sealed = allMatchesScored(matches)
   // King of the Court records no matches (D-006), so there is nothing to score.
-  const scored = !isKingOfTheCourt(tournament)
+  const scored = recordsMatches(presetFor(tournament))
 
   return (
     <div className="space-y-4">
