@@ -252,16 +252,27 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                 // D-029: match scores stay visible (players already saw their own
                 // live), but the podium/final-ranking is embargoed until revealed.
                 const withheld = resultsWithheld({ tournament: t, isAdmin })
-                const resultsLink = (label: string) =>
+                // The event's own page (Info tab), then its results.
+                const eventLinks = (resultsLabel: string) =>
                   onNavigate && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      fullWidth
-                      onClick={() => onNavigate('scores', t)}
-                    >
-                      {label}
-                    </Button>
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        fullWidth
+                        onClick={() => onNavigate('registration', t)}
+                      >
+                        Event info
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        fullWidth
+                        onClick={() => onNavigate('scores', t)}
+                      >
+                        {resultsLabel}
+                      </Button>
+                    </>
                   )
 
                 // King of the Court ranks teams, has no matches (D-006) and no
@@ -293,7 +304,7 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                       {dbTab === 'games' && hasGameResults && (
                         <LobsterGamesPanel gameResults={gameResults} />
                       )}
-                      {resultsLink('View event results →')}
+                      {eventLinks('View event results →')}
                     </div>
                   )
                 }
@@ -390,7 +401,7 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                       <LobsterGamesPanel gameResults={gameResults} />
                     )}
 
-                    {resultsLink('View full match scores →')}
+                    {eventLinks('View full match scores →')}
                   </div>
                 )
               })()}
