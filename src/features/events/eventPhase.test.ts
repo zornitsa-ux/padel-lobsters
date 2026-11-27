@@ -233,6 +233,14 @@ describe('eventPhase', () => {
       expected: 'social',
     },
     {
+      label: 'EV-D1 — no scores yet the morning after is finished, not live',
+      status: 'active',
+      date: YESTERDAY,
+      resultsSharedAt: null,
+      matches: [unscored()],
+      expected: 'social',
+    },
+    {
       label: 'EV-D1 — all scored and past its end is finished, not sealed',
       status: 'active',
       date: YESTERDAY,
@@ -289,6 +297,19 @@ describe('eventPhase', () => {
       resultsSharedAt: null,
     }
     expect(eventPhase({ tournament, matches: [unscored()], now: lateNight })).toBe('live')
+  })
+
+  it('keeps an overrunning night live past its end while scores are missing', () => {
+    const tournament = {
+      status: 'active',
+      date: TODAY,
+      time: '19:00',
+      duration: 120,
+      resultsSharedAt: null,
+    }
+    const late = new Date(2026, 6, 29, 21, 15)
+    expect(eventPhase({ tournament, matches: [scored(), unscored()], now: late })).toBe('live')
+    expect(eventPhase({ tournament, matches: [scored(), scored()], now: late })).toBe('social')
   })
 
   it('is unaffected by Oscars or raffle state — they are not inputs', () => {

@@ -60,8 +60,8 @@ export function useEventPhase(tournament: (PhaseTournament & { id: string }) | n
   }
 }
 
-// King of the Court's phase turns on the clock (the event day, the scheduled
-// end), not on data, so an open page re-derives it every minute.
+// Every event's phase turns on the clock (the event day, the scheduled end),
+// not only on data, so an open page re-derives it every minute.
 function useMinuteClock({ enabled }: { enabled: boolean }): Date {
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {

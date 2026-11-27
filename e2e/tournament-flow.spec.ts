@@ -73,8 +73,8 @@ test('run-of-show: schedule → finish → oscars → reveal (admin + player)', 
     // ── 3. Admin finishes the tournament from /manage, not Schedule ──────
     await admin.goto(`${eventPath}/manage`)
     await expect(admin.getByRole('heading', { name: 'Run of show' })).toBeVisible()
-    await admin.getByRole('button', { name: 'Finish tournament' }).click()
-    await expect(admin.getByText('Ratings applied, tournament complete')).toBeVisible()
+    await admin.getByRole('button', { name: 'Apply ratings' }).click()
+    await expect(admin.getByText('Ratings applied, scores locked')).toBeVisible()
 
     // ── 4. Player still cannot see standings ──────────────────────────────
     // The event page is public; /join is where its "Sign in" leads, and it

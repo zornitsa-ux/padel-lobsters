@@ -27,7 +27,7 @@ import type { Player, NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedMatch } from '../events/matchQueries'
 import type { NormalisedRegistration } from '../events/registrationQueries'
 import type { NormalisedTransfer } from '../events/transferQueries'
-import { isEventFinished } from '../events/eventPhase'
+import { eventTimeGroup, isEventFinished } from '../events/eventPhase'
 import { countdownTarget, formatHomeDate, tipOfTheDay, upcomingEvents } from './homeHelpers'
 import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
 import MyKingOfCourtLine from '../events/kingOfCourt/MyKingOfCourtLine'
@@ -144,7 +144,9 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     new Date(t.date || t.completedAt || 0).getTime()
   const recentlyCompleted = tournaments
     .filter((t) => {
-      if (!isEventFinished({ tournament: t })) return false
+      // A rated event celebrates once its ratings are applied, as before: its
+      // standings are only partial until then (event-system EV3).
+      if (eventTimeGroup({ tournament: t }) !== 'finished') return false
       const refDate = t.date || t.completedAt
       if (!refDate) return false
       return Date.now() - new Date(refDate).getTime() < TWO_DAYS_MS

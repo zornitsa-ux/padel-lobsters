@@ -59,8 +59,7 @@ import { errorMessage } from '../../lib/errors'
 import { REGISTER_FAILURE_MESSAGES, registrationMessage } from './registrationStatusMessages'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
-import { isEventFinished } from './eventPhase'
-import { ratingsOn } from './presets'
+import { isEventFinished, isRosterLocked } from './eventPhase'
 import type { Player } from '../../lib/normalise'
 import type { NormalisedRegistration } from './registrationQueries'
 import type { NormalisedTransfer } from './transferQueries'
@@ -184,11 +183,8 @@ export default function Registration({
     playerId: claimedId,
   })
   const isCompleted = tournament != null && isEventFinished({ tournament })
-  // Admins keep the roster open on a rated event until ratings are applied, to
-  // fix who played first (event-system EV-D3). Players are done once finished.
-  const rosterLocked =
-    tournament != null &&
-    (ratingsOn(tournament) ? tournament.status === 'completed' : isCompleted)
+  // Players are done once finished; admins may fix the roster longer (EV-D3).
+  const rosterLocked = tournament != null && isRosterLocked({ tournament })
   const { hasTikkie, tikkieLink, costPerEntry } = useMemo(
     () => computePaymentConfig(tournament),
     [tournament],
@@ -573,7 +569,7 @@ export default function Registration({
       />
 
       {/* 4. Roster — the two numbers that matter. */}
-      {!isCompleted && (
+      {!rosterLocked && (
         <RosterLine
           teamEntries={isTeamEvent ? teamEntries : undefined}
           registered={registered.length}

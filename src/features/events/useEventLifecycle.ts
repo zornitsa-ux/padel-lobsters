@@ -70,9 +70,9 @@ export function useEventLifecycle({ tournament }: { tournament: NormalisedTourna
   const applyRatingsMutation = useApplyTournamentRatings()
   const reviewMutation = useReviewRatingEvent()
 
-  // Count of adjustments auto-applied without review on THIS Finish action.
+  // Count of adjustments auto-applied without review on THIS Apply ratings.
   // Session-only (unlike the queue, this has no persisted source to re-derive
-  // from post-refresh), so it's null except right after a same-session Finish.
+  // from post-refresh), so it's null except right after a same-session Apply ratings.
   const [appliedCount, setAppliedCount] = useState<number | null>(null)
   const [busy, setBusy] = useState<null | 'apply_ratings' | 'reveal' | 'publish'>(null)
   const [error, setError] = useState('')

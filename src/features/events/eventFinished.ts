@@ -1,3 +1,4 @@
+import { ratingsOn } from './presets'
 import { tournamentStartMs } from '../../lib/tournamentStart'
 import { DEFAULT_EVENT_DURATION_MINUTES } from '../../lib/normalise'
 
@@ -34,4 +35,20 @@ export function isEventFinished({
   if (tournament.status === 'completed') return true
   const end = eventEndMs(tournament)
   return end != null && now.getTime() >= end
+}
+
+/**
+ * Whether admins can still change the roster (add, cancel, transfer). A rated
+ * event stays open until its ratings are applied, so who played can be fixed
+ * first; any other event closes when it finishes (event-system EV-D3).
+ */
+export function isRosterLocked({
+  tournament,
+  now = new Date(),
+}: {
+  tournament: OverTournament
+  now?: Date
+}): boolean {
+  if (ratingsOn(tournament)) return tournament.status === 'completed'
+  return isEventFinished({ tournament, now })
 }

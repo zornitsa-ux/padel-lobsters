@@ -255,6 +255,15 @@ describe('isTransferWindowClosed', () => {
     expect(isTransferWindowClosed(localDateTime(NOW_MS - HOUR_MS))).toBe(true)
   })
 
+  it('reads a missing time as 19:00, as the server does (EV-D4)', () => {
+    vi.useFakeTimers()
+    // 06:59 and 07:00 local on the event day: 12h before a 19:00 start.
+    vi.setSystemTime(new Date(2026, 7, 1, 6, 59))
+    expect(isTransferWindowClosed({ date: '2026-08-01', time: '' })).toBe(false)
+    vi.setSystemTime(new Date(2026, 7, 1, 7, 0))
+    expect(isTransferWindowClosed({ date: '2026-08-01', time: '' })).toBe(true)
+  })
+
   it('is true exactly at the 12h cutoff', () => {
     vi.useFakeTimers()
     vi.setSystemTime(NOW_MS)

@@ -89,9 +89,9 @@ export function allMatchesScored(matches: readonly PhaseMatch[]): boolean {
  * Derive the phase. `now` is injectable for tests; production callers leave it
  * default so it reads the real clock.
  *
- * `status` is the authority on completion, not `completedAt` — a Finish click
- * can apply ratings and then fail the status write, and the retry path keys off
- * `status`.
+ * `status` is the authority on applied ratings, not `completedAt` — Apply
+ * ratings can write the ratings and then fail the status write, and the retry
+ * path keys off `status`.
  */
 export function eventPhase({
   tournament,
@@ -109,12 +109,29 @@ export function eventPhase({
     return kingOfTheCourtPhase({ tournament, hasFinalStandings, now })
   }
   if (isEventFinished({ tournament, now })) {
-    return tournament.resultsSharedAt ? 'revealed' : 'social'
+    if (tournament.resultsSharedAt) return 'revealed'
+    return isOverrunning({ tournament, matches, now }) ? 'live' : 'social'
   }
   if (matches.length === 0) return 'open'
   if (allMatchesScored(matches)) return 'sealed'
   if (tournament.date && tournament.date > localDateString(now)) return 'set'
   return 'live'
+}
+
+// Past its scheduled end on the night, with matches still to score: still being
+// played, so players keep landing on their matches. From the next day it's
+// over, scored or not.
+function isOverrunning({
+  tournament,
+  matches,
+  now,
+}: {
+  tournament: PhaseTournament
+  matches: readonly PhaseMatch[]
+  now: Date
+}): boolean {
+  if (tournament.status === 'completed' || matches.length === 0) return false
+  return !allMatchesScored(matches) && tournament.date === localDateString(now)
 }
 
 function kingOfTheCourtPhase({
@@ -133,7 +150,7 @@ function kingOfTheCourtPhase({
   return tournament.startingCourtsPublishedAt ? 'set' : 'open'
 }
 
-export { eventEndMs, isEventFinished, type OverTournament } from './eventFinished'
+export { eventEndMs, isEventFinished, isRosterLocked, type OverTournament } from './eventFinished'
 
 /**
  * Where the Events page lists an event: upcoming until finished (event-system

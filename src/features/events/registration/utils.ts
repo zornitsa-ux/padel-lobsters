@@ -4,6 +4,7 @@ import type { NormalisedMatch } from '../matchQueries'
 import type { NormalisedTransfer } from '../transferQueries'
 import { pricePerEntry } from '../eventHelpers'
 import { firstName } from '../../../lib/playerName'
+import { tournamentStartMs } from '../../../lib/tournamentStart'
 
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
 const TRANSFER_CUTOFF_MS = 12 * 60 * 60 * 1000
@@ -172,9 +173,10 @@ export const isWithinResultsWindow = (
 export const isTransferWindowClosed = (
   tournament: Pick<NormalisedTournament, 'date' | 'time'> | null | undefined,
 ): boolean => {
-  if (!tournament?.date) return false
-  const startMs = new Date(`${tournament.date}T${tournament.time || '00:00'}`).getTime()
-  if (Number.isNaN(startMs)) return false
+  // The shared start parse: a missing or unreadable time is 19:00, as on the
+  // server (event-system EV-D4).
+  const startMs = tournamentStartMs(tournament)
+  if (startMs == null) return false
   return Date.now() >= startMs - TRANSFER_CUTOFF_MS
 }
 
