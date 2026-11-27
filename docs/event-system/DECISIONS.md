@@ -60,3 +60,12 @@ added, and lifecycle code reads the parts instead of `isKingOfTheCourt`.
 
 **Why:** new formats then add a preset rather than
 another branch in each of about 30 files.
+
+## EV-D7 The cancel time is stamped by a trigger (2026-11-27)
+
+**Decision:** `registrations.cancelled_at` is set by a trigger whenever a row
+becomes `cancelled`, not by each cancel path.
+
+**Why:** seven functions write `cancelled` today. One trigger can't be
+forgotten by the next one, and none of the large functions has to be
+recreated.

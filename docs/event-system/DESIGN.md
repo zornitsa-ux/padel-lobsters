@@ -69,6 +69,12 @@ so neither default changes any existing event.
 still need to fix who played before applying ratings: the rating update
 refuses a player who isn't registered.
 
+**Ratings start between the end and applying ratings.** A played night now
+counts from the end. A player whose Playtomic level changes after the end but
+before ratings are applied gets the reset rule rather than the levelling start
+(signup-revamp D-6), as if ratings had been applied. Expected; it follows from
+the played night following the finish.
+
 **Known gap, left as is:** `send_tournament_reminders` (its window and the
 date in the email) and `private.auto_close_started_transfers` still read a
 missing time as 00:00 inline. No event has a missing time.
@@ -96,6 +102,18 @@ still lets ratings be written (account-deletion DESIGN §2).
 | `resultsWithheld` (`resultsPhase` had no caller and goes) | withheld only between `completed` and the reveal             | §6: withheld until revealed, for presets that reveal                                                                                               |
 | `hasLiveScores`                                           | until `completed`                                            | unchanged meaning: until ratings applied                                                                                                           |
 | Run of show "Finish tournament"                           | applies ratings, sets `completed`                            | "Apply ratings", same writes; a to-do (§5)                                                                                                         |
+
+- **An overrunning night stays `live`:** past the end on the event day, with
+  matches still unscored and ratings not applied. Players keep landing on
+  their matches. From the next day it's `social`, scored or not.
+- **Home banners** for a rated event still wait for ratings to be applied
+  (`eventTimeGroup` = `finished`): before that, standings are partial.
+- **Admin roster controls** (add player or team, cancel, transfer, team
+  lists) read one rule, `isRosterLocked` (EV-D3).
+- **The client reads the start in the viewer's own timezone**, the database
+  in Europe/Amsterdam. Accepted: members are in the Netherlands, and the
+  server decides.
+- `isTransferWindowClosed` reads a missing time as 19:00, as the server.
 
 Callers of `isEventOver` (Home banners and streak, account stats, event cards,
 registration, team lists, public event page) keep their logic and get the

@@ -46,6 +46,8 @@ export function isEventFinished({
 
 - `eventEndMs` = `tournamentStartMs(t)` + (`duration ?? DEFAULT_EVENT_DURATION_MINUTES`) minutes.
 - `isEventFinished` = `status === 'completed'` or `now >= eventEndMs`.
+- `isRosterLocked`: a rated preset locks when ratings are applied, any other
+  when finished (EV-D3).
 - `isEventOver` is renamed `isEventFinished` at every caller; no alias left.
 
 ## C-3 Presets
@@ -67,8 +69,8 @@ export const PRESETS: readonly EventPreset[]
 export function presetFor({ format }: { format?: string | null }): EventPreset
 export const recordsMatches: (p: EventPreset) => boolean // play !== 'not_recorded'
 export const ratingsOn: (p: EventPreset) => boolean
-export const revealsStandings: (p: EventPreset) => boolean // standingsShown === 'on_reveal'
-export const savesPlacings: (p: EventPreset) => boolean // scoring === 'final_placings'
+export const revealsStandings: ({ format }) => boolean // standingsShown === 'on_reveal'
+export const savesPlacings: ({ format }) => boolean // scoring === 'final_placings'
 ```
 
 - `presetFor` falls back to Americano for an unknown or missing format, as

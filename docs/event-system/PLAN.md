@@ -24,18 +24,18 @@ formats as presets, and the to-dos left after an event.
 
 ## Tasks
 
-| #   | Task                            | What ships                                                                                                                                                                                                                                                                  |
-| --- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| EV0 | Plan                            | These docs. No code.                                                                                                                                                                                                                                                        |
-| EV1 | Finished in the database        | Migration: C-1 helpers; every reader in DESIGN §3 "Database" moved onto them; `tournament_start_ts` 19:00 default (EV-D4). Shared cases file (C-4) and `supabase/tests/event_finished.sh`. DB test for the readers (below). Grants and types regenerated. No client change. |
-| EV2 | Presets                         | `presets.ts` (C-3). `eventFormat.ts` reads it. Lifecycle code (`eventPhase`, `runOfShowSteps`, `useEventLifecycle`, `resultsPhase`, `hasLiveScores`, the Scores tabs) asks preset parts, not `isKingOfTheCourt`. No behaviour change: existing tests pass unchanged.        |
-| EV3 | Finished in the client          | `eventEndMs`, `isEventFinished` (C-2), renamed at every caller. `eventPhase`, `eventTimeGroup`, `resultsPhase`, `resultsWithheld` per DESIGN §3 "Client" and §6 (C-6). Run-of-show "Finish tournament" → "Apply ratings". Vitest suite over the shared cases.               |
-| EV4 | To-dos and wrapped up           | `eventTodos.ts` (C-5); `runOfShowSteps` reads it for the steps they share. No new screen.                                                                                                                                                                                   |
-| EV5 | Past cards link to the event    | A past event's results card links to `/events/:id` (Info tab), as upcoming and awaiting cards do.                                                                                                                                                                           |
-| EV6 | Record when a spot is cancelled | Migration: `registrations.cancelled_at timestamptz`, set by every path that sets `status = 'cancelled'` (`private.cancel_registration_row`, `private.cancel_team_rows`, `private.delete_account`, transfers, partner change). No backfill. DB test.                         |
+| #   | Task                            | What ships                                                                                                                                                                                                                                                                                                       |
+| --- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| EV0 | Plan                            | These docs. No code.                                                                                                                                                                                                                                                                                             |
+| EV1 | Finished in the database        | Migration: C-1 helpers; every reader in DESIGN §3 "Database" moved onto them; `tournament_start_ts` 19:00 default (EV-D4). Shared cases file (C-4) and `supabase/tests/event_finished.sh`. DB test for the readers (below). Grants and types regenerated. No client change.                                      |
+| EV2 | Presets                         | `presets.ts` (C-3). `eventFormat.ts` reads it. Lifecycle code (`eventPhase`, `runOfShowSteps`, `useEventLifecycle`, `resultsPhase`, `hasLiveScores`, the Scores tabs) asks preset parts, not `isKingOfTheCourt`. No behaviour change: existing tests pass unchanged.                                             |
+| EV3 | Finished in the client          | `eventEndMs`, `isEventFinished` (C-2), renamed at every caller. `eventPhase`, `eventTimeGroup`, `resultsPhase`, `resultsWithheld` per DESIGN §3 "Client" and §6 (C-6). Run-of-show "Finish tournament" → "Apply ratings". Vitest suite over the shared cases.                                                    |
+| EV4 | To-dos and wrapped up           | `eventTodos.ts` (C-5); `runOfShowSteps` reads it for the steps they share. No new screen.                                                                                                                                                                                                                        |
+| EV5 | Past cards link to the event    | A past event's results card links to `/events/:id` (Info tab), as upcoming and awaiting cards do.                                                                                                                                                                                                                |
+| EV6 | Record when a spot is cancelled | Migration: `registrations.cancelled_at timestamptz`, stamped by a trigger (`registrations_stamp_cancelled`) whenever a row becomes `cancelled`, so no cancel path can forget it. Once set it doesn't move; a check allows it only on cancelled rows. No backfill. DB test through every path that cancels today. |
 
-**Order:** EV1 and EV2 in parallel → EV3 (after EV2) → EV4. EV5 and EV6 any
-time.
+**Order:** EV0 first (EV1 and EV6 cite it). EV1 and EV2 in parallel → EV3
+(after EV2, and after EV1's release) → EV4. EV5 and EV6 any time.
 
 - **EV1 ships on its own:** merge, `npm run release`, then
   `npm run db:grants:prod`. It changes only database behaviour (played
@@ -116,7 +116,9 @@ time.
 
 ### EV6
 
-- One migration. List every `set status = 'cancelled'` on `registrations` in
-  the latest function bodies; each sets `cancelled_at = now()` too.
-- DB test: each cancel path sets it; registering again after a cancel
-  leaves the old row's time alone.
+- A BEFORE INSERT OR UPDATE trigger on `registrations`, not an edit to each
+  path. The paths that write `cancelled` today, all covered by the DB test:
+  `cancel_registration_row`, `cancel_team_rows`, `apply_registration_transfer`,
+  `apply_team_transfer`, `respond_to_transfer` (a decline drops the
+  recipient's waitlist spot), `change_team_partner`, and `delete_account`
+  through the cancel helpers.
