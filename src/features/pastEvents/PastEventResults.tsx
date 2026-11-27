@@ -252,28 +252,22 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                 // D-029: match scores stay visible (players already saw their own
                 // live), but the podium/final-ranking is embargoed until revealed.
                 const withheld = resultsWithheld({ tournament: t, isAdmin })
-                // The event's own page (Info tab), then its results.
                 const eventLinks = (resultsLabel: string) =>
-                  onNavigate && (
-                    <>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        fullWidth
-                        onClick={() => onNavigate('registration', t)}
-                      >
-                        Event info
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        fullWidth
-                        onClick={() => onNavigate('scores', t)}
-                      >
-                        {resultsLabel}
-                      </Button>
-                    </>
-                  )
+                  onNavigate &&
+                  [
+                    { view: 'registration', label: 'Event info' },
+                    { view: 'scores', label: resultsLabel },
+                  ].map(({ view, label }) => (
+                    <Button
+                      key={view}
+                      variant="secondary"
+                      size="sm"
+                      fullWidth
+                      onClick={() => onNavigate(view, t)}
+                    >
+                      {label}
+                    </Button>
+                  ))
 
                 // King of the Court ranks teams, has no matches (D-006) and no
                 // reveal: saved standings are public at once (D-026).

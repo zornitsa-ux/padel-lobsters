@@ -124,3 +124,26 @@ describe('PastEventResults on King of the Court', () => {
     expect(screen.getByText('Sign in to see the final standings.')).toBeTruthy()
   })
 })
+
+describe('PastEventResults links back to the event (event-system EV5)', () => {
+  it("offers an Americano's info page next to its results", () => {
+    const americano = {
+      id: 'a1',
+      name: 'Lobster Sunday',
+      status: 'completed',
+      format: 'lobster_matching',
+      date: '2026-01-04',
+      time: '10:00',
+      duration: 120,
+      resultsSharedAt: '2026-01-04T13:00:00Z',
+      courts: [],
+    }
+    const onNavigate = vi.fn()
+    render(<PastEventResults tournaments={[americano] as never} onNavigate={onNavigate} />)
+    fireEvent.click(screen.getByText('Lobster Sunday'))
+
+    expect(screen.getByRole('button', { name: 'View full match scores →' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Event info' }))
+    expect(onNavigate).toHaveBeenCalledWith('registration', expect.objectContaining({ id: 'a1' }))
+  })
+})
