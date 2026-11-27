@@ -11,7 +11,7 @@ import { formatLabel, pricePerPlayer } from './eventHelpers'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament, TournamentCourt } from '../../lib/normalise'
 import type { NormalisedTransfer } from './transferQueries'
-import { isEventOver } from './eventPhase'
+import { isEventFinished } from './eventPhase'
 import { ActionRow } from '../../components/ui/ActionRow'
 import { Button } from '../../components/ui/Button'
 import { AlertBox } from '../../components/ui/AlertBox'
@@ -52,7 +52,7 @@ export default function UpcomingEventCard({
   updateTournament,
 }: UpcomingEventCardProps) {
   const { data: regsData = [] } = useRegistrations(t?.id)
-  const over = isEventOver({ tournament: t })
+  const over = isEventFinished({ tournament: t })
   const allBooked = (t.courts || []).every((c) => c.booked)
   const bookedCount = (t.courts || []).filter((c) => c.booked).length
   const totalCourts = (t.courts || []).length

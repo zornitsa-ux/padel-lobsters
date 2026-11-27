@@ -5,7 +5,7 @@ import { useAllRegistrations } from '../events/useRegistrations'
 import { useTournaments } from '../events/useTournaments'
 import { buildPlayerStats } from '../../lib/playerStats'
 import YourStatsCard from './YourStatsCard'
-import { isEventOver } from '../events/eventPhase'
+import { isEventFinished } from '../events/eventPhase'
 import { firstName } from '../../lib/playerName'
 
 export default function AccountStatsSection({ claimedId }: { claimedId: string | null }) {
@@ -44,7 +44,7 @@ export default function AccountStatsSection({ claimedId }: { claimedId: string |
         .sort((a, b) => b.wins - a.wins)[0] || null
 
     const completedSorted = tournaments
-      .filter((t) => isEventOver({ tournament: t }))
+      .filter((t) => isEventFinished({ tournament: t }))
       .sort((a, b) => ((b.date || '') > (a.date || '') ? 1 : -1))
     let streak = 0
     for (const t of completedSorted) {

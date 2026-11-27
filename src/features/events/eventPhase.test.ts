@@ -9,7 +9,7 @@ import {
   isOscarsTabVisible,
   defaultEventTab,
   isRunOfShowVisible,
-  isEventOver,
+  isEventFinished,
   isEventUpcoming,
   eventTimeGroup,
   groupEventsByTime,
@@ -95,14 +95,6 @@ describe('eventPhase', () => {
       expected: 'open',
     },
     {
-      label: 'active, no matches, date in the past',
-      status: 'active',
-      date: YESTERDAY,
-      resultsSharedAt: null,
-      matches: [],
-      expected: 'open',
-    },
-    {
       label: 'no matches and no date at all',
       status: 'upcoming',
       date: null,
@@ -155,14 +147,6 @@ describe('eventPhase', () => {
       expected: 'live',
     },
     {
-      label: 'date in the past but scores never finished',
-      status: 'active',
-      date: YESTERDAY,
-      resultsSharedAt: null,
-      matches: [scored(), unscored()],
-      expected: 'live',
-    },
-    {
       label: 'no date recorded, matches saved, scores outstanding',
       status: 'active',
       date: null,
@@ -186,14 +170,6 @@ describe('eventPhase', () => {
       date: TODAY,
       resultsSharedAt: null,
       matches: [scored(), scored(), scored()],
-      expected: 'sealed',
-    },
-    {
-      label: 'all scored on an event whose date has passed',
-      status: 'active',
-      date: YESTERDAY,
-      resultsSharedAt: null,
-      matches: [scored()],
       expected: 'sealed',
     },
     {
@@ -239,6 +215,40 @@ describe('eventPhase', () => {
       expected: 'social',
     },
 
+    // ── social by the clock: finished at its end, ratings or not (EV-D1) ───
+    {
+      label: 'EV-D1 — past its end with no matches is finished, not open',
+      status: 'active',
+      date: YESTERDAY,
+      resultsSharedAt: null,
+      matches: [],
+      expected: 'social',
+    },
+    {
+      label: 'EV-D1 — past its end with scores missing is finished, not live',
+      status: 'active',
+      date: YESTERDAY,
+      resultsSharedAt: null,
+      matches: [scored(), unscored()],
+      expected: 'social',
+    },
+    {
+      label: 'EV-D1 — all scored and past its end is finished, not sealed',
+      status: 'active',
+      date: YESTERDAY,
+      resultsSharedAt: null,
+      matches: [scored()],
+      expected: 'social',
+    },
+    {
+      label: 'EV-D1 — past its end and revealed before ratings were applied',
+      status: 'active',
+      date: YESTERDAY,
+      resultsSharedAt: SHARED,
+      matches: [scored()],
+      expected: 'revealed',
+    },
+
     // ── revealed: embargo lifted ───────────────────────────────────────────
     {
       label: 'completed and shared',
@@ -271,7 +281,13 @@ describe('eventPhase', () => {
 
   it('treats the event date as reached at midnight local, not UTC', () => {
     const lateNight = new Date(2026, 6, 29, 23, 30)
-    const tournament = { status: 'active', date: TODAY, resultsSharedAt: null }
+    const tournament = {
+      status: 'active',
+      date: TODAY,
+      time: '23:00',
+      duration: 60,
+      resultsSharedAt: null,
+    }
     expect(eventPhase({ tournament, matches: [unscored()], now: lateNight })).toBe('live')
   })
 
@@ -359,7 +375,7 @@ describe('isEventUpcoming', () => {
   })
 })
 
-describe('isEventOver', () => {
+describe('isEventFinished', () => {
   const event = (over: Record<string, unknown> = {}) => ({
     status: 'upcoming',
     format: 'king_of_court',
@@ -370,20 +386,27 @@ describe('isEventOver', () => {
   })
 
   it('ends King of the Court at start + duration', () => {
-    expect(isEventOver({ tournament: event(), now: new Date(2026, 6, 29, 11, 59) })).toBe(false)
-    expect(isEventOver({ tournament: event(), now: new Date(2026, 6, 29, 12, 0) })).toBe(true)
+    expect(isEventFinished({ tournament: event(), now: new Date(2026, 6, 29, 11, 59) })).toBe(false)
+    expect(isEventFinished({ tournament: event(), now: new Date(2026, 6, 29, 12, 0) })).toBe(true)
   })
 
   it('defaults to 90 minutes when no duration is stored', () => {
     const tournament = event({ duration: null })
-    expect(isEventOver({ tournament, now: new Date(2026, 6, 29, 11, 29) })).toBe(false)
-    expect(isEventOver({ tournament, now: new Date(2026, 6, 29, 11, 30) })).toBe(true)
+    expect(isEventFinished({ tournament, now: new Date(2026, 6, 29, 11, 29) })).toBe(false)
+    expect(isEventFinished({ tournament, now: new Date(2026, 6, 29, 11, 30) })).toBe(true)
   })
 
-  it('leaves Americano to the Finish step, however late it is', () => {
-    const americano = event({ format: 'lobster_matching', date: YESTERDAY })
-    expect(isEventOver({ tournament: americano, now: NOW })).toBe(false)
-    expect(isEventOver({ tournament: { ...americano, status: 'completed' }, now: NOW })).toBe(true)
+  it('ends Americano at its end too, ratings applied or not (EV-D1)', () => {
+    const americano = event({ format: 'lobster_matching' })
+    expect(isEventFinished({ tournament: americano, now: new Date(2026, 6, 29, 11, 59) })).toBe(
+      false,
+    )
+    expect(isEventFinished({ tournament: americano, now: new Date(2026, 6, 29, 12, 0) })).toBe(true)
+  })
+
+  it('treats applied ratings as finished, even before the end', () => {
+    const early = event({ format: 'lobster_matching', date: TOMORROW, status: 'completed' })
+    expect(isEventFinished({ tournament: early, now: NOW })).toBe(true)
   })
 })
 
@@ -404,8 +427,18 @@ describe('eventTimeGroup', () => {
     expect(eventTimeGroup({ tournament: americano, now: NOW })).toBe('finished')
   })
 
-  it('holds an Americano past its date until Finish as awaiting results', () => {
+  it('holds a finished Americano as awaiting results until its ratings are applied', () => {
     expect(eventTimeGroup({ tournament: event(), now: NOW })).toBe('awaitingResults')
+  })
+
+  it('moves an Americano to Past at its end, not at midnight (EV-D1)', () => {
+    const tonight = event({ date: TODAY, time: '19:00', duration: 120 })
+    expect(eventTimeGroup({ tournament: tonight, now: new Date(2026, 6, 29, 20, 59) })).toBe(
+      'upcoming',
+    )
+    expect(eventTimeGroup({ tournament: tonight, now: new Date(2026, 6, 29, 21, 0) })).toBe(
+      'awaitingResults',
+    )
   })
 
   it('keeps King of the Court upcoming until its end, even past midnight', () => {

@@ -77,12 +77,12 @@ function useStepActions({
       busy: false,
       onClick: () => navigate(`/events/${tournament.id}/schedule`),
     },
-    finish: {
+    apply_ratings: {
       kind: 'button',
-      label: 'Finish tournament',
-      busyLabel: 'Finishing…',
-      busy: lifecycle.busy === 'finish',
-      onClick: () => void lifecycle.finishTournament(),
+      label: 'Apply ratings',
+      busyLabel: 'Applying…',
+      busy: lifecycle.busy === 'apply_ratings',
+      onClick: () => void lifecycle.applyRatingsAndLock(),
     },
     resolve_flags: {
       kind: 'custom',

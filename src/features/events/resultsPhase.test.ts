@@ -1,44 +1,39 @@
 import { describe, it, expect } from 'vitest'
-import { resultsPhase, resultsWithheld } from './resultsPhase'
-
-describe('resultsPhase', () => {
-  it('is not_completed for anything but a completed tournament', () => {
-    expect(resultsPhase({ status: 'upcoming', resultsSharedAt: null })).toBe('not_completed')
-    expect(resultsPhase({ status: 'active', resultsSharedAt: '2026-07-25T00:00:00Z' })).toBe(
-      'not_completed',
-    )
-  })
-
-  it('is pending_reveal once completed with no reveal timestamp', () => {
-    expect(resultsPhase({ status: 'completed', resultsSharedAt: null })).toBe('pending_reveal')
-  })
-
-  it('is revealed once completed with a reveal timestamp', () => {
-    expect(resultsPhase({ status: 'completed', resultsSharedAt: '2026-07-25T00:00:00Z' })).toBe(
-      'revealed',
-    )
-  })
-})
+import { resultsWithheld } from './resultsPhase'
 
 describe('resultsWithheld', () => {
-  const pending = { status: 'completed', resultsSharedAt: null }
-  const revealed = { status: 'completed', resultsSharedAt: '2026-07-25T00:00:00Z' }
-  const upcoming = { status: 'upcoming', resultsSharedAt: null }
-
-  it('withholds from non-admins while pending reveal', () => {
-    expect(resultsWithheld({ tournament: pending, isAdmin: false })).toBe(true)
+  const SHARED = '2026-07-25T00:00:00Z'
+  const americano = (over: Record<string, unknown> = {}) => ({
+    status: 'completed',
+    format: 'lobster_matching',
+    resultsSharedAt: null,
+    ...over,
   })
 
-  it('never withholds from admins, regardless of phase', () => {
-    expect(resultsWithheld({ tournament: pending, isAdmin: true })).toBe(false)
-    expect(resultsWithheld({ tournament: revealed, isAdmin: true })).toBe(false)
+  it('withholds from non-admins until revealed', () => {
+    expect(resultsWithheld({ tournament: americano(), isAdmin: false })).toBe(true)
+  })
+
+  it('withholds before ratings are applied too, during the event or after it (EV-D5)', () => {
+    expect(resultsWithheld({ tournament: americano({ status: 'upcoming' }), isAdmin: false })).toBe(
+      true,
+    )
+  })
+
+  it('never withholds from admins', () => {
+    expect(resultsWithheld({ tournament: americano(), isAdmin: true })).toBe(false)
+    expect(resultsWithheld({ tournament: americano({ status: 'upcoming' }), isAdmin: true })).toBe(
+      false,
+    )
   })
 
   it('does not withhold once revealed', () => {
+    const revealed = americano({ resultsSharedAt: SHARED })
     expect(resultsWithheld({ tournament: revealed, isAdmin: false })).toBe(false)
   })
 
-  it('does not withhold a tournament that is not even completed yet', () => {
-    expect(resultsWithheld({ tournament: upcoming, isAdmin: false })).toBe(false)
+  it('never withholds King of the Court, whose standings are public once saved (D-026)', () => {
+    const kotc = americano({ format: 'king_of_court', status: 'upcoming' })
+    expect(resultsWithheld({ tournament: kotc, isAdmin: false })).toBe(false)
   })
 })

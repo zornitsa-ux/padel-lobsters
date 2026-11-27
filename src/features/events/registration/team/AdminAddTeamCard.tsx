@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import type { Player } from '../../../../lib/normalise'
-import { isEventOver } from '../../eventPhase'
+import { isEventFinished } from '../../eventPhase'
 import type { NormalisedRegistration } from '../../registrationQueries'
 import type { NormalisedTournament } from '../../tournamentQueries'
 import type { DisplayName, GetPlayer } from '../utils'
@@ -117,7 +117,7 @@ export default function AdminAddTeamCard({
     setCaptainLevel('')
   }
 
-  if (isEventOver({ tournament })) return null
+  if (isEventFinished({ tournament })) return null
 
   if (!open) {
     return (

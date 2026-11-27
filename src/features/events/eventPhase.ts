@@ -16,10 +16,9 @@
    D-029 requires the results reveal to stay independent of everything else.
    ════════════════════════════════════════════════════════════════════════════ */
 
-import { isEventDayReached, isTournamentPast, localDateString } from '../../lib/tournamentDate'
+import { isEventDayReached, localDateString } from '../../lib/tournamentDate'
 import { ratingsOn, recordsMatches, savesPlacings } from './presets'
-import { tournamentStartMs } from '../../lib/tournamentStart'
-import { DEFAULT_EVENT_DURATION_MINUTES } from '../../lib/normalise'
+import { isEventFinished, type OverTournament } from './eventFinished'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
 
 /**
@@ -31,9 +30,12 @@ import type { OscarsPhase } from '../oscars/oscarsPhase'
  *   social   → completed, final ranking still withheld from players
  *   revealed → `resultsSharedAt` set; standings and winners are public
  *
- * King of the Court has no matches, no Finish and no Reveal (D-026): it is
- * `live` on the event day, `social` once its scheduled end has passed, and
- * `revealed` as soon as final standings are saved.
+ * Every event is finished at its scheduled end (event-system EV-D1), so a
+ * finished Americano is `social` until revealed, scored or not.
+ *
+ * King of the Court has no matches, no ratings and no Reveal (D-026): it is
+ * `live` on the event day, `social` once finished, and `revealed` as soon as
+ * final standings are saved.
  */
 export type EventPhase = 'open' | 'set' | 'live' | 'sealed' | 'social' | 'revealed'
 
@@ -106,7 +108,7 @@ export function eventPhase({
   if (savesPlacings(tournament)) {
     return kingOfTheCourtPhase({ tournament, hasFinalStandings, now })
   }
-  if (tournament.status === 'completed') {
+  if (isEventFinished({ tournament, now })) {
     return tournament.resultsSharedAt ? 'revealed' : 'social'
   }
   if (matches.length === 0) return 'open'
@@ -126,42 +128,19 @@ function kingOfTheCourtPhase({
 }): EventPhase {
   const dayReached = isEventDayReached({ date: tournament.date ?? '', now })
   if (dayReached && hasFinalStandings) return 'revealed'
-  if (isEventOver({ tournament, now })) return 'social'
+  if (isEventFinished({ tournament, now })) return 'social'
   if (dayReached) return 'live'
   return tournament.startingCourtsPublishedAt ? 'set' : 'open'
 }
 
-export type OverTournament = Pick<
-  PhaseTournament,
-  'status' | 'format' | 'date' | 'time' | 'duration'
->
+export { eventEndMs, isEventFinished, type OverTournament } from './eventFinished'
 
 /**
- * Whether the event is over. Americano is over when the admin finishes it
- * (that applies the ratings). Nobody finishes King of the Court, so it is over
- * once its scheduled end (start + duration) has passed (D-026).
- */
-export function isEventOver({
-  tournament,
-  now = new Date(),
-}: {
-  tournament: OverTournament
-  now?: Date
-}): boolean {
-  if (tournament.status === 'completed') return true
-  // Finish applies the ratings, so a rated event isn't over until then.
-  if (ratingsOn(tournament)) return false
-  const start = tournamentStartMs(tournament)
-  const minutes = tournament.duration ?? DEFAULT_EVENT_DURATION_MINUTES
-  return start != null && now.getTime() >= start + minutes * 60_000
-}
-
-/**
- * Where the Events page lists an event: `finished` events get a results card
- * under Past; `awaitingResults` (an Americano past its date, before Finish)
- * get a plain card under Past; the rest are upcoming. King of the Court is
- * never awaiting results: it's upcoming until its scheduled end, even past
- * midnight.
+ * Where the Events page lists an event: upcoming until finished (event-system
+ * EV-D1); then `awaitingResults` (a plain "Results pending" card under Past)
+ * while a rated event still has its ratings to apply, and `finished` (a results
+ * card, which withholds unrevealed standings itself) after that. King of the
+ * Court has no ratings, so it goes straight to `finished`.
  */
 export type EventTimeGroup = 'upcoming' | 'awaitingResults' | 'finished'
 
@@ -172,9 +151,9 @@ export function eventTimeGroup({
   tournament: OverTournament
   now?: Date
 }): EventTimeGroup {
-  if (isEventOver({ tournament, now })) return 'finished'
-  if (!ratingsOn(tournament)) return 'upcoming'
-  return isTournamentPast(tournament.date, now) ? 'awaitingResults' : 'upcoming'
+  if (!isEventFinished({ tournament, now })) return 'upcoming'
+  const ratingsToApply = ratingsOn(tournament) && tournament.status !== 'completed'
+  return ratingsToApply ? 'awaitingResults' : 'finished'
 }
 
 export function groupEventsByTime<T extends OverTournament>({
@@ -202,7 +181,7 @@ export function isEventUpcoming({
   now?: Date
 }): boolean {
   const scheduled = tournament.status === 'upcoming' || tournament.status === 'active'
-  return scheduled && !isEventOver({ tournament, now })
+  return scheduled && !isEventFinished({ tournament, now })
 }
 
 /* ── Tab visibility ─────────────────────────────────────────────────────────

@@ -122,8 +122,15 @@ beforeEach(() => {
   vi.clearAllMocks()
   resetLevellingMock()
   registrations = allRegistered()
+  // The event day, before its 19:00 start: every event now finishes by the
+  // clock (event-system EV-D1), so the fixture's date must not be in the past.
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 6, 29, 12))
 })
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 
 describe('Info tab — no results leak at any phase', () => {
   it.each(PHASES)('renders no podium, standings or ranking at %s', (_label, overrides) => {
@@ -145,6 +152,7 @@ describe('Info tab — no results leak at any phase', () => {
 
     expect(screen.queryByRole('button', { name: /mark tournament as complete/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /finish tournament/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /apply ratings/i })).toBeNull()
   })
 
   it('DEFECT GUARD — offers no Lobster Games button', () => {

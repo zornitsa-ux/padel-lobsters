@@ -43,7 +43,7 @@ describe('runOfShowSteps — shape', () => {
   it('is the eight steps of §04, in order', () => {
     expect(build().map((s) => s.id)).toEqual([
       'enter_scores',
-      'finish',
+      'apply_ratings',
       'resolve_flags',
       'open_voting',
       'close_voting',
@@ -104,7 +104,7 @@ describe('D-029 — reveal is independent of rating review', () => {
 
   it('reveal locks only on the one thing the data actually requires', () => {
     expect(stateOf('reveal', SEALED)).toBe('locked')
-    expect(stepOf('reveal', SEALED).lockedReason).toBe('Finish the tournament first')
+    expect(stepOf('reveal', SEALED).lockedReason).toBe('Apply ratings first')
   })
 
   it('reveal is done once shared', () => {
@@ -213,26 +213,26 @@ describe('enter_scores and finish', () => {
   })
 
   it('locks finish until every match is scored', () => {
-    expect(stateOf('finish', { matches: [scored(), unscored()] })).toBe('locked')
-    expect(stepOf('finish', { matches: [scored(), unscored()] }).lockedReason).toBe(
+    expect(stateOf('apply_ratings', { matches: [scored(), unscored()] })).toBe('locked')
+    expect(stepOf('apply_ratings', { matches: [scored(), unscored()] }).lockedReason).toBe(
       'Every match needs a score',
     )
   })
 
   it('unlocks finish when all scored and not yet completed', () => {
-    expect(stateOf('finish', SEALED)).toBe('available')
+    expect(stateOf('apply_ratings', SEALED)).toBe('available')
   })
 
   it('is done once completed', () => {
-    expect(stateOf('finish', COMPLETED)).toBe('done')
+    expect(stateOf('apply_ratings', COMPLETED)).toBe('done')
   })
 
   it('an empty schedule does not unlock finish', () => {
-    expect(stateOf('finish', { matches: [] })).toBe('locked')
+    expect(stateOf('apply_ratings', { matches: [] })).toBe('locked')
   })
 
   it('never promises standings to players before the reveal', () => {
-    expect(stepOf('finish', SEALED).playersSee).toBe('Standings stay hidden')
+    expect(stepOf('apply_ratings', SEALED).playersSee).toBe('Standings stay hidden')
   })
 })
 
@@ -381,7 +381,7 @@ describe('runOfShowProgress', () => {
       build()
         .filter((s) => !s.optional)
         .map((s) => s.id),
-    ).toEqual(['enter_scores', 'finish', 'reveal'])
+    ).toEqual(['enter_scores', 'apply_ratings', 'reveal'])
   })
 
   // An event with no Oscars leaves open_voting on 'available' forever, and one

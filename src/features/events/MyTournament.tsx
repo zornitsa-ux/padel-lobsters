@@ -20,7 +20,7 @@ import { useMyKingOfCourt } from './kingOfCourt/useKingOfCourtTeams'
 import MyStartingCourtCard from './kingOfCourt/MyStartingCourtCard'
 import { buildMyTournamentView, myFinalPlacing } from './nextMatch'
 import type { EventPhase } from './eventPhase'
-import { isEventOver } from './eventPhase'
+import { isEventFinished } from './eventPhase'
 import type { NormalisedTournament } from '../../lib/normalise'
 import type { EventNavigate } from './eventHelpers'
 import { Button } from '../../components/ui/Button'
@@ -154,7 +154,7 @@ export default function MyTournament({ tournament, onNavigate }: Props) {
       entry={myEntry}
       viewerId={claimedId}
       tournamentId={tournament.id}
-      isCompleted={isEventOver({ tournament })}
+      isCompleted={isEventFinished({ tournament })}
       candidates={candidates}
       getPlayer={getPlayer}
       displayName={(p) => (p.name || '').trim()}

@@ -92,14 +92,14 @@ beforeEach(() => {
 })
 afterEach(cleanup)
 
-describe('finishTournament — applies ratings before marking complete', () => {
+describe('applyRatingsAndLock — applies ratings before marking complete', () => {
   it('DEFECT GUARD — applies learned ratings, then sets status completed', async () => {
     // The Info tab's deleted button wrote status without this apply step, which
     // silently stranded the event's learned ratings forever.
     const { result } = render()
 
     await act(async () => {
-      await result.current.finishTournament()
+      await result.current.applyRatingsAndLock()
     })
 
     expect(mockApplyMutateAsync).toHaveBeenCalledTimes(1)
@@ -116,7 +116,7 @@ describe('finishTournament — applies ratings before marking complete', () => {
     const { result } = render()
 
     await act(async () => {
-      await result.current.finishTournament()
+      await result.current.applyRatingsAndLock()
     })
 
     expect(order).toEqual(['apply', 'complete'])
@@ -126,7 +126,7 @@ describe('finishTournament — applies ratings before marking complete', () => {
     const { result } = render()
 
     await act(async () => {
-      await result.current.finishTournament()
+      await result.current.applyRatingsAndLock()
     })
 
     expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
@@ -136,7 +136,7 @@ describe('finishTournament — applies ratings before marking complete', () => {
   })
 })
 
-describe('finishTournament — double-apply guard dead-end (owner ask, 2026-07-25)', () => {
+describe('applyRatingsAndLock — double-apply guard dead-end (owner ask, 2026-07-25)', () => {
   it('treats a double-apply-guard rejection as done and still completes', async () => {
     // A prior Finish can apply ratings and then fail the status write; the RPC's
     // guard then rejects every retry's apply step. Without this, completion was
@@ -145,7 +145,7 @@ describe('finishTournament — double-apply guard dead-end (owner ask, 2026-07-2
     const { result } = render()
 
     await act(async () => {
-      await result.current.finishTournament()
+      await result.current.applyRatingsAndLock()
     })
 
     expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
@@ -160,7 +160,7 @@ describe('finishTournament — double-apply guard dead-end (owner ask, 2026-07-2
     const { result } = render()
 
     await act(async () => {
-      await result.current.finishTournament()
+      await result.current.applyRatingsAndLock()
     })
 
     expect(mockUpdateMutateAsync).not.toHaveBeenCalled()
@@ -173,7 +173,7 @@ describe('finishTournament — double-apply guard dead-end (owner ask, 2026-07-2
 
     let ok: boolean | undefined
     await act(async () => {
-      ok = await result.current.finishTournament()
+      ok = await result.current.applyRatingsAndLock()
     })
 
     expect(ok).toBe(false)

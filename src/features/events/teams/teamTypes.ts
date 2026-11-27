@@ -67,6 +67,7 @@ export type RegisterTeamStatus =
   | 'not_found'
   | 'not_team_event'
   | 'tournament_completed'
+  | 'event_finished'
   | 'captain_not_active'
   | 'needs_level'
   | 'captain_needs_level'

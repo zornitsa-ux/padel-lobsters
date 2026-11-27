@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
@@ -60,9 +60,17 @@ const meTab = () => screen.queryByText('ME TAB')
 const resultsTab = () => screen.queryByText('RESULTS TAB')
 const spinner = () => document.querySelector('.animate-spin')
 
+// During the event (19:00 by default, 90 minutes): every event now finishes by
+// the clock (event-system EV-D1), so "live" needs a time before its end.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2020, 0, 1, 19, 30))
+})
+
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  vi.useRealTimers()
   mockSession = { user: { id: 'player-1' } }
 })
 

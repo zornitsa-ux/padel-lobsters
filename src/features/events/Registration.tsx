@@ -59,7 +59,8 @@ import { errorMessage } from '../../lib/errors'
 import { REGISTER_FAILURE_MESSAGES, registrationMessage } from './registrationStatusMessages'
 import type { EventNavigate } from './eventHelpers'
 import type { NormalisedTournament } from '../../lib/normalise'
-import { isEventOver } from './eventPhase'
+import { isEventFinished } from './eventPhase'
+import { ratingsOn } from './presets'
 import type { Player } from '../../lib/normalise'
 import type { NormalisedRegistration } from './registrationQueries'
 import type { NormalisedTransfer } from './transferQueries'
@@ -182,7 +183,12 @@ export default function Registration({
     tournamentId: tournament?.id,
     playerId: claimedId,
   })
-  const isCompleted = tournament != null && isEventOver({ tournament })
+  const isCompleted = tournament != null && isEventFinished({ tournament })
+  // Admins keep the roster open on a rated event until ratings are applied, to
+  // fix who played first (event-system EV-D3). Players are done once finished.
+  const rosterLocked =
+    tournament != null &&
+    (ratingsOn(tournament) ? tournament.status === 'completed' : isCompleted)
   const { hasTikkie, tikkieLink, costPerEntry } = useMemo(
     () => computePaymentConfig(tournament),
     [tournament],
@@ -589,7 +595,7 @@ export default function Registration({
 
       {!isTeamEvent && isAdmin && (
         <AddPlayerCard
-          isCompleted={isCompleted}
+          isCompleted={rosterLocked}
           showAdd={showAdd}
           onOpen={() => setShowAdd(true)}
           onClose={() => setShowAdd(false)}
@@ -621,7 +627,7 @@ export default function Registration({
       ) : (
         <>
           <RegisteredSection
-            isCompleted={isCompleted}
+            isCompleted={rosterLocked}
             getPlayer={getPlayer}
             registered={registered}
             maxPlayers={maxPlayers}
@@ -636,7 +642,7 @@ export default function Registration({
           />
 
           <WaitlistSection
-            isCompleted={isCompleted}
+            isCompleted={rosterLocked}
             waitlisted={waitlisted}
             getPlayer={getPlayer}
             displayName={displayName}
@@ -648,7 +654,7 @@ export default function Registration({
       )}
 
       <CancelledSection
-        isCompleted={isCompleted}
+        isCompleted={rosterLocked}
         cancelled={cancelled}
         getPlayer={getPlayer}
         displayName={displayName}

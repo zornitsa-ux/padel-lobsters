@@ -10,7 +10,7 @@
    resolving them. And per the Oscars decoupling rule, no Oscars step reads
    `tournaments.status`.
 
-   Only three steps are required: enter scores → finish → reveal. Oscars and the
+   Only three steps are required: enter scores → apply ratings → reveal. Oscars and the
    raffle are per-event extras most events never run, and nothing exists to
    derive "this event has one" from — a raffle has no state at all until it is
    drawn. Counting them meant an event that was genuinely closed out sat at
@@ -29,7 +29,7 @@ import type { OscarsPhase } from '../oscars/oscarsPhase'
 
 export type RunOfShowStepId =
   | 'enter_scores'
-  | 'finish'
+  | 'apply_ratings'
   | 'resolve_flags'
   | 'open_voting'
   | 'close_voting'
@@ -64,7 +64,7 @@ export type RunOfShowInput = {
   oscarsPhase: OscarsPhase
   /** Unresolved flagged rating events. */
   flaggedCount: number
-  /** Ratings auto-applied by this session's Finish; null outside that window. */
+  /** Ratings auto-applied by this session's Apply ratings; null outside that window. */
   appliedCount?: number | null
   hasRaffleWinners: boolean
   /** Live voting turnout, once a session exists. */
@@ -132,12 +132,12 @@ export function runOfShowSteps({
       playersSee: 'Their own scores, live',
     },
     {
-      id: 'finish',
-      title: 'Finish tournament',
+      id: 'apply_ratings',
+      title: 'Apply ratings',
       state: finishState,
       detail: isCompleted
-        ? 'Ratings applied, tournament complete'
-        : 'Applies learned ratings first',
+        ? 'Ratings applied, scores locked'
+        : 'Applies learned ratings and locks scores',
       lockedReason: lockedBecause(finishState, 'Every match needs a score'),
       playersSee: 'Standings stay hidden',
     },
@@ -152,7 +152,7 @@ export function runOfShowSteps({
           : appliedCount != null
             ? `${plural({ count: appliedCount, one: 'rating' })} applied automatically, nothing to review`
             : 'Nothing to review',
-      lockedReason: lockedBecause(flagsState, 'Finish the tournament first'),
+      lockedReason: lockedBecause(flagsState, 'Apply ratings first'),
       playersSee: 'Nothing — ratings are admin-only',
       optional: true,
     },
@@ -198,7 +198,7 @@ export function runOfShowSteps({
         : oscarsAwaitingShare
           ? 'Standings and Oscars winners together'
           : 'Standings',
-      lockedReason: lockedBecause(revealState, 'Finish the tournament first'),
+      lockedReason: lockedBecause(revealState, 'Apply ratings first'),
       // Only what has actually landed: `resultsSharedAt` says nothing about the
       // Oscars winners, which are shared by a separate write that can fail or be
       // declined.
@@ -234,7 +234,7 @@ export function runOfShowSteps({
 // Each closing step exists only for the preset part it closes out.
 function stepApplies({ id, preset }: { id: RunOfShowStepId; preset: EventPreset }): boolean {
   if (id === 'enter_scores') return recordsMatches(preset)
-  if (id === 'finish' || id === 'resolve_flags') return ratingsOn(preset)
+  if (id === 'apply_ratings' || id === 'resolve_flags') return ratingsOn(preset)
   if (id === 'reveal') return revealsStandings(preset)
   return true
 }

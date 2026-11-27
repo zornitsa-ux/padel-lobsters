@@ -91,6 +91,7 @@ export const REGISTER_TEAM_MESSAGES: Partial<Record<RegisterTeamStatus | 'error'
   not_found: 'This event no longer exists. Refresh and try again.',
   not_team_event: 'This event takes individual signups.',
   tournament_completed: 'This event has already finished.',
+  event_finished: 'This event has already finished.',
   captain_not_active: "That player's account isn't active.",
   needs_level: 'Set your level first, then sign your team up.',
   captain_needs_level: 'That captain has no level yet. Enter their level, then try again.',

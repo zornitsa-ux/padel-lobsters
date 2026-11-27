@@ -3,7 +3,7 @@ import { useMatches } from './useMatches'
 import { useOscarsSessionRow } from '../oscars/useOscarsSessionRow'
 import { derivePhase, toPhaseSession } from '../oscars/oscarsPhase'
 import { eventPhase } from './eventPhase'
-import { ratingsOn, savesPlacings } from './presets'
+import { savesPlacings } from './presets'
 import { useEventTeams } from './teams/useTeams'
 import type { EventPhase, PhaseTournament } from './eventPhase'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
@@ -39,21 +39,12 @@ export function useEventPhase(tournament: (PhaseTournament & { id: string }) | n
   })
   const hasFinalStandings = Boolean(teams?.some((t) => t.finalRank != null && !t.cancelledAt))
 
-  // An unrated event is over by the clock (D-026), so its phase needs one.
-  const endsByClock = tournament != null && !ratingsOn(tournament)
-  const now = useMinuteClock({ enabled: endsByClock })
+  // Every event finishes by the clock (event-system EV-D1).
+  const now = useMinuteClock({ enabled: tournament != null })
 
   const phase = useMemo(
-    () =>
-      tournament
-        ? eventPhase({
-            tournament,
-            matches,
-            hasFinalStandings,
-            now: endsByClock ? now : new Date(),
-          })
-        : 'open',
-    [tournament, matches, hasFinalStandings, endsByClock, now],
+    () => (tournament ? eventPhase({ tournament, matches, hasFinalStandings, now }) : 'open'),
+    [tournament, matches, hasFinalStandings, now],
   )
 
   // react-query's `undefined` while loading is exactly derivePhase's loading

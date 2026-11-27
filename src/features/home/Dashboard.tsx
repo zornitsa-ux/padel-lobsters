@@ -27,7 +27,7 @@ import type { Player, NormalisedTournament } from '../../lib/normalise'
 import type { NormalisedMatch } from '../events/matchQueries'
 import type { NormalisedRegistration } from '../events/registrationQueries'
 import type { NormalisedTransfer } from '../events/transferQueries'
-import { isEventOver } from '../events/eventPhase'
+import { isEventFinished } from '../events/eventPhase'
 import { countdownTarget, formatHomeDate, tipOfTheDay, upcomingEvents } from './homeHelpers'
 import { useTeamResultsByEvent } from '../events/kingOfCourt/useTeamResultsByEvent'
 import MyKingOfCourtLine from '../events/kingOfCourt/MyKingOfCourtLine'
@@ -144,7 +144,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     new Date(t.date || t.completedAt || 0).getTime()
   const recentlyCompleted = tournaments
     .filter((t) => {
-      if (!isEventOver({ tournament: t })) return false
+      if (!isEventFinished({ tournament: t })) return false
       const refDate = t.date || t.completedAt
       if (!refDate) return false
       return Date.now() - new Date(refDate).getTime() < TWO_DAYS_MS
@@ -177,7 +177,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   const myStreak = useMemo(() => {
     if (!claimedId) return 0
     const completed = tournaments
-      .filter((t) => isEventOver({ tournament: t }))
+      .filter((t) => isEventFinished({ tournament: t }))
       .sort((a, b) => ((b.date || '') > (a.date || '') ? 1 : -1))
     let s = 0
     for (const t of completed) {

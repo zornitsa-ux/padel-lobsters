@@ -11,6 +11,7 @@ export const REGISTER_FAILURE_MESSAGES: Record<string, string> = {
   already_registered: 'They are already registered for this event.',
   already_waitlist: 'They are already on the waitlist for this event.',
   team_event: 'This is a team event. Sign up as a team instead.',
+  event_finished: 'This event has already finished.',
   needs_level: 'Set your own level first (on Home), then sign yourself up.',
   player_needs_level: 'That player has no level yet. Enter their level, then try again.',
 }

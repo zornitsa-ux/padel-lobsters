@@ -3,7 +3,7 @@ import { Badge } from '../../components/ui/Badge'
 import { LinkCard } from '../../components/ui/LinkCard'
 import type { NormalisedTournament } from '../../lib/normalise'
 
-/** An event past its date whose results aren't in yet (D-031). */
+/** A finished event whose ratings are still to apply (D-031, event-system EV-D1). */
 export function AwaitingResultsCard({ tournament: t }: { tournament: NormalisedTournament }) {
   const details = [t.time, t.location].filter(Boolean).join(' · ')
   return (

@@ -1,26 +1,18 @@
-// D-029 — pure "results reveal" phase logic (no React, no Supabase). Mirrors
-// the shape of ../oscars/oscarsPhase.ts's ended/shared split: `completed`
-// keeps meaning "scores locked + ratings computed"; `resultsSharedAt` is a
-// second, independent gate on when non-admin players see the final
-// ranking/podium/winner. Admins always see results regardless of phase.
+// D-029 — pure "results reveal" logic (no React, no Supabase). The final
+// ranking/podium/winner is its own gate: for a preset that reveals standings
+// (Americano), players see them only once `resultsSharedAt` is set, before and
+// after the event alike (event-system EV-D5). A preset that shows standings on
+// save (King of the Court, D-026) has no gate. Admins always see results.
 
-export type ResultsPhase = 'not_completed' | 'pending_reveal' | 'revealed'
-
-export function resultsPhase(tournament: {
-  status: string
-  resultsSharedAt: string | null
-}): ResultsPhase {
-  if (tournament.status !== 'completed') return 'not_completed'
-  return tournament.resultsSharedAt ? 'revealed' : 'pending_reveal'
-}
+import { revealsStandings } from './presets'
 
 // Whether THIS viewer should have the final ranking/winner withheld.
 export function resultsWithheld({
   tournament,
   isAdmin,
 }: {
-  tournament: { status: string; resultsSharedAt: string | null }
+  tournament: { format?: string | null; resultsSharedAt: string | null }
   isAdmin: boolean
 }): boolean {
-  return !isAdmin && resultsPhase(tournament) === 'pending_reveal'
+  return !isAdmin && revealsStandings(tournament) && !tournament.resultsSharedAt
 }

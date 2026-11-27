@@ -21,7 +21,7 @@ import type { RatingReviewProps } from '../matchmaking/ui/RatingReview'
 import type { NormalisedTournament } from '../../lib/normalise'
 
 /**
- * The event's lifecycle writes, in one place: finish, reveal, publish raffle
+ * The event's lifecycle writes, in one place: apply ratings, reveal, publish raffle
  * winners, and the flagged-rating review queue.
  *
  * Lifted out of Schedule.tsx so the run-of-show owns them and there is exactly
@@ -74,7 +74,7 @@ export function useEventLifecycle({ tournament }: { tournament: NormalisedTourna
   // Session-only (unlike the queue, this has no persisted source to re-derive
   // from post-refresh), so it's null except right after a same-session Finish.
   const [appliedCount, setAppliedCount] = useState<number | null>(null)
-  const [busy, setBusy] = useState<null | 'finish' | 'reveal' | 'publish'>(null)
+  const [busy, setBusy] = useState<null | 'apply_ratings' | 'reveal' | 'publish'>(null)
   const [error, setError] = useState('')
 
   // Priors are the ratings used to generate — the learned mm_* when the engine
@@ -125,8 +125,8 @@ export function useEventLifecycle({ tournament }: { tournament: NormalisedTourna
     setAppliedCount(payload.updates.filter((u) => !u.flagged).length)
   }
 
-  const finishTournament = async () => {
-    setBusy('finish')
+  const applyRatingsAndLock = async () => {
+    setBusy('apply_ratings')
     setError('')
     try {
       try {
@@ -146,7 +146,7 @@ export function useEventLifecycle({ tournament }: { tournament: NormalisedTourna
       })
       return true
     } catch (err) {
-      setError(errorMessage(err, 'Could not finish tournament.'))
+      setError(errorMessage(err, 'Could not apply ratings.'))
       return false
     } finally {
       setBusy(null)
@@ -198,7 +198,7 @@ export function useEventLifecycle({ tournament }: { tournament: NormalisedTourna
   }
 
   return {
-    finishTournament,
+    applyRatingsAndLock,
     revealResults,
     publishRaffleWinners,
     reviewRating,

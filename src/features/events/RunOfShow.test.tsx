@@ -30,7 +30,7 @@ const RunOfShow = (await import('./RunOfShow')).default
 const scored = () => ({ id: 'm1', completed: true, score1: 6, score2: 3 })
 const unscored = () => ({ id: 'm2', completed: false, score1: null, score2: null })
 
-const finishTournament = vi.fn()
+const applyRatingsAndLock = vi.fn()
 const revealResults = vi.fn()
 const publishRaffleWinners = vi.fn()
 const endGame = vi.fn()
@@ -79,7 +79,7 @@ function setup({
   mockUseEventPhase.mockReturnValue({ phase: 'sealed', oscarsPhase })
   mockUseRaffleWinners.mockReturnValue({ data: raffleWinners })
   mockUseEventLifecycle.mockReturnValue({
-    finishTournament,
+    applyRatingsAndLock,
     revealResults,
     publishRaffleWinners,
     reviewRating: vi.fn(),
@@ -113,7 +113,7 @@ const button = (name: RegExp) => screen.queryByRole('button', { name }) as HTMLB
 beforeEach(() => {
   vi.clearAllMocks()
   revealResults.mockResolvedValue(true)
-  finishTournament.mockResolvedValue(true)
+  applyRatingsAndLock.mockResolvedValue(true)
   publishRaffleWinners.mockResolvedValue(true)
   shareResults.mockResolvedValue(true)
 })
@@ -124,7 +124,7 @@ describe('RunOfShow — the eight steps', () => {
     setup()
     const titles = [
       'Enter scores',
-      'Finish tournament',
+      'Apply ratings',
       'Resolve flagged ratings',
       'Open Oscars voting',
       'Close voting',
@@ -132,7 +132,7 @@ describe('RunOfShow — the eight steps', () => {
       'Draw the raffle',
       'Publish raffle winners',
     ]
-    // "Finish tournament" is both a step title and its button label, so count
+    // "Apply ratings" is both a step title and its button label, so count
     // rather than assert a single match.
     for (const title of titles) {
       expect(screen.getAllByText(title).length).toBeGreaterThan(0)
@@ -186,9 +186,9 @@ describe('RunOfShow — the eight steps', () => {
 })
 
 describe('RunOfShow — locked steps', () => {
-  it('disables Finish and explains why while scores are outstanding', () => {
+  it('disables Apply ratings and explains why while scores are outstanding', () => {
     setup({ matches: [scored(), unscored()] })
-    expect(button(/finish tournament/i)?.disabled).toBe(true)
+    expect(button(/apply ratings/i)?.disabled).toBe(true)
     expect(screen.queryByText('Every match needs a score')).not.toBeNull()
   })
 
@@ -321,15 +321,15 @@ describe('RunOfShow — preview standings before revealing', () => {
 })
 
 describe('RunOfShow — actions', () => {
-  it('Finish calls finishTournament', () => {
+  it('Apply ratings calls applyRatingsAndLock', () => {
     setup({ matches: [scored()] })
-    fireEvent.click(button(/finish tournament/i)!)
-    expect(finishTournament).toHaveBeenCalledTimes(1)
+    fireEvent.click(button(/apply ratings/i)!)
+    expect(applyRatingsAndLock).toHaveBeenCalledTimes(1)
   })
 
-  it('offers no Finish or Reveal on King of the Court, and no progress count', () => {
+  it('offers no Apply ratings or Reveal on King of the Court, and no progress count', () => {
     setup({ format: 'king_of_court', matches: [] })
-    expect(button(/finish tournament/i)).toBeNull()
+    expect(button(/apply ratings/i)).toBeNull()
     expect(button(/reveal the results/i)).toBeNull()
     expect(screen.queryByText(/of \d+ done/)).toBeNull()
   })
@@ -374,9 +374,9 @@ describe('RunOfShow — actions', () => {
 })
 
 describe('RunOfShow — done states', () => {
-  it('marks a completed tournament Finish as done and offers no button', () => {
+  it('marks Apply ratings done on a completed tournament and offers no button', () => {
     setup({ status: 'completed' })
-    expect(button(/finish tournament/i)).toBeNull()
+    expect(button(/apply ratings/i)).toBeNull()
     expect(screen.getAllByText('Done').length).toBeGreaterThan(0)
   })
 
