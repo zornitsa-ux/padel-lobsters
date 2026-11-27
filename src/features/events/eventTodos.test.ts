@@ -62,6 +62,10 @@ describe('isWrappedUp', () => {
     expect(isWrappedUp({ tournament: americano(), matches: [scored], now: AFTER })).toBe(false)
   })
 
+  it('never wraps up an Americano with no schedule', () => {
+    expect(isWrappedUp({ tournament: done, matches: [], now: AFTER })).toBe(false)
+  })
+
   it('wraps up King of the Court at its end, placings saved or not', () => {
     expect(isWrappedUp({ tournament: kotc(), matches: [], now: DURING })).toBe(false)
     expect(isWrappedUp({ tournament: kotc(), matches: [], now: AFTER })).toBe(true)

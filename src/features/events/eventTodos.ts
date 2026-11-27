@@ -23,6 +23,9 @@ export function eventTodos({
   hasFinalStandings?: boolean
 }): EventTodo[] {
   const todos: EventTodo[] = []
+  // An empty schedule leaves scores to enter: an Americano used only for signup
+  // never wraps up, as it never could be finished before. The signup-only
+  // preset (event model step 2) is the fix for that use.
   if (recordsMatches(tournament)) {
     todos.push({ id: 'enter_scores', required: true, done: allMatchesScored(matches) })
   }
