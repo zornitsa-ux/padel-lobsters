@@ -1,5 +1,5 @@
 {
-  "about": "When an event is finished (docs/event-system DESIGN §2, CONTRACTS C-4). Read by the client's unit test and by supabase/tests/event_finished.sh. Start: date + time in Europe/Amsterdam, a missing or blank time meaning 19:00. End: start + duration minutes, a missing duration meaning 90. Finished: status 'completed', or now at or after the end. No date: never finished by the clock.",
+  "about": "When an event is finished (docs/event-system DESIGN §2, CONTRACTS C-4). Read by the client's unit test and by supabase/tests/event_finished.sh. Start: date + time in Europe/Amsterdam, a missing, blank or unreadable time meaning 19:00 (HH:MM and HH.MM are read). End: start + duration minutes, a missing duration meaning 90. Finished: status 'completed', or now at or after the end. No date: never finished by the clock.",
   "cases": [
     {
       "name": "at the start",
@@ -71,6 +71,33 @@
       "duration": 90,
       "status": "upcoming",
       "now": "2026-06-10T20:30:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "unreadable time starts at 19:00",
+      "date": "2026-06-10",
+      "time": "TBD",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:30:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "time with a dot, before the end",
+      "date": "2026-06-10",
+      "time": "18.30",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T19:59:00+02:00",
+      "finished": false
+    },
+    {
+      "name": "time with a dot, at the end",
+      "date": "2026-06-10",
+      "time": "18.30",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:00:00+02:00",
       "finished": true
     },
     {

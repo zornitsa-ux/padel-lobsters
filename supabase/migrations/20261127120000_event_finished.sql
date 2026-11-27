@@ -12,12 +12,16 @@
 
 -- ── 1. Start, end and finished (C-1) ────────────────────────────────────────
 
--- A missing or blank time means 19:00, as the client (EV-D4). Was 00:00.
+-- A missing time means 19:00, as the client (EV-D4). Was 00:00. So does a time
+-- that isn't HH:MM (or HH.MM): readers of finished run per row, and one bad
+-- value must not make them raise.
 create or replace function public.tournament_start_ts(input_tournament_id uuid)
 returns timestamptz language sql stable security definer
 set search_path to 'pg_catalog', 'public', 'extensions'
 as $function$
-  select (t.date::text || ' ' || coalesce(nullif(btrim(t.time), ''), '19:00'))::timestamp
+  select (t.date::text || ' ' ||
+          case when btrim(t.time) ~ '^([01]?[0-9]|2[0-3])[:.][0-5][0-9]$'
+               then replace(btrim(t.time), '.', ':') else '19:00' end)::timestamp
          at time zone 'Europe/Amsterdam'
     from public.tournaments t where t.id = input_tournament_id
 $function$;
@@ -75,8 +79,8 @@ as $function$
 $function$;
 revoke all on function private.has_played_night(uuid) from public, anon, authenticated;
 
--- An event dated today or earlier that isn't finished: its schedule,
--- results and ratings are still being written.
+-- An event dated today or earlier that isn't finished yet. After the end the
+-- account can go: ratings can still be applied to a deleted player.
 create or replace function private.in_live_event(input_player_id uuid)
 returns boolean
 language sql
