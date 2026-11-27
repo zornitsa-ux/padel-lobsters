@@ -21,7 +21,8 @@
    saved, so only the Oscars and raffle steps remain, all optional.
    ════════════════════════════════════════════════════════════════════════════ */
 
-import { allMatchesScored, isMatchScored } from './eventPhase'
+import { isMatchScored } from './eventPhase'
+import { eventTodos, type EventTodoId } from './eventTodos'
 import { presetFor, ratingsOn, recordsMatches, revealsStandings, type EventPreset } from './presets'
 import { plural } from '../../lib/plural'
 import type { PhaseMatch } from './eventPhase'
@@ -85,9 +86,12 @@ export function runOfShowSteps({
   turnout = null,
 }: RunOfShowInput): RunOfShowStep[] {
   const scored = matches.filter(isMatchScored).length
-  const allScored = allMatchesScored(matches)
-  const isCompleted = tournament.status === 'completed'
-  const isRevealed = Boolean(tournament.resultsSharedAt)
+  // The required steps are the event's to-dos (event-system DESIGN §5).
+  const todos = eventTodos({ tournament, matches })
+  const todoDone = (id: EventTodoId) => todos.some((t) => t.id === id && t.done)
+  const allScored = todoDone('enter_scores')
+  const isCompleted = todoDone('apply_ratings')
+  const isRevealed = todoDone('reveal_standings')
   const isRafflePublished = Boolean(tournament.rafflePublishedAt)
   const preset = presetFor(tournament)
 
