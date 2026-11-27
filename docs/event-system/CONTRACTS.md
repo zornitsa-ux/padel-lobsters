@@ -12,7 +12,8 @@ public.tournament_start_ts(input_tournament_id uuid) returns timestamptz
 -- start + coalesce(duration, 90) minutes. Null when the event has no date.
 public.tournament_end_ts(input_tournament_id uuid) returns timestamptz
 
--- status = 'completed' or input_now >= tournament_end_ts. False with no date.
+-- status = 'completed' or input_now >= tournament_end_ts. With no date, only
+-- status = 'completed' finishes it. A blank time counts as missing.
 private.event_finished(input_tournament_id uuid, input_now timestamptz default now()) returns boolean
 ```
 
@@ -26,7 +27,7 @@ private.event_finished(input_tournament_id uuid, input_now timestamptz default n
 
 ## C-2 Client: end and finished
 
-In `src/features/events/eventPhase.ts` (or a new `eventStage.ts` it re-exports):
+In `src/features/events/eventFinished.ts`, re-exported by `eventPhase.ts`:
 
 ```ts
 export function eventEndMs(t: {
@@ -114,11 +115,16 @@ export function isWrappedUp({ tournament, matches, hasFinalStandings, now }: {..
 ## C-6 Standings visibility
 
 ```ts
-export function resultsPhase(t): 'not_finished' | 'pending_reveal' | 'revealed'
 export function resultsWithheld({ tournament, isAdmin }): boolean
 ```
 
-- `revealed` when `resultsSharedAt` is set, or the preset shows standings
-  on save and the event day has been reached.
-- `resultsWithheld` = not admin, preset shows standings on reveal, and
+- Not admin, the preset reveals standings (`revealsStandings`), and
   `resultsSharedAt` not set. Independent of `status` and of the clock.
+- `resultsPhase` had no caller outside its tests and is removed.
+
+## C-7 Result code `event_finished`
+
+`register_for_tournament` and `register_team_for_tournament` answer
+`event_finished` when a non-admin signs up after the end (`private.caller_is_admin()`
+decides who's an admin). The client shows the existing "This event has
+already finished."

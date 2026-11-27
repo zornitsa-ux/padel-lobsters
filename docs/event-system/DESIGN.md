@@ -52,22 +52,29 @@ so neither default changes any existing event.
 
 ### Database
 
-| Function                                                                                                                          | Today                                             | After                                                 |
-| --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------- |
-| `private.has_played_night`                                                                                                        | registered in a `completed` event                 | registered in a finished event                        |
-| `private.in_live_event`                                                                                                           | date ≤ today and not `completed`                  | date ≤ today and not finished                         |
-| `private.delete_account`, `private.deletion_summary`, `private.record_deletion_followups`, `public.admin_list_deletion_followups` | spots in events not `completed` count as upcoming | spots in events not finished                          |
-| `public.get_my_team_invites`                                                                                                      | hides `completed` events                          | hides finished events                                 |
-| `public.register_for_tournament`                                                                                                  | no check                                          | a player is refused once finished; an admin as today  |
-| `public.register_team_for_tournament`                                                                                             | refuses `completed`                               | a captain is refused once finished; an admin as today |
-| `private.send_tournament_reminders`                                                                                               | `status = 'upcoming'`                             | not finished                                          |
-| `public.tournament_start_ts`                                                                                                      | missing time → 00:00                              | missing time → 19:00, as the client                   |
+| Function                                                                                     | Today                                             | After                                                 |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------- |
+| `private.has_played_night`                                                                   | registered in a `completed` event                 | registered in a finished event                        |
+| `private.in_live_event`                                                                      | date ≤ today and not `completed`                  | date ≤ today and not finished                         |
+| `private.delete_account`, `private.deletion_summary`, `public.admin_list_deletion_followups` | spots in events not `completed` count as upcoming | spots in events not finished                          |
+| `public.get_my_team_invites`                                                                 | hides `completed` events                          | hides finished events                                 |
+| `public.register_for_tournament`                                                             | no check                                          | a player is refused once finished; an admin as today  |
+| `public.register_team_for_tournament`                                                        | refuses `completed`                               | a captain is refused once finished; an admin as today |
+| `private.send_tournament_reminders`                                                          | `status = 'upcoming'`                             | not finished                                          |
+| `public.tournament_start_ts`                                                                 | missing time → 00:00                              | missing time → 19:00, as the client                   |
 
 **Admin paths keep today's gate** (`status = 'completed'`, so ratings applied):
 `admin_transfer_registration`, the admin side of `change_team_partner`,
 `register_*` on behalf, `cancel_registration`. After the end an admin may
 still need to fix who played before applying ratings: the rating update
 refuses a player who isn't registered.
+
+**Known gap, left as is:** `send_tournament_reminders` (its window and the
+date in the email) and `private.auto_close_started_transfers` still read a
+missing time as 00:00 inline. No event has a missing time.
+
+`private.record_deletion_followups` doesn't read tournament status (it
+searches free text), so it needs no change.
 
 **Player paths are already closed** before the start and need no change:
 transfers, partner changes and team cancels close 12 hours before
@@ -81,14 +88,14 @@ still lets ratings be written (account-deletion DESIGN §2).
 
 ### Client
 
-| Code                              | Today                                                        | After                                                                                                                                                 |
-| --------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `isEventOver` (`eventPhase.ts`)   | Americano: `completed`. KotC: clock                          | `isEventFinished`: §2 for every format                                                                                                                |
-| `eventTimeGroup`                  | `awaitingResults`: an Americano past its date, before Finish | `awaitingResults`: finished, standings not yet shown (§6); `finished`: shown. On the event day an Americano moves to Past at its end, not at midnight |
-| `eventPhase` (Americano)          | `social`/`revealed` only once `completed`                    | `social`/`revealed` once finished                                                                                                                     |
-| `resultsPhase`, `resultsWithheld` | withheld only between `completed` and the reveal             | §6: withheld until revealed, for presets that reveal                                                                                                  |
-| `hasLiveScores`                   | until `completed`                                            | unchanged meaning: until ratings applied                                                                                                              |
-| Run of show "Finish tournament"   | applies ratings, sets `completed`                            | "Apply ratings", same writes; a to-do (§5)                                                                                                            |
+| Code                                                      | Today                                                        | After                                                                                                                                              |
+| --------------------------------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `isEventOver` (`eventPhase.ts`)                           | Americano: `completed`. KotC: clock                          | `isEventFinished`: §2 for every format                                                                                                             |
+| `eventTimeGroup`                                          | `awaitingResults`: an Americano past its date, before Finish | `awaitingResults`: finished, ratings still to apply; `finished`: the rest. On the event day an Americano moves to Past at its end, not at midnight |
+| `eventPhase` (Americano)                                  | `social`/`revealed` only once `completed`                    | `social`/`revealed` once finished                                                                                                                  |
+| `resultsWithheld` (`resultsPhase` had no caller and goes) | withheld only between `completed` and the reveal             | §6: withheld until revealed, for presets that reveal                                                                                               |
+| `hasLiveScores`                                           | until `completed`                                            | unchanged meaning: until ratings applied                                                                                                           |
+| Run of show "Finish tournament"                           | applies ratings, sets `completed`                            | "Apply ratings", same writes; a to-do (§5)                                                                                                         |
 
 Callers of `isEventOver` (Home banners and streak, account stats, event cards,
 registration, team lists, public event page) keep their logic and get the
