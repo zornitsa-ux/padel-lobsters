@@ -1,10 +1,17 @@
-// The client parses an event's start in local time; the database in
-// Europe/Amsterdam. Pin the zone so the shared cases mean the same here.
-process.env.TZ = 'Europe/Amsterdam'
-
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import finishedCases from '../../../supabase/tests/event_finished_cases.json'
 import { isEventFinished, isRosterLocked } from './eventFinished'
+
+// The client parses an event's start in local time; the database in
+// Europe/Amsterdam. Pin the zone for this file so the cases mean the same here.
+const zone = process.env.TZ
+beforeAll(() => {
+  process.env.TZ = 'Europe/Amsterdam'
+})
+afterAll(() => {
+  if (zone === undefined) delete process.env.TZ
+  else process.env.TZ = zone
+})
 
 type FinishedCase = {
   name: string

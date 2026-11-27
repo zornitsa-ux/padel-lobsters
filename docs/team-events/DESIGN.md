@@ -345,7 +345,7 @@ Built in #63 and #64; revised by D-024 to D-027.
 
 ### 3.4 Lifecycle changes
 
-- **Over by the clock** (D-026). `isEventOver` (in `eventPhase.ts`):
+- **Over by the clock** (D-026). `isEventFinished` (in `eventPhase.ts`):
   Americano when finished, King of the Court at start + duration. Home's next
   event and countdown, the admin unpaid count, attendance streaks, the Events
   list, the event card badge, signup and the admin team controls use it (or

@@ -18,7 +18,7 @@
 
 import { isEventDayReached, localDateString } from '../../lib/tournamentDate'
 import { ratingsOn, recordsMatches, savesPlacings } from './presets'
-import { isEventFinished, type OverTournament } from './eventFinished'
+import { eventEndMs, isEventFinished, type OverTournament } from './eventFinished'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
 
 /**
@@ -118,9 +118,9 @@ export function eventPhase({
   return 'live'
 }
 
-// Past its scheduled end on the night, with matches still to score: still being
-// played, so players keep landing on their matches. From the next day it's
-// over, scored or not.
+// Past its scheduled end but within the night (OVERRUN_MS), with matches still
+// to score: still being played, so players keep landing on their matches.
+// After that it's over, scored or not.
 function isOverrunning({
   tournament,
   matches,
@@ -131,7 +131,8 @@ function isOverrunning({
   now: Date
 }): boolean {
   if (tournament.status === 'completed' || matches.length === 0) return false
-  return !allMatchesScored(matches) && tournament.date === localDateString(now)
+  const end = eventEndMs({ tournament })
+  return end != null && now.getTime() < end + OVERRUN_MS && !allMatchesScored(matches)
 }
 
 function kingOfTheCourtPhase({
@@ -151,6 +152,8 @@ function kingOfTheCourtPhase({
 }
 
 export { eventEndMs, isEventFinished, isRosterLocked, type OverTournament } from './eventFinished'
+
+const OVERRUN_MS = 3 * 60 * 60_000
 
 /**
  * Where the Events page lists an event: upcoming until finished (event-system

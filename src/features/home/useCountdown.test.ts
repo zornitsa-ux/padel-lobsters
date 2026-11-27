@@ -28,17 +28,12 @@ describe('tournamentStartMs', () => {
     )
   })
 
-  it('parses am/pm times', () => {
-    expect(tournamentStartMs({ date: '2026-07-26', time: '7pm' })).toBe(localMs(2026, 7, 26, 19, 0))
-    expect(tournamentStartMs({ date: '2026-07-26', time: '7:45 PM' })).toBe(
-      localMs(2026, 7, 26, 19, 45),
-    )
-    expect(tournamentStartMs({ date: '2026-07-26', time: '9am' })).toBe(localMs(2026, 7, 26, 9, 0))
-    expect(tournamentStartMs({ date: '2026-07-26', time: '12am' })).toBe(localMs(2026, 7, 26, 0, 0))
-  })
-
-  it('parses a bare hour', () => {
-    expect(tournamentStartMs({ date: '2026-07-26', time: '21' })).toBe(localMs(2026, 7, 26, 21, 0))
+  // The event form saves HH:MM; anything else starts at 19:00, as the database
+  // reads it (event-system EV-D4).
+  it('reads am/pm, a bare hour and an out-of-range time as 19:00', () => {
+    for (const time of ['7pm', '7:45 PM', '9am', '21', '24:30', '19:60']) {
+      expect(tournamentStartMs({ date: '2026-07-26', time })).toBe(localMs(2026, 7, 26, 19, 0))
+    }
   })
 
   it('falls back to the 19:00 default on an unparseable time', () => {

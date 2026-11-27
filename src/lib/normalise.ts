@@ -104,8 +104,8 @@ export interface NormalisedTournament extends RawTournamentRow {
   tikkieLink: string
   genderMode: string
   completedAt: string | null
-  // D-029: null while a completed tournament's final ranking is withheld from
-  // players (admins always see it regardless). See resultsPhase().
+  // D-029: null while the final ranking is withheld from players (admins always
+  // see it), for presets that reveal standings. See resultsWithheld().
   resultsSharedAt: string | null
   rafflePublishedAt: string | null
   entryMode: EntryMode

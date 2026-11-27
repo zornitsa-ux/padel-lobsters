@@ -276,6 +276,9 @@ function RegistrationCard({
   onTikkieClick: () => void
   onSelfDeclare: () => void
 }) {
+  // Once finished there's nothing to join, wait for or re-join (EV-D1): the
+  // server refuses the signup anyway.
+  if (registration.status !== 'registered' && isEventFinished({ tournament })) return null
   if (registration.status === 'waitlisted') {
     return <WaitlistNotice position={waitlistPosition} />
   }

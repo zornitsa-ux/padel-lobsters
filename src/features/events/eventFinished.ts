@@ -12,9 +12,11 @@ export type OverTournament = {
 }
 
 /** The scheduled end: start + duration (90 minutes when none is stored). */
-export function eventEndMs(
-  tournament: Pick<OverTournament, 'date' | 'time' | 'duration'>,
-): number | null {
+export function eventEndMs({
+  tournament,
+}: {
+  tournament: Pick<OverTournament, 'date' | 'time' | 'duration'>
+}): number | null {
   const start = tournamentStartMs(tournament)
   const minutes = tournament.duration ?? DEFAULT_EVENT_DURATION_MINUTES
   return start == null ? null : start + minutes * 60_000
@@ -33,7 +35,7 @@ export function isEventFinished({
   now?: Date
 }): boolean {
   if (tournament.status === 'completed') return true
-  const end = eventEndMs(tournament)
+  const end = eventEndMs({ tournament })
   return end != null && now.getTime() >= end
 }
 

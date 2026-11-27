@@ -312,6 +312,20 @@ describe('eventPhase', () => {
     expect(eventPhase({ tournament, matches: [scored(), scored()], now: late })).toBe('social')
   })
 
+  it('keeps an overrun live past midnight, for up to three hours after the end', () => {
+    // 22:30 + 120 minutes ends at 00:30 the next day.
+    const tournament = {
+      status: 'active',
+      date: TODAY,
+      time: '22:30',
+      duration: 120,
+      resultsSharedAt: null,
+    }
+    const matches = [scored(), unscored()]
+    expect(eventPhase({ tournament, matches, now: new Date(2026, 6, 30, 1, 0) })).toBe('live')
+    expect(eventPhase({ tournament, matches, now: new Date(2026, 6, 30, 3, 30) })).toBe('social')
+  })
+
   it('is unaffected by Oscars or raffle state — they are not inputs', () => {
     // Enforced by the type signature: there is nowhere to pass them.
     const tournament = { status: 'completed', date: TODAY, resultsSharedAt: null }

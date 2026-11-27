@@ -80,7 +80,7 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
 - **Code map (Phase 2).** Domain: `src/features/events/kingOfCourt/domain/`.
   Boundary parsing: `kingOfCourt/kotcInputs.ts`. Admin model and UI:
   `kotcAdmin.ts`, `useKingOfCourtAdmin.ts`, `KingOfCourtAdmin.tsx`,
-  `StartingCourtsList.tsx`. Lifecycle: `eventPhase.ts` (`isEventOver`,
+  `StartingCourtsList.tsx`. Lifecycle: `eventPhase.ts` (`isEventFinished`,
   `isEventUpcoming`, the King of the Court phase) and `useEventPhase.ts`.
   Writes: `updateEventTeams` in `teams/teamQueries.ts`.
   **Player side (T11, T13):** one read path, `useKingOfCourtTeams` (saved seeds →
@@ -111,7 +111,7 @@ States: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked.
   through active team entries, so it never shows; keep it that way in T11.
 - `tournaments.status` (`upcoming` | `active` | `completed`): nothing writes
   `active`, and on Americano `completed` means Finished (ratings applied),
-  which `completed_at` also records. Display code should ask `isEventOver` /
+  which `completed_at` also records. Display code should ask `isEventFinished` /
   `eventTimeGroup`, never the raw status (#68 fixed the Events list). Dropping
   the column is a migration across the RPC guards; not planned.
 - T12 UX notes, not fixed: a captain-created account is asked "Has your
@@ -188,7 +188,7 @@ nothing admin-only, so reuse or split it rather than repeating it.
   Don't route it through `resultsWithheld` / `resultsSharedAt`: on King of the
   Court, saved standings are public (D-026).
 - **History and the recently-completed banner** (Home): switch to
-  `isEventOver` and show the team ranking for King of the Court. Both rank by
+  `isEventFinished` and show the team ranking for King of the Court. Both rank by
   match scores today, so they skip these events.
 - **Lobster Review** (per-event ranks in `community/reviewScenarios.ts`,
   `corpReview`, called from `PlayerDetailPage` and `AdminTools`): the team's
@@ -376,7 +376,7 @@ OQ-4, odd counts, was closed by D-029: capacity matches the courts.)
   and Home's next-event card show "You start on {court}", then the team's
   placing once standings are saved. Results shows the team ranking, with no
   Matches tab and no reveal gate. History and the recently-completed banner
-  use `isEventOver` and show the team ranking and winning team. In Lobster
+  use `isEventFinished` and show the team ranking and winning team. In Lobster
   Review, a player's rank is their team's `final_rank`. A `/code-review`
   pass, and fixes:
   - Signed-out viewers get a sign-in prompt on Schedule, Results and History

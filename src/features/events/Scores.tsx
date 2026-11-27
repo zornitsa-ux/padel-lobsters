@@ -111,9 +111,8 @@ export default function Scores({ tournament, onNavigate }: ScoresProps) {
     )
   }
 
-  // D-029: players already saw their own match scores live, so only the final
-  // ranking/podium is embargoed until the admin reveals it (Schedule.jsx, post-
-  // Finish). Admins always see the real ranking.
+  // D-029: players see their own match scores live; the final ranking/podium is
+  // embargoed until the admin reveals it (EV-D5). Admins always see it.
   const withheld = resultsWithheld({ tournament, isAdmin })
   // King of the Court records no matches (D-006); its ranking is the teams'.
 
