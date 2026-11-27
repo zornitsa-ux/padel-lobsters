@@ -55,7 +55,7 @@ export function isEventFinished({
 export type EventPreset = {
   id: 'americano' | 'king_of_the_court'
   format: 'lobster_matching' | 'king_of_court'
-  entry: 'solo' | 'team'
+  entry: 'individual' | 'team' // the stored entry_mode values
   play: 'rounds_drawn_up_front' | 'not_recorded'
   scoring: 'points_per_match' | 'final_placings'
   standingsShown: 'on_reveal' | 'on_save'
@@ -66,6 +66,8 @@ export const PRESETS: readonly EventPreset[]
 export function presetFor({ format }: { format?: string | null }): EventPreset
 export const recordsMatches: (p: EventPreset) => boolean // play !== 'not_recorded'
 export const ratingsOn: (p: EventPreset) => boolean
+export const revealsStandings: (p: EventPreset) => boolean // standingsShown === 'on_reveal'
+export const savesPlacings: (p: EventPreset) => boolean // scoring === 'final_placings'
 ```
 
 - `presetFor` falls back to Americano for an unknown or missing format, as
