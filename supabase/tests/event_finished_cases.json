@@ -261,6 +261,33 @@
       "status": "completed",
       "now": "2030-01-01T12:00:00+01:00",
       "finished": true
+    },
+    {
+      "name": "'8pm' is unreadable, so 19:00",
+      "date": "2026-06-10",
+      "time": "8pm",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:30:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "an hour alone ('20') is unreadable, so 19:00",
+      "date": "2026-06-10",
+      "time": "20",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:30:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "'24:30' is out of range, so 19:00",
+      "date": "2026-06-10",
+      "time": "24:30",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:29:00+02:00",
+      "finished": false
     }
   ]
 }
