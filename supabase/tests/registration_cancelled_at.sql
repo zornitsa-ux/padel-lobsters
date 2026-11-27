@@ -159,6 +159,7 @@ begin
   set constraints all immediate;
   set constraints all deferred;
   perform pg_temp.check(pg_temp.stamped(v_teams, v_g), 'P3: the team giver''s spot is stamped');
+  perform pg_temp.check((pg_temp.spot(v_teams, v_h)).cancelled_at is null, 'P3: the team recipient''s spot is not');
   raise notice 'P3 ok: apply_registration_transfer, apply_team_transfer';
 
   -- 4. A waitlisted player declines a transfer: their waitlist spot goes with
@@ -226,6 +227,8 @@ begin
   exception when check_violation then
     null;
   end;
+  v_reg := pg_temp.solo(v_full, v_a, 'cancelled');
+  perform pg_temp.check(pg_temp.cancelled_at(v_reg) = now(), 'C8: a row inserted cancelled gets a time');
   raise notice 'C8 ok: only cancelled rows have a time';
 end $$;
 
