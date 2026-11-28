@@ -1317,6 +1317,7 @@ export type Database = {
       registrations: {
         Row: {
           accepted_at: string | null
+          cancelled_at: string | null
           created_at: string | null
           id: string
           payment_method: string | null
@@ -1329,6 +1330,7 @@ export type Database = {
         ComputedFields: never
         Insert: {
           accepted_at?: string | null
+          cancelled_at?: string | null
           created_at?: string | null
           id?: string
           payment_method?: string | null
@@ -1340,6 +1342,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          cancelled_at?: string | null
           created_at?: string | null
           id?: string
           payment_method?: string | null
