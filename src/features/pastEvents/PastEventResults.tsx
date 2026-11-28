@@ -252,17 +252,22 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                 // D-029: match scores stay visible (players already saw their own
                 // live), but the podium/final-ranking is embargoed until revealed.
                 const withheld = resultsWithheld({ tournament: t, isAdmin })
-                const resultsLink = (label: string) =>
-                  onNavigate && (
+                const eventLinks = (resultsLabel: string) =>
+                  onNavigate &&
+                  [
+                    { view: 'registration', label: 'Event info' },
+                    { view: 'scores', label: resultsLabel },
+                  ].map(({ view, label }) => (
                     <Button
+                      key={view}
                       variant="secondary"
                       size="sm"
                       fullWidth
-                      onClick={() => onNavigate('scores', t)}
+                      onClick={() => onNavigate(view, t)}
                     >
                       {label}
                     </Button>
-                  )
+                  ))
 
                 // King of the Court ranks teams, has no matches (D-006) and no
                 // reveal: saved standings are public at once (D-026).
@@ -293,7 +298,7 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                       {dbTab === 'games' && hasGameResults && (
                         <LobsterGamesPanel gameResults={gameResults} />
                       )}
-                      {resultsLink('View event results →')}
+                      {eventLinks('View event results →')}
                     </div>
                   )
                 }
@@ -390,7 +395,7 @@ export default function PastEventResults({ tournaments, onNavigate }: PastEventR
                       <LobsterGamesPanel gameResults={gameResults} />
                     )}
 
-                    {resultsLink('View full match scores →')}
+                    {eventLinks('View full match scores →')}
                   </div>
                 )
               })()}
