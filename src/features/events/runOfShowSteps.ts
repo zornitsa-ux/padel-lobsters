@@ -22,7 +22,7 @@
    ════════════════════════════════════════════════════════════════════════════ */
 
 import { allMatchesScored, isMatchScored } from './eventPhase'
-import { isKingOfTheCourt } from './eventFormat'
+import { presetFor, ratingsOn, recordsMatches, revealsStandings, type EventPreset } from './presets'
 import { plural } from '../../lib/plural'
 import type { PhaseMatch } from './eventPhase'
 import type { OscarsPhase } from '../oscars/oscarsPhase'
@@ -89,7 +89,7 @@ export function runOfShowSteps({
   const isCompleted = tournament.status === 'completed'
   const isRevealed = Boolean(tournament.resultsSharedAt)
   const isRafflePublished = Boolean(tournament.rafflePublishedAt)
-  const kotc = isKingOfTheCourt(tournament)
+  const preset = presetFor(tournament)
 
   const finishState: RunOfShowStepState = isCompleted ? 'done' : allScored ? 'available' : 'locked'
   const flagsState: RunOfShowStepState =
@@ -228,15 +228,16 @@ export function runOfShowSteps({
       optional: true,
     },
   ]
-  return kotc ? steps.filter((s) => !AMERICANO_ONLY_STEPS.includes(s.id)) : steps
+  return steps.filter((s) => stepApplies({ id: s.id, preset }))
 }
 
-const AMERICANO_ONLY_STEPS: readonly RunOfShowStepId[] = [
-  'enter_scores',
-  'finish',
-  'resolve_flags',
-  'reveal',
-]
+// Each closing step exists only for the preset part it closes out.
+function stepApplies({ id, preset }: { id: RunOfShowStepId; preset: EventPreset }): boolean {
+  if (id === 'enter_scores') return recordsMatches(preset)
+  if (id === 'finish' || id === 'resolve_flags') return ratingsOn(preset)
+  if (id === 'reveal') return revealsStandings(preset)
+  return true
+}
 
 /** Convenience for the collapsed summary line. */
 export function runOfShowProgress(steps: readonly RunOfShowStep[]): {
