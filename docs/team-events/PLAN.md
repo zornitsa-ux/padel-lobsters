@@ -16,10 +16,10 @@ Status is tracked outside the repo; this plan holds the work breakdown and how t
 
 **Constraints**
 
-- **Migrations:** review → merge → `npx supabase db push --remote` from `main`
+- **Migrations:** review → merge → `npm run release` from `main`
   (CLAUDE.md). There are no MCP or dashboard writes to production. Edge
-  functions are deployed from `main` after merge, **before** the `db push`
-  that calls them.
+  functions ship **before** the migrations that call them:
+  `npm run release -- --functions-first`.
 - **Testing is local only.** Use the local stack plus synced production data
   (`npm run rehearsal:sync`). Nothing is tested on Vercel previews.
 - **No player names, emails or IDs** in commits, fixtures or PRs. One-off data
