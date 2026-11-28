@@ -2382,6 +2382,7 @@ export type Database = {
       }
       signup_name_match: { Args: { input_name: string }; Returns: string }
       sync_my_role: { Args: Record<PropertyKey, never>; Returns: Json }
+      tournament_end_ts: { Args: { input_tournament_id: string }; Returns: string }
       tournament_start_ts: { Args: { input_tournament_id: string }; Returns: string }
       tournament_transfers_closed: { Args: { input_tournament_id: string }; Returns: boolean }
       update_my_profile: { Args: { input_payload: Json }; Returns: boolean }

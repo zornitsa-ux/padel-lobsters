@@ -1,0 +1,293 @@
+{
+  "about": "When an event is finished (docs/event-system DESIGN §2, CONTRACTS C-4). Read by the client's unit test and by supabase/tests/event_finished.sh. Start: date + time in Europe/Amsterdam, a missing, blank or unreadable time meaning 19:00 (HH:MM and HH.MM are read). End: start + duration minutes, a missing duration meaning 90. Finished: status 'completed', or now at or after the end. No date: never finished by the clock.",
+  "cases": [
+    {
+      "name": "at the start",
+      "date": "2026-06-10",
+      "time": "19:00",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T19:00:00+02:00",
+      "finished": false
+    },
+    {
+      "name": "a minute before the end",
+      "date": "2026-06-10",
+      "time": "19:00",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:29:00+02:00",
+      "finished": false
+    },
+    {
+      "name": "at the end exactly",
+      "date": "2026-06-10",
+      "time": "19:00",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:30:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "a minute after the end",
+      "date": "2026-06-10",
+      "time": "19:00",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:31:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "days after the end",
+      "date": "2026-06-10",
+      "time": "19:00",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-14T12:00:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "missing time starts at 19:00, before the end",
+      "date": "2026-06-10",
+      "time": null,
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:29:00+02:00",
+      "finished": false
+    },
+    {
+      "name": "missing time starts at 19:00, at the end",
+      "date": "2026-06-10",
+      "time": null,
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:30:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "blank time starts at 19:00",
+      "date": "2026-06-10",
+      "time": "",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:30:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "unreadable time starts at 19:00",
+      "date": "2026-06-10",
+      "time": "TBD",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:30:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "time with a dot, before the end",
+      "date": "2026-06-10",
+      "time": "18.30",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T19:59:00+02:00",
+      "finished": false
+    },
+    {
+      "name": "time with a dot, at the end",
+      "date": "2026-06-10",
+      "time": "18.30",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:00:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "missing duration lasts 90 minutes, before the end",
+      "date": "2026-06-10",
+      "time": "18:00",
+      "duration": null,
+      "status": "upcoming",
+      "now": "2026-06-10T19:29:00+02:00",
+      "finished": false
+    },
+    {
+      "name": "missing duration lasts 90 minutes, at the end",
+      "date": "2026-06-10",
+      "time": "18:00",
+      "duration": null,
+      "status": "upcoming",
+      "now": "2026-06-10T19:30:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "time and duration missing, before the end",
+      "date": "2026-06-10",
+      "time": null,
+      "duration": null,
+      "status": "upcoming",
+      "now": "2026-06-10T20:29:00+02:00",
+      "finished": false
+    },
+    {
+      "name": "time and duration missing, at the end",
+      "date": "2026-06-10",
+      "time": null,
+      "duration": null,
+      "status": "upcoming",
+      "now": "2026-06-10T20:30:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "completed before the end",
+      "date": "2026-06-10",
+      "time": "19:00",
+      "duration": 90,
+      "status": "completed",
+      "now": "2026-06-10T19:30:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "completed before the start",
+      "date": "2026-06-10",
+      "time": "19:00",
+      "duration": 90,
+      "status": "completed",
+      "now": "2026-06-01T12:00:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "end after midnight, before it",
+      "date": "2026-06-10",
+      "time": "23:00",
+      "duration": 120,
+      "status": "upcoming",
+      "now": "2026-06-11T00:59:00+02:00",
+      "finished": false
+    },
+    {
+      "name": "end after midnight, at it",
+      "date": "2026-06-10",
+      "time": "23:00",
+      "duration": 120,
+      "status": "upcoming",
+      "now": "2026-06-11T01:00:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "last Sunday of October, evening, before the end",
+      "date": "2026-10-25",
+      "time": "19:00",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-10-25T20:29:00+01:00",
+      "finished": false
+    },
+    {
+      "name": "last Sunday of October, evening, at the end",
+      "date": "2026-10-25",
+      "time": "19:00",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-10-25T20:30:00+01:00",
+      "finished": true
+    },
+    {
+      "name": "last Sunday of October, across the change, an hour before the end",
+      "date": "2026-10-25",
+      "time": "01:30",
+      "duration": 120,
+      "status": "upcoming",
+      "now": "2026-10-25T02:30:00+02:00",
+      "finished": false
+    },
+    {
+      "name": "last Sunday of October, across the change, at the end",
+      "date": "2026-10-25",
+      "time": "01:30",
+      "duration": 120,
+      "status": "upcoming",
+      "now": "2026-10-25T02:30:00+01:00",
+      "finished": true
+    },
+    {
+      "name": "last Sunday of March, evening, before the end",
+      "date": "2027-03-28",
+      "time": "19:00",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2027-03-28T20:29:00+02:00",
+      "finished": false
+    },
+    {
+      "name": "last Sunday of March, evening, at the end",
+      "date": "2027-03-28",
+      "time": "19:00",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2027-03-28T20:30:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "last Sunday of March, across the change, before the end",
+      "date": "2027-03-28",
+      "time": "01:30",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2027-03-28T03:59:00+02:00",
+      "finished": false
+    },
+    {
+      "name": "last Sunday of March, across the change, at the end",
+      "date": "2027-03-28",
+      "time": "01:30",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2027-03-28T04:00:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "no date is never finished",
+      "date": null,
+      "time": "19:00",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2030-01-01T12:00:00+01:00",
+      "finished": false
+    },
+    {
+      "name": "no date, completed",
+      "date": null,
+      "time": "19:00",
+      "duration": 90,
+      "status": "completed",
+      "now": "2030-01-01T12:00:00+01:00",
+      "finished": true
+    },
+    {
+      "name": "'8pm' is unreadable, so 19:00",
+      "date": "2026-06-10",
+      "time": "8pm",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:30:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "an hour alone ('20') is unreadable, so 19:00",
+      "date": "2026-06-10",
+      "time": "20",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:30:00+02:00",
+      "finished": true
+    },
+    {
+      "name": "'24:30' is out of range, so 19:00",
+      "date": "2026-06-10",
+      "time": "24:30",
+      "duration": 90,
+      "status": "upcoming",
+      "now": "2026-06-10T20:29:00+02:00",
+      "finished": false
+    }
+  ]
+}
