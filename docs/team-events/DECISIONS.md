@@ -421,6 +421,9 @@ so players and admins compute the same order.
 
 ## D-026 — King of the Court has no Finish or Reveal (2026-10-24)
 
+> Partly superseded by [EV-D1](../event-system/DECISIONS.md#ev-d1-finished-comes-from-the-clock-for-every-format-2026-11-27):
+> every format is now over by the clock, Americano included.
+
 **Decision:**
 
 - A King of the Court event is **over by the clock**: at its scheduled end
