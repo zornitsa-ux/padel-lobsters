@@ -37,8 +37,8 @@ formats as presets, and the to-dos left after an event.
 **Order:** EV0 first (EV1 and EV6 cite it). EV1 and EV2 in parallel → EV3
 (after EV2, and after EV1's release) → EV4. EV5 and EV6 any time.
 
-- **EV1 ships on its own:** merge, `npm run release`, then
-  `npm run db:grants:prod`. It changes only database behaviour (played
+- **EV1 ships on its own:** merge, then `npm run release` (it checks
+  grants too). It changes only database behaviour (played
   nights, deletion, signups refused once finished). Not sign-in-facing.
 - **EV3 after EV1's release**, so the app and the database agree on when an
   event is finished. Its standings rule (EV-D5) and the finished rule ship in
